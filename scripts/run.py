@@ -6,6 +6,7 @@ import io, json, os, re, sys, time, zipfile, traceback, datetime as dt
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
+import signals_v2 as v2
 
 RULES = json.load(open(os.path.join(ROOT, "rules.json")))
 P = lambda k: RULES["signals"][k]["params"]
@@ -450,7 +451,7 @@ def summarize(rows):
     for k, cfg in RULES["signals"].items():
         rs = [x for x in rows if x["signal"] == k]
         if k == "7": sts = [x["status"] for x in rs if "合計" in x["target"]]
-        elif k == "6": sts = [x["status"] for x in rs if "官方" in x["target"]]
+        elif k == "6": sts = [x["status"] for x in rs if x["target"].startswith("大盤融資維持率（上市，不含ETF")]
         else: sts = [x["status"] for x in rs]
         st = agg_any(sts)
         extra = {}
@@ -510,8 +511,14 @@ def main():
     except Exception as e:
         release_note = f"發布日期查詢失敗：{e}"
     rows, failed = [], {}
-    for k, f in (("1", sig1), ("2", sig2), ("3", sig3), ("4", sig4), ("5", sig5), ("6", sig6), ("7", sig7), ("8", sig8), ("9", sig9)):
-        print("running", f.__name__, flush=True)
+    # v2（2026-11-10 依 COBB 指正）：第 2、5、6、9 項改用 signals_v2；v1 函式保留供對照
+    s2 = lambda: v2.sig2_v2(row, completed_daily, P)
+    s5 = lambda: v2.sig5_v2(row, completed_daily, P)
+    s6 = lambda: v2.sig6_v2(row, P)
+    s8 = lambda: v2.sig8_v2(row, completed_daily, weekly, yf_src, P)
+    s9 = lambda: v2.sig9_v2(row, completed_daily, MKT, yf_src, P)
+    for k, f in (("1", sig1), ("2", s2), ("3", sig3), ("4", sig4), ("5", s5), ("6", s6), ("7", sig7), ("8", s8), ("9", s9)):
+        print("running signal", k, flush=True)
         try: rows += f()
         except Exception as e:
             traceback.print_exc(); failed[k] = e

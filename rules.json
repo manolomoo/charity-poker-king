@@ -1,10 +1,26 @@
 {
-  "version": "v1",
+  "version": "v2-draft",
   "created": "2026-11-10",
   "changelog": [
-    {"date": "2026-11-10", "version": "v1", "change": "首次建立", "reason": "初版"}
+    {
+      "date": "2026-11-10",
+      "version": "v1",
+      "change": "首次建立",
+      "reason": "初版"
+    },
+    {
+      "date": "2026-11-10",
+      "version": "v2",
+      "change": "第2項改為『回檔區間內曾<25即觸發』；第5項改用VIX/VXN絕對值；第6項改用大盤融資維持率（上市，不含ETF，自算）且觸發<130%；第9項改用道氏理論（日收盤波段）；第8項改用 COBB 的 HMV 週量 Z-Score（200 週）",
+      "reason": "依 COBB 指正"
+    }
   ],
-  "status_legend": {"🔴": "已觸發", "🟡": "接近門檻（各項另定『接近』定義）", "⚪": "未觸發", "❔": "資料不足或無法確認"},
+  "status_legend": {
+    "🔴": "已觸發",
+    "🟡": "接近門檻（各項另定『接近』定義）",
+    "⚪": "未觸發",
+    "❔": "資料不足或無法確認"
+  },
   "aggregation_definitions": {
     "any": "任一符合：任一標的🔴→整項🔴；否則任一🟡→🟡；否則有❔→❔；否則⚪",
     "all": "全部符合：全部🔴→🔴；其餘已知皆🔴但有❔→❔；已知皆🔴/🟡→🟡；否則⚪"
@@ -13,113 +29,210 @@
     "1": {
       "name": "指數 ETF 資金外流",
       "origin": "自訂規則／尚未回測（Cobb 原表未提供可計算門檻）",
-      "targets": ["SPY", "QQQ", "SOXX", "SMH"],
+      "targets": [
+        "SPY",
+        "QQQ",
+        "SOXX",
+        "SMH"
+      ],
       "formula": "每日淨流量 F_t = (流通股數_t − 流通股數_{t−1}) × NAV_t；近一週 = 最近 5 個有資料交易日加總；近一個月 = 最近 21 個有資料交易日加總；以期初資產規模（期初流通股數×NAV）標準化為 %。資產規模變動僅作背景，不當作資金流。",
       "data_source": "發行商官方每日 NAV／流通股數（SPY: SSGA navhist；QQQ: Invesco；SOXX: iShares；SMH: VanEck）",
       "trigger": "近一個月淨流量 ≤ −2.0% AUM，或近一週 ≤ −1.0% AUM",
       "near": "近一個月介於 −1.0% 與 −2.0%（不含），或近一週介於 −0.5% 與 −1.0%（不含）",
-      "params": {"m_trigger": -2.0, "w_trigger": -1.0, "m_near": -1.0, "w_near": -0.5, "week_days": 5, "month_days": 21},
+      "params": {
+        "m_trigger": -2.0,
+        "w_trigger": -1.0,
+        "m_near": -1.0,
+        "w_near": -0.5,
+        "week_days": 5,
+        "month_days": 21
+      },
       "aggregation": "any"
     },
     "2": {
       "name": "CNN 恐懼貪婪指數",
-      "origin": "觸發門檻『低於 25』為使用者／Cobb 檢查表指定；『接近』定義為自訂規則",
-      "targets": ["CNN Fear & Greed (美股)"],
-      "formula": "直接讀取 CNN Fear & Greed 最新分數（0–100）。不使用加密貨幣恐懼貪婪指數。",
-      "trigger": "分數 < 25",
-      "near": "25 ≤ 分數 < 30",
-      "params": {"trigger": 25, "near": 30},
+      "origin": "『<25』為 Cobb 檢查表；『在對的位置觸發就算觸發』為 COBB 指正（2026-11-10）。回檔區間的具體定義（NDX 52 週收盤新高起算、當天回落≥10%）與『接近』為自訂規則／尚未回測",
+      "targets": [
+        "CNN Fear & Greed (美股)"
+      ],
+      "formula": "CNN Fear & Greed 每日收盤值（取每日最後一筆，只用已收盤日）。回檔區間＝NDX 最近一次 252 日收盤新高的隔天起，直到 NDX 再創 252 日收盤新高為止。只計入當天 NDX 相對 252 日最高收盤回落 ≥10% 的日子（『對的位置』）。",
+      "trigger": "回檔區間內、符合位置的任一已收盤日分數 < 25（觸發後維持到回檔區間結束）",
+      "near": "未觸發，但回檔區間內符合位置的任一日 < 30",
+      "params": {
+        "trigger": 25,
+        "near": 30,
+        "dd_min": -10
+      },
       "aggregation": "single"
     },
     "3": {
       "name": "週線 KDJ 的 J 值 ≤ 0",
       "origin": "J ≤ 0 為 Cobb 檢查表條件；參數、算法與『接近』定義為自訂規則／尚未回測",
-      "targets": ["台灣加權指數 ^TWII", "NDX ^NDX", "SOX ^SOX"],
+      "targets": [
+        "台灣加權指數 ^TWII",
+        "NDX ^NDX",
+        "SOX ^SOX"
+      ],
       "formula": "週K由日線重組（週五為週末，只用已完成週）。參數 (n=9, m1=3, m2=3)。RSV_t = (C_t − L9_t)/(H9_t − L9_t)×100（H9/L9 為最近 9 週最高/最低）；K_t = (2/3)K_{t−1} + (1/3)RSV_t；D_t = (2/3)D_{t−1} + (1/3)K_t；J_t = 3K_t − 2D_t；K、D 初值 = 50，自 2010 年起遞推以消除初值影響。",
       "trigger": "最近一根已完成週線 J ≤ 0",
       "near": "0 < J ≤ 10",
-      "params": {"n": 9, "m1": 3, "m2": 3, "trigger": 0, "near": 10, "seed_start": "2010-01-01"},
+      "params": {
+        "n": 9,
+        "m1": 3,
+        "m2": 3,
+        "trigger": 0,
+        "near": 10,
+        "seed_start": "2010-01-01"
+      },
       "aggregation": "any（並分台股、美股各自列示）"
     },
     "4": {
       "name": "估值進入便宜區間",
       "origin": "自訂規則／尚未回測",
-      "targets": ["NDX", "SOX"],
+      "targets": [
+        "NDX",
+        "SOX"
+      ],
       "formula": "固定資料商：History of Market（historyofmarket.com，資料源為終端機 12 個月 blended-forward 共識本益比，週頻，以及同口徑每日自算線 forwardOwn）。口徑固定為『未來 12 個月（NTM, FY1/FY2 依時間加權）預估本益比』，不使用歷史本益比或單一明年度本益比。歷史分位 = 最新值在『最近 10 年週頻序列』中的百分位（也附 5 年分位）。預估 EPS 趨勢 = 指數收盤 ÷ NTM 本益比 推得之隱含 NTM EPS，比較約 1 個月（20 交易日）與約 3 個月（63 交易日或資料起點）變化。",
       "trigger": "NTM 本益比 10 年分位 ≤ 20%",
       "near": "20% < 10 年分位 ≤ 30%",
       "eps_flag": "隱含 NTM EPS 3 個月變化 < −3% 時加註『EPS 下修中，可能為假便宜』，但不改變燈號",
-      "params": {"pct_trigger": 20, "pct_near": 30, "window_years": 10, "eps_down_flag": -3.0},
+      "params": {
+        "pct_trigger": 20,
+        "pct_near": 30,
+        "window_years": 10,
+        "eps_down_flag": -3.0
+      },
       "aggregation": "any"
     },
     "5": {
-      "name": "VIX／VXN 升到高檔",
-      "origin": "自訂規則／尚未回測",
-      "targets": ["VIX", "VXN"],
-      "formula": "Cboe 官方每日收盤（FRED VIXCLS/VXNCLS 交叉核對）。各自計算最新收盤在『自身最近 10 年日收盤』的百分位；兩者各自門檻，不共用點位。",
-      "trigger": "收盤 ≥ 自身 10 年第 90 百分位",
-      "near": "自身第 80 百分位 ≤ 收盤 < 第 90 百分位",
-      "params": {"pct_trigger": 90, "pct_near": 80, "window_years": 10},
+      "name": "VIX／VXN 太高",
+      "origin": "『看絕對值、不看百分位』為 COBB 指正（2026-11-10）；門檻數字（VIX 30／VXN 40，接近 25／35）為自訂規則／尚未回測，參考市場常見分界（VIX>30 恐慌、>40 極端；VXN 約 40 常見於那指波段低點），待 COBB 確認",
+      "targets": [
+        "VIX",
+        "VXN"
+      ],
+      "formula": "Cboe 官方每日收盤（FRED 交叉核對）。只看收盤。回檔區間與第2項相同（NDX 52 週收盤新高起、當天回落≥10%）。10 年分位只列示、不參與判定。",
+      "trigger": "回檔區間內任一收盤 VIX ≥ 30 或 VXN ≥ 40（各自判定）",
+      "near": "VIX ≥ 25 或 VXN ≥ 35（未達觸發）",
+      "params": {
+        "vix_trigger": 30,
+        "vix_near": 25,
+        "vxn_trigger": 40,
+        "vxn_near": 35,
+        "dd_min": -10
+      },
       "aggregation": "any"
     },
     "6": {
-      "name": "台股融資維持率偏低",
-      "origin": "自訂規則／尚未回測（不採用個人帳戶 130% 追繳門檻作為市場訊號）",
-      "targets": ["全市場信用交易整戶擔保維持率（證交所官方，上市＋上櫃、融資＋融券合併）", "資料商推估融資維持率（僅參考，不納入判定）"],
-      "formula": "判定只用證交所臺股儀表板 BFIJ3U『全市場擔保維持率』。參考點：166% 為官方原始擔保維持率（證交所 2026-07-28 新聞稿）。資料商推估之『大盤融資維持率』口徑不同（只算融資、算法自訂），只另欄列示。",
-      "trigger": "官方全市場擔保維持率 < 160%",
-      "near": "160% ≤ 維持率 < 166%",
-      "params": {"trigger": 160, "near": 166},
-      "aggregation": "single（只依官方數據）"
+      "name": "台股融資維持率太低（不含ETF）",
+      "origin": "『看不含 ETF 的大盤融資維持率』與『<130%』為 COBB（指正 2026-11-10、檢查表 2026-11-07）；計算口徑細節與『接近』為自訂規則／尚未回測",
+      "targets": [
+        "大盤融資維持率（上市，不含ETF，自算）— 判定",
+        "上市櫃不含ETF（參考）",
+        "上市含ETF（參考）",
+        "窄口徑（參考）",
+        "證交所全市場整戶擔保維持率（參考）"
+      ],
+      "formula": "維持率 = Σ(融資餘額張數 × 1000 × 當日收盤價) ÷ 證交所公布之上市融資金額餘額 × 100%。判定用『窄口徑』：分子只計上市本國普通股（4 位數字代號，排除 ETF/ETN/受益憑證/特別股，另排除 -KY/DR 與當日停資 X），與財經M平方 2026-07 停更前數字（第三方逆向推估）及論壇流傳的『扣除ETF』數字最接近。另列『只排 ETF』口徑（財經M平方公開說明的算法）。分母沿用官方總額（含 ETF 借款；官方不公布個股融資金額）。資料：證交所 MI_MARGN（selectType=ALL）＋ MI_INDEX（ALLBUT0999）；上櫃參考值用櫃買 margin/balance ＋ afterTrading/otc。",
+      "trigger": "< 130%",
+      "near": "130% ≤ 維持率 < 140%",
+      "params": {
+        "trigger": 130,
+        "near": 140,
+        "lookback_days": 20,
+        "primary_variant": "narrow"
+      },
+      "aggregation": "single（只依『上市，不含ETF，自算』）"
     },
     "7": {
       "name": "台股融資餘額降至低檔",
       "origin": "自訂規則／尚未回測",
-      "targets": ["上市融資餘額", "上櫃融資餘額", "上市＋上櫃合計"],
+      "targets": [
+        "上市融資餘額",
+        "上櫃融資餘額",
+        "上市＋上櫃合計"
+      ],
       "formula": "融資金額（仟元）：上市取證交所 MI_MARGN／MI_MARGN_TREND，上櫃取櫃買中心融資融券餘額彙總。回落幅度 = 最新 / 最近 120 個交易日最高 − 1。融資占市值比重 = 上市融資金額 ÷ 上市總市值（證交所 MI_MARGN_TREND marketValue）；比較基準 = 證交所 MI_MARGN_HISTORY 最近 5 個完整年度年底比重之中位數。",
       "trigger": "合計融資餘額較 120 日高點回落 ≥ 20%，且 上市融資占市值比重 ≤ 近 5 年年底中位數",
       "near": "回落 15%–20% 且比重條件成立；或回落 ≥ 20% 但比重條件不成立",
-      "params": {"lookback_days": 120, "dd_trigger": -20, "dd_near": -15, "ratio_years": 5},
+      "params": {
+        "lookback_days": 120,
+        "dd_trigger": -20,
+        "dd_near": -15,
+        "ratio_years": 5
+      },
       "aggregation": "以『上市＋上櫃合計』判定，上市、上櫃分別列示供參考"
     },
     "8": {
-      "name": "槓桿 ETF 爆量",
-      "origin": "自訂規則／尚未回測",
-      "targets": ["QLD", "TQQQ", "SOXL"],
-      "formula": "成交量用拆股調整後股數（Yahoo/yfinance）。日量倍數 = 當日量 ÷ 前 20 個完整交易日平均（不含當日）；取最近 5 個完整交易日中最大者。週量倍數 = 最近一個完整交易週量 ÷ 前 20 個完整交易週平均。若計算視窗內有拆股／合股，標註並以調整後股數為準。",
-      "trigger": "近 5 日最大日量倍數 ≥ 2.0，或 週量倍數 ≥ 1.5",
-      "near": "日量倍數 1.5–2.0，或 週量倍數 1.25–1.5",
-      "params": {"d_trigger": 2.0, "d_near": 1.5, "w_trigger": 1.5, "w_near": 1.25, "avg_n": 20, "recent_days": 5},
+      "name": "QLD／TQQQ／SOXL 週爆量（HMV 週量 Z-Score）",
+      "origin": "公式與分區（Extra High ≥4σ、High ≥2.5σ、Elevated ≥1σ、Low ≤−0.5σ，長度 200 週）來自 COBB 提供的 TradingView 指標「HMV – 歷史均量標準差柱」；燈號對應（🔴=Extra High、🟡=High）是本表提案，待 COBB 確認",
+      "targets": [
+        "QLD",
+        "TQQQ",
+        "SOXL"
+      ],
+      "formula": "週線（只用已完成週）成交量 V（Yahoo 拆股調整後股數）。stdbar = (V − SMA(V,200)) ÷ stdev(V,200)，stdev 為母體標準差（同 TradingView ta.stdev），SMA/stdev 含當週。不足 200 根已完成週時標❔。200 週視窗內有拆／合股時加註。",
+      "trigger": "最新已完成週 stdbar ≥ 4σ（Extra High）",
+      "near": "2.5σ ≤ stdbar < 4σ（High）",
+      "params": {
+        "length": 200,
+        "extra_high": 4.0,
+        "high": 2.5,
+        "elevated": 1.0,
+        "low": -0.5
+      },
       "aggregation": "any"
     },
     "9": {
-      "name": "底底高＋高點更高",
-      "origin": "自訂規則／尚未回測",
-      "targets": ["台灣加權指數", "NDX", "SOX"],
-      "formula": "使用已完成週線。波段低點：該週最低價低於前後各 2 週最低價；波段高點：該週最高價高於前後各 2 週最高價；兩者皆須在其後 2 根已完成週出現後才算『確認』（確認日 = 該週 + 2 週），不得用尚未出現的價格。前提：前一個確認低點 L1 出現時，距 52 週最高收盤回落 ≥ 10%（確保是跌勢後的回穩）。條件：最近確認低點 L2 > L1（底底高），且 L2 之後任一已完成週收盤 > L1 與 L2 之間的確認波段高點 H（高點更高）。若最近完成週最低價 < L2，結構失效。",
-      "trigger": "L2 > L1 且 L2 後週收盤突破 H",
-      "near": "L2 > L1 已確認，但尚未突破 H",
-      "params": {"pivot_n": 2, "min_drawdown": -10},
+      "name": "底底高＋頭頭高（道氏理論）",
+      "origin": "『用道氏理論』為 COBB 指正（2026-11-10）；收盤波段的反轉門檻、52 週回落前提與日線選擇為自訂規則／尚未回測",
+      "targets": [
+        "台灣加權指數",
+        "NDX",
+        "SOX"
+      ],
+      "formula": "道氏理論、只用已收盤日收盤價。波段點以 zigzag 確認：自前一極值反向收盤 ≥ 門檻（台股 5%、NDX 5%、SOX 8%）時，才確認該極值為波段高／低點（確認前不使用，無前視）。前一確認低點 L1 須距 52 週最高收盤回落 ≥10%（確認是跌勢）。底底高：下一確認低點 L2 > L1；頭頭高：L2 確認後任一收盤 > L1 與 L2 之間的反彈高點 H → 道氏多頭確認。L2 之後若收盤跌破 L2 → 結構失效。",
+      "trigger": "L2 > L1 且收盤突破 H（道氏多頭確認）",
+      "near": "L2 > L1 已確認，尚未收盤突破 H",
+      "params": {
+        "reversal_pct": {
+          "台灣加權指數": 5,
+          "NDX": 5,
+          "SOX": 8
+        },
+        "min_drawdown": -10
+      },
       "aggregation": "分市場列示；整項採 any（但台股與美股結論分開敘述）"
     },
     "10": {
       "name": "台灣領先指標連三個月低於 100",
       "origin": "條件為 Cobb 檢查表；『接近』定義為自訂規則",
-      "targets": ["國發會 領先指標不含趨勢指數"],
+      "targets": [
+        "國發會 領先指標不含趨勢指數"
+      ],
       "formula": "取國發會『景氣指標及燈號』資料集（data.gov.tw 6099）最新三個月『領先指標不含趨勢指數』，三個月數值皆 < 100 才觸發（不是連跌三個月）。",
       "trigger": "最近連續 3 個月皆 < 100",
       "near": "最近 1–2 個月 < 100（未滿 3 個月）",
-      "params": {"months": 3, "level": 100},
+      "params": {
+        "months": 3,
+        "level": 100
+      },
       "aggregation": "single"
     },
     "11": {
       "name": "台灣景氣藍燈",
       "origin": "藍燈定義為國發會官方（9–16 分）；『接近』定義為自訂規則",
-      "targets": ["國發會 景氣對策信號"],
+      "targets": [
+        "國發會 景氣對策信號"
+      ],
       "formula": "讀取最新景氣對策信號綜合判斷分數與燈號。",
       "trigger": "藍燈（9–16 分）",
       "near": "黃藍燈（17–22 分）",
-      "params": {"blue_max": 16, "yb_max": 22},
+      "params": {
+        "blue_max": 16,
+        "yb_max": 22
+      },
       "aggregation": "single"
     }
   }
