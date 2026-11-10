@@ -2,10 +2,8 @@ name: 更新資料並部署網站
 
 on:
   schedule:
-    # 台灣時間（UTC+8）平日 08:30 → UTC 00:30（同一天，台灣比 UTC 快 8 小時）；cron 用 UTC。
+    # 一天一次：台灣時間（UTC+8）平日 08:30 → UTC 00:30（同一天，台灣比 UTC 快 8 小時）；cron 用 UTC。
     - cron: "30 0 * * 1-5"
-    # 台灣時間（UTC+8）平日 22:00 → UTC 14:00（當天）。
-    - cron: "0 14 * * 1-5"
   workflow_dispatch: {}
   push:
     branches: [main]

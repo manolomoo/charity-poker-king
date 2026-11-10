@@ -71,9 +71,8 @@ python3 -m http.server 8000 --directory _site
 
 `.github/workflows/update-and-deploy.yml` 會在以下時機執行：
 
-- **排程**：平日（週一至週五）台灣時間約 08:30 與約 22:00。台灣時間為 UTC+8，換算成 cron 使用的 UTC：
+- **排程**：平日（週一至週五）每天一次，台灣時間約 08:30。台灣時間為 UTC+8，換算成 cron 使用的 UTC：
   - 08:30 台北 → `30 0 * * 1-5`（UTC 00:30，與台北同一天，因為台北比 UTC 快 8 小時）
-  - 22:00 台北 → `0 14 * * 1-5`（UTC 14:00）
 - **手動觸發**：`workflow_dispatch`，可在 GitHub Actions 頁面手動執行。
 - **push 到 `main`**：只重新部署網站，**不會**重跑追蹤器（避免每次改網頁都重新抓資料）。
 
