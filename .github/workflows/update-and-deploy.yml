@@ -1,0 +1,95 @@
+name: 更新資料並部署網站
+
+on:
+  schedule:
+    # 台灣時間（UTC+8）平日 08:30 → UTC 00:30（同一天，台灣比 UTC 快 8 小時）；cron 用 UTC。
+    - cron: "30 0 * * 1-5"
+    # 台灣時間（UTC+8）平日 22:00 → UTC 14:00（當天）。
+    - cron: "0 14 * * 1-5"
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-and-deploy
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: 更新訊號資料
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 設定 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
+
+      - name: 安裝相依套件
+        run: pip install -r requirements.txt
+
+      - name: 執行追蹤器（個別來源失敗不中斷流程，run.py 會沿用上次數值並標記資料過期）
+        env:
+          TZ: Asia/Taipei
+          PYTHON: python
+        run: ./run.sh || echo "::warning::run.sh 執行過程出現錯誤，但流程繼續（個別來源失敗已由 run.py 標記為資料過期）"
+
+      - name: 檢查是否有資料變更
+        id: diff
+        run: |
+          git add -A data reports
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit 並推送
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          TZ: Asia/Taipei
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(data): 自動更新訊號 $(date '+%Y-%m-%d %H:%M (台北時間 UTC+8)')"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+  deploy:
+    name: 部署到 GitHub Pages
+    needs: update
+    if: always() && (needs.update.result == 'success' || needs.update.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout（main 最新 commit）
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: 組出 _site
+        run: ./scripts/build_site.sh _site
+
+      - name: 設定 GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上傳 Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: 部署
+        id: deployment
+        uses: actions/deploy-pages@v4

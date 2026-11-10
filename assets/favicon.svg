@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="撲克牌與燈號圖示">
+  <rect x="4" y="6" width="38" height="52" rx="6" fill="#faf4ec" stroke="#2b2420" stroke-width="3"/>
+  <text x="12" y="24" font-family="-apple-system,Arial,sans-serif" font-size="16" font-weight="700" fill="#d64545">A</text>
+  <path d="M15 34 L19 42 L23 34 L19 29 Z" fill="#d64545"/>
+  <circle cx="51" cy="18" r="9" fill="#d64545"/>
+  <circle cx="51" cy="36" r="9" fill="#e0a429"/>
+  <circle cx="51" cy="54" r="9" fill="#b9b1a6"/>
+</svg>
