@@ -526,7 +526,7 @@ def main():
         for k, v in summ.items():
             o = prev["summary"].get(k, {}).get("status")
             if o and o != v["status"]: changes.append(f"第{k}項 {v['name']}：{o} → {v['status']}")
-    out = dict(schema="bottom-signals/v1", site="慈善撲克王大賽", rules_version=RULES["version"], run_date=RUN_DATE,
+    out = dict(schema="bottom-signals/v1", site=SITE_NAME, rules_version=RULES["version"], run_date=RUN_DATE,
                queried_at=RUN_TS, previous_run=prev.get("queried_at") if has_prev else None,
                changes_vs_previous=(changes or "與上次相比，整項燈號沒有變化") if has_prev else "首次建立，無上次紀錄",
                stale_rows=stale, summary=summ, rows=rows)
