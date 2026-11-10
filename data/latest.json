@@ -1,17 +1,19 @@
 {
   "schema": "bottom-signals/v1",
-  "site": "慈善撲克王大賽",
+  "site": "COBB我大哥",
   "rules_version": "v1",
   "run_date": "2026-11-10",
-  "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
-  "previous_run": "2026-11-10 12:18 (台北時間 UTC+8)",
-  "changes_vs_previous": "與上次相比，整項燈號沒有變化",
+  "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
+  "previous_run": "2026-11-10 13:48 (台北時間 UTC+8)",
+  "changes_vs_previous": [
+    "第1項 指數 ETF 資金外流：❔ → 🟡"
+  ],
   "stale_rows": [],
   "summary": {
     "1": {
       "name": "指數 ETF 資金外流",
-      "status": "❔",
-      "status_label": "資料不足",
+      "status": "🟡",
+      "status_label": "接近門檻",
       "aggregation": "any",
       "by_market": null
     },
@@ -96,24 +98,24 @@
     {
       "signal": "1",
       "target": "SPY",
-      "value": "近1週 +2.59B 美元（+0.32% AUM）；近1月 +1.51B（+0.19% AUM）；AUM 777.9B；流通股數 1057.8M",
+      "value": "近1週 -6.82B 美元（-0.85% AUM）；近1月 -2.31B（-0.28% AUM）；AUM 791.9B；流通股數 1052.1M",
       "threshold": "近一個月淨流量 ≤ −2.0% AUM，或近一週 ≤ −1.0% AUM",
-      "status": "⚪",
-      "status_label": "未觸發",
-      "data_date": "2026-11-06",
+      "status": "🟡",
+      "status_label": "接近門檻",
+      "data_date": "2026-11-09",
       "sources": [
         "https://www.ssga.com/library-content/products/fund-data/etfs/us/navhist-us-en-spy.xlsx"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "以官方每日流通股數變動×NAV 推算；SSGA 檔案約延遲 1 個交易日。",
       "extra": {
-        "week_flow_usd": 2585382334.7999988,
-        "week_pct": 0.3244441231185041,
-        "month_flow_usd": 1514685829.6999984,
-        "month_pct": 0.18535065065602385,
-        "aum": 777931938923.62,
-        "shares": 1057782116.0,
-        "aum_change_1m_pct": -4.80521556463378
+        "week_flow_usd": -6816918683.900001,
+        "week_pct": -0.8542989048857355,
+        "month_flow_usd": -2308497091.6000013,
+        "month_pct": -0.2809489355067231,
+        "aum": 791876861370.68,
+        "shares": 1052082116.0,
+        "aum_change_1m_pct": -3.6269259060229264
       }
     },
     {
@@ -127,7 +129,7 @@
       "sources": [
         "https://www.ishares.com/us/products/239705/ishares-semiconductor-etf"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "iShares 官網只公開當日流通股數，歷史下載檔以程式讀取失敗；已開始每日存快照（data/etf_shares_snapshots.csv），累積 22 個交易日後即可依規則計算。"
     },
     {
@@ -141,7 +143,7 @@
       "sources": [
         "https://www.invesco.com/qqq-etf/en/about.html"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "Invesco 資料 API 拒絕程式存取（HTTP 406），未取得每日流通股數；不以資產規模縮水代替資金外流。"
     },
     {
@@ -155,7 +157,7 @@
       "sources": [
         "https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "VanEck 官網需 Cookie／瀏覽器，程式讀取被導向錯誤頁；未取得每日流通股數。"
     },
     {
@@ -170,7 +172,7 @@
         "https://edition.cnn.com/markets/fear-and-greed",
         "https://production.dataviz.cnn.io/index/fearandgreed/graphdata/2026-09-11"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "CNN 未公開 API，結構可能變動。",
       "extra": {
         "score": 31.6857142857143,
@@ -233,7 +235,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ETWII/history"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "週K由 Yahoo 日線重組，KDJ(9,3,3)。",
       "extra": {
         "J": -6.020547425658364,
@@ -275,7 +277,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ENDX/history"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "週K由 Yahoo 日線重組，KDJ(9,3,3)。",
       "extra": {
         "J": -14.308263820291018,
@@ -317,7 +319,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ESOX/history"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "週K由 Yahoo 日線重組，KDJ(9,3,3)。",
       "extra": {
         "J": -9.416338061117827,
@@ -360,7 +362,7 @@
         "https://historyofmarket.com/nasdaq/ndx-forward-pe/",
         "https://historyofmarket.com/api/ndx/forward-pe.json"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "單一資料商 History of Market；歷史分位以終端機週頻序列（2016-11–2026-08-05，509 筆）計算，最新值為同口徑自算日線 forwardOwn（官方說明與終端機序列差距 <3%）。EPS 由指數收盤÷本益比推得，非資料商直接公布。",
       "extra": {
         "pe": 19.01,
@@ -384,7 +386,7 @@
         "https://historyofmarket.com/zh-tw/semi/semi-fwdpe/",
         "https://historyofmarket.com/api/sectors/forward-pe.json"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "單一資料商 History of Market；歷史分位以終端機週頻序列（2016-11–2026-08-05，509 筆）計算，最新值為同口徑自算日線 forwardOwn（官方說明與終端機序列差距 <3%）。EPS 由指數收盤÷本益比推得，非資料商直接公布。",
       "extra": {
         "pe": 14.14,
@@ -408,7 +410,7 @@
         "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
         "https://fred.stlouisfed.org/series/VIXCLS"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "FRED 讀取逾時／失敗，本次未交叉核對（以 Cboe 官方檔為準）",
       "extra": {
         "close": 19.92,
@@ -434,7 +436,7 @@
         "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXN_History.csv",
         "https://fred.stlouisfed.org/series/VXNCLS"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "FRED 讀取逾時／失敗，本次未交叉核對（以 Cboe 官方檔為準）",
       "extra": {
         "close": 28.97,
@@ -460,7 +462,7 @@
         "https://www.twse.com.tw/dashboard/zh/credit/margin.html",
         "https://www.twse.com.tw/rwd/zh/marginTrading/BFIJ3U_TREND?response=json&days=60"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "上市＋上櫃、融資＋融券合併計算；官方資料自 2026-08-03 起才有，歷史很短。",
       "extra": {
         "keepRate": 168.44,
@@ -524,7 +526,7 @@
       "sources": [
         "https://www.macromicro.me/charts/53117/taiwan-taiex-maintenance-margin"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "財經M平方等資料商頁面有 Cloudflare 驗證／付費牆，程式無法讀取；口徑（只算融資、自行估算）與官方整戶維持率不同，不可混用。"
     },
     {
@@ -541,7 +543,7 @@
         "https://www.tpex.org.tw/zh-tw/mainboard/trading/margin-trading/transactions.html",
         "https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN_HISTORY?response=json"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "上櫃日資料涵蓋 120/120 日；比重僅計上市（櫃買總市值未納入）。",
       "extra": {
         "total_100m": 7100.69539,
@@ -564,7 +566,7 @@
         "https://www.twse.com.tw/zh/trading/margin/mi-margn.html",
         "https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN_TREND?response=json&days=60"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "分項燈號僅供參考，不參與彙總。"
     },
     {
@@ -578,7 +580,7 @@
       "sources": [
         "https://www.tpex.org.tw/zh-tw/mainboard/trading/margin-trading/transactions.html"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "分項燈號僅供參考，不參與彙總。"
     },
     {
@@ -592,7 +594,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/QLD/history"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "量為拆股調整後股數。視窗內無拆／合股（最近一次 2025-11-20 2:1）。",
       "extra": {
         "d_last": 1.1310082642586257,
@@ -612,7 +614,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/TQQQ/history"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "量為拆股調整後股數。視窗內無拆／合股（最近一次 2025-11-20 2:1）。",
       "extra": {
         "d_last": 1.1802576744341204,
@@ -632,7 +634,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/SOXL/history"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "量為拆股調整後股數。視窗內無拆／合股（最近一次 2021-03-02 15:1）。",
       "extra": {
         "d_last": 1.7266142020505053,
@@ -652,7 +654,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ETWII/history"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "週線、左右各 2 週確認的波段點；最近 2 週的高低點尚未確認、不使用。",
       "extra": {
         "L1": 44210.30859375,
@@ -676,7 +678,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ENDX/history"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "週線、左右各 2 週確認的波段點；最近 2 週的高低點尚未確認、不使用。",
       "extra": {
         "L1": 28875.9609375,
@@ -700,7 +702,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ESOX/history"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "週線、左右各 2 週確認的波段點；最近 2 週的高低點尚未確認、不使用。",
       "extra": {
         "L1": 10445.4404296875,
@@ -726,7 +728,7 @@
         "https://index.ndc.gov.tw/n/zh_tw/data/eco",
         "https://ws.ndc.gov.tw/Download.ashx?u=LzAwMS9hZG1pbmlzdHJhdG9yLzEwL3JlbGZpbGUvNTc4MS82MzkyL2VhMjM1YmQ5LWQwNTItNGE2OS1hYmZjLWQ1Yzc4NWQzZDBlMi56aXA%3d&n=5pmv5rCj5oyH5qiZ5Y%2bK54eI6JmfLnppcA%3d%3d&icon=.zip"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "資料檔更新時間 2026-10-29 11:06；首次建立，尚無前一版本可比對修正（每月發布會回溯修正歷史值）",
       "extra": {
         "values": [
@@ -772,7 +774,7 @@
         "https://www.ndc.gov.tw/nc_332_40618",
         "https://ws.ndc.gov.tw/Download.ashx?u=LzAwMS9hZG1pbmlzdHJhdG9yLzEwL3JlbGZpbGUvNTc4MS82MzkyL2VhMjM1YmQ5LWQwNTItNGE2OS1hYmZjLWQ1Yzc4NWQzZDBlMi56aXA%3d&n=5pmv5rCj5oyH5qiZ5Y%2bK54eI6JmfLnppcA%3d%3d&icon=.zip"
       ],
-      "queried_at": "2026-11-10 13:48 (台北時間 UTC+8)",
+      "queried_at": "2026-11-10 15:58 (台北時間 UTC+8)",
       "note": "歷史修正：國發會每月回溯修正；本表以最新一版資料檔為準",
       "extra": {
         "series": [

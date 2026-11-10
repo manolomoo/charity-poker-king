@@ -1,6 +1,6 @@
 | 訊號 | 市場／標的 | 最新數值 | 判定門檻 | 狀態 | 資料日期 | 來源 |
 |---|---|---|---|---|---|---|
-| 1. 指數 ETF 資金外流 | SPY | 近1週 +2.59B 美元（+0.32% AUM）；近1月 +1.51B（+0.19% AUM）；AUM 777.9B；流通股數 1057.8M | 近一個月淨流量 ≤ −2.0% AUM，或近一週 ≤ −1.0% AUM | ⚪ 未觸發 | 2026-11-06 | [1](https://www.ssga.com/library-content/products/fund-data/etfs/us/navhist-us-en-spy.xlsx) |
+| 1. 指數 ETF 資金外流 | SPY | 近1週 -6.82B 美元（-0.85% AUM）；近1月 -2.31B（-0.28% AUM）；AUM 791.9B；流通股數 1052.1M | 近一個月淨流量 ≤ −2.0% AUM，或近一週 ≤ −1.0% AUM | 🟡 接近門檻 | 2026-11-09 | [1](https://www.ssga.com/library-content/products/fund-data/etfs/us/navhist-us-en-spy.xlsx) |
 | 1. 指數 ETF 資金外流 | SOXX | 流通股數 255.75M、AUM 37.53B（Nov 09, 2026）；近1週／近1月淨流量：無歷史資料（iShares 官網只公開當日流通股數，歷史下載檔以程式讀取失敗；已開始每日存快照（data/etf_shares_snapshots.csv），累積 22 個交易日後即可依規則計算。） | 近一個月淨流量 ≤ −2.0% AUM，或近一週 ≤ −1.0% AUM | ❔ 資料不足 | Nov 09, 2026 | [1](https://www.ishares.com/us/products/239705/ishares-semiconductor-etf) |
 | 1. 指數 ETF 資金外流 | QQQ | —（Invesco 資料 API 拒絕程式存取（HTTP 406），未取得每日流通股數；不以資產規模縮水代替資金外流。） | 近一個月淨流量 ≤ −2.0% AUM，或近一週 ≤ −1.0% AUM | ❔ 資料不足 | — | [1](https://www.invesco.com/qqq-etf/en/about.html) |
 | 1. 指數 ETF 資金外流 | SMH | —（VanEck 官網需 Cookie／瀏覽器，程式讀取被導向錯誤頁；未取得每日流通股數。） | 近一個月淨流量 ≤ −2.0% AUM，或近一週 ≤ −1.0% AUM | ❔ 資料不足 | — | [1](https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/) |
@@ -30,7 +30,7 @@
 
 | 訊號 | 整項狀態 | 彙總方式 | 分市場 |
 |---|---|---|---|
-| 1. 指數 ETF 資金外流 | ❔ 資料不足 | any | — |
+| 1. 指數 ETF 資金外流 | 🟡 接近門檻 | any | — |
 | 2. CNN 恐懼貪婪指數 | ⚪ 未觸發 | single | — |
 | 3. 週線 KDJ 的 J 值 ≤ 0 | 🔴 已觸發 | any（並分台股、美股各自列示） | 台股 🔴、美股 🔴 |
 | 4. 估值進入便宜區間 | 🔴 已觸發 | any | — |
