@@ -190,23 +190,32 @@ def dow_pattern(c, rev, min_dd):
         return "uptrend_pullback", f"上升趨勢中回檔：底底高＋頭頭高已成立（L2 {L2[2]:,.0f}＞L1 {L1[2]:,.0f}，高點 {lp[2]:,.0f}＞{H[2]:,.0f}），目前回檔中、守 {L2[2]:,.0f}", det
     return "pullback", f"自高點 {lp[2]:,.0f}（{D(lp[1])}）回檔中，尚未破前低 {L2[2]:,.0f}", det
 
+def sig9_daily_light(code):
+    """日K 機械燈號（自訂規則／尚未回測）。週K 不參與。"""
+    if code == "confirmed": return RED   # 底底高＋頭頭高確認
+    if code == "hl_pending": return YEL  # 底底高（頭頭高待確認）
+    return WHT
+
 def sig9_v2(row, completed_daily, weekly, MKT, yf_src, P):
     p = P("9"); rows = []
+    note = ("COBB：看 4小時／日K／週K 哪個高低點軌跡最清楚（例如 2022 明顯看週K）；本站預設用日K 判燈，週K 僅供參考。4 小時K 暫無穩定免費資料，未納入。"
+            "燈號門檻為自訂規則／尚未回測：🔴＝日K『底底高＋頭頭高確認』；🟡＝僅日K『底底高（頭頭高待確認）』；其餘日K 型態（含破前低後反彈）為⚪。"
+            "只用收盤；波段點要反向達門檻才確認，確認前不使用（無前視）。")
     for tk, (name, tz, hm) in MKT.items():
         rd, rw = p["reversal_pct_daily"][name] / 100, p["reversal_pct_weekly"][name] / 100
-        thr = f"參考（需看型態判斷）；🔴 僅在日線與週線都『底底高＋頭頭高確認』時（自訂）。波段確認門檻：日線 {rd*100:.0f}%、週線 {rw*100:.0f}%（收盤）"
+        thr = (f"🔴 日K『底底高＋頭頭高確認』；🟡 僅日K『底底高（頭頭高待確認）』；其餘⚪（自訂規則／尚未回測）。"
+               f"波段確認門檻：日K {rd*100:.0f}%、週K 參考 {rw*100:.0f}%（收盤）")
         try:
             dly = completed_daily(tk, tz, hm); c = dly["Close"][dly.index >= "2018-01-01"]
             wc = weekly(dly, tz)["Close"]; wc = wc[wc.index >= "2015-01-01"]
             cd, td, dd_ = dow_pattern(c, rd, p["min_drawdown"]); cw, tw, dw = dow_pattern(wc, rw, p["min_drawdown"])
-            st = RED if (cd == "confirmed" and cw == "confirmed") else REF
-            val = f"日線：{td}｜週線：{tw}｜最新收盤 {c.iloc[-1]:,.0f}（{c.index[-1].strftime('%m/%d')}）"
+            st = sig9_daily_light(cd)
+            val = f"日K（判燈）：{td}｜週K（參考）：{tw}｜最新收盤 {c.iloc[-1]:,.0f}（{c.index[-1].strftime('%m/%d')}）"
             chart = dict(daily=[(i.strftime("%Y-%m-%d"), round(float(v), 1)) for i, v in c.iloc[-130:].items()],
                          weekly=[(i.strftime("%Y-%m-%d"), round(float(v), 1)) for i, v in wc.iloc[-104:].items()],
                          daily_pivots=dd_.get("pivots", []), weekly_pivots=dw.get("pivots", []))
-            rows.append(row("9", name, val, thr, st, f"日線 {c.index[-1].strftime('%Y-%m-%d')}；週線截至 {wc.index[-1].strftime('%Y-%m-%d')}（已完成週）", [yf_src(tk)],
-                "道氏理論（COBB）：看底底高＋頭頭高，時間框架依型態而定，所以本項只描述型態、不硬給燈號。只用收盤；波段點要反向達門檻才確認，確認前不使用（無前視）。",
-                dict(daily_code=cd, weekly_code=cw, daily=dd_, weekly=dw, chart=chart)))
+            rows.append(row("9", name, val, thr, st, f"日K {c.index[-1].strftime('%Y-%m-%d')}；週K截至 {wc.index[-1].strftime('%Y-%m-%d')}（已完成週，參考）", [yf_src(tk)],
+                note, dict(daily_code=cd, weekly_code=cw, daily=dd_, weekly=dw, chart=chart)))
         except Exception as e:
             rows.append(row("9", name, None, thr, UNK, None, [yf_src(tk)], f"失敗：{e}"))
     return rows

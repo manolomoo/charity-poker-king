@@ -116,13 +116,14 @@
     });
     inner.appendChild(segWrap);
 
-    var legend = S.el("div", { class: "legend" }, [
+    var legendItems = [
       S.el("span", {}, [S.el("span", { class: "dot red" }), "已觸發"]),
       S.el("span", {}, [S.el("span", { class: "dot yellow" }), "接近門檻"]),
       S.el("span", {}, [S.el("span", { class: "dot gray" }), "未觸發"]),
-      S.el("span", {}, [S.el("span", { class: "dot ref" }), "型態參考"]),
-      S.el("span", {}, [S.el("span", { class: "dot unknown" }), "資料不足"]),
-    ]);
+    ];
+    if (counts["🔍"]) legendItems.push(S.el("span", {}, [S.el("span", { class: "dot ref" }), "型態參考"]));
+    legendItems.push(S.el("span", {}, [S.el("span", { class: "dot unknown" }), "資料不足"]));
+    var legend = S.el("div", { class: "legend" }, legendItems);
     inner.appendChild(legend);
 
     card.appendChild(inner);
@@ -206,7 +207,7 @@
       if (dailySvg) {
         any = true;
         var dailyBox = S.el("div", { class: "sig9-chart-box" }, [
-          S.el("div", { class: "sig9-chart-title", text: row.target + "：日線（近 130 日）" }),
+          S.el("div", { class: "sig9-chart-title", text: row.target + "：日K（判燈，近 130 日）" }),
         ]);
         dailyBox.appendChild(dailySvg);
         pair.appendChild(dailyBox);
@@ -218,7 +219,7 @@
       if (weeklySvg) {
         any = true;
         var weeklyBox = S.el("div", { class: "sig9-chart-box" }, [
-          S.el("div", { class: "sig9-chart-title", text: row.target + "：週線（近 104 週）" }),
+          S.el("div", { class: "sig9-chart-title", text: row.target + "：週K（參考，近 104 週）" }),
         ]);
         weeklyBox.appendChild(weeklySvg);
         pair.appendChild(weeklyBox);
@@ -367,6 +368,9 @@
       body.appendChild(buildRowsTable(rows));
       body.appendChild(buildRowCards(rows));
       if (id === "9") {
+        body.appendChild(S.el("p", { class: "sig9-chart-caption" }, [
+          "COBB：看 4小時／日K／週K 哪個高低點軌跡最清楚（例如 2022 明顯看週K）；本站預設用日K 判燈，週K 僅供參考。4 小時K 暫無穩定免費資料，未納入。燈號門檻為自訂規則／尚未回測。",
+        ]));
         rows.forEach(function (row) {
           var chartsEl = buildSig9Charts(row);
           if (chartsEl) body.appendChild(chartsEl);
