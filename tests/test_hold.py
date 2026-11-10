@@ -1,7 +1,7 @@
 """3 日維持的日期窗口。不碰網路。"""
 import datetime as dt, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
-from hold import HOLD_DAYS, in_window, window_end, apply_three_day_hold, hold_text
+from hold import HOLD_DAYS, in_window, window_end, apply_three_day_hold, hold_text, period_hold_text
 from common import RED, YEL, WHT
 
 ASOF = dt.date(2026, 11, 11)
@@ -40,16 +40,39 @@ def test_current_trigger_uses_obs_date():
     assert rows[0]["extra"]["hold"]["last_trigger"] == "2026-11-10"
     assert "目前數值：盤中 36" in rows[0]["value"]
 
-def test_weekly_bar_expires_before_next_bar():
+def test_weekly_bar_holds_until_next_week():
     rows = [{
         "signal": "3", "target": "NDX", "value": "J=-3", "threshold": "J ≤ 0",
         "status": RED, "status_label": "已觸發", "data_date": "2026-11-06",
         "note": "", "extra": {"obs_date": "2026-11-06", "red_dates": ["2026-11-06"]},
     }]
     apply_three_day_hold(rows, ASOF)
-    assert rows[0]["status"] == WHT
-    assert "已超過 3 個日曆天" in rows[0]["note"]
+    assert rows[0]["status"] == RED
+    text = "依最新已完成週K（2026-11-06）判定，維持到下一根週K"
+    assert rows[0]["extra"]["hold"]["text"] == text
+    assert rows[0]["value"].startswith(text + "｜目前數值：")
+    assert "已超過 3 個日曆天" not in rows[0]["note"]
+
+def test_weekly_next_bar_replaces_old_red():
+    rows = [{
+        "signal": "8", "target": "SOXL", "value": "z=2.8", "threshold": "z ≥ 4",
+        "status": YEL, "status_label": "接近門檻", "data_date": "2026-11-06",
+        "note": "", "extra": {"obs_date": "2026-11-06", "red_dates": ["2026-10-30"]},
+    }]
+    apply_three_day_hold(rows, ASOF)
+    assert rows[0]["status"] == YEL
     assert "hold" not in rows[0]["extra"]
+
+def test_monthly_holds_past_three_days():
+    rows = [{
+        "signal": "10", "target": "領先指標", "value": "98", "threshold": "< 100",
+        "status": RED, "status_label": "已觸發", "data_date": "2026-10-29",
+        "note": "", "extra": {"obs_date": "2026-10-29", "red_dates": ["2026-10-29"]},
+    }]
+    apply_three_day_hold(rows, ASOF)
+    assert rows[0]["status"] == RED
+    assert rows[0]["extra"]["hold"]["mode"] == "monthly"
+    assert rows[0]["extra"]["hold"]["text"] == period_hold_text("monthly", dt.date(2026, 10, 29))
 
 def test_reference_row_untouched():
     rows = [{
@@ -68,7 +91,9 @@ if __name__ == "__main__":
     test_inclusive_three_calendar_days()
     test_restart_uses_last_date()
     test_current_trigger_uses_obs_date()
-    test_weekly_bar_expires_before_next_bar()
+    test_weekly_bar_holds_until_next_week()
+    test_weekly_next_bar_replaces_old_red()
+    test_monthly_holds_past_three_days()
     test_reference_row_untouched()
     test_hold_text()
     print("hold tests ok")

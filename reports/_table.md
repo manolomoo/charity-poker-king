@@ -5,11 +5,11 @@
 | 1. 指數 ETF 資金外流 | QQQ | —（Invesco 資料 API 拒絕程式存取（HTTP 406），未取得每日流通股數；不以資產規模縮水代替資金外流。） | 近一個月淨流量 ≤ −2.0% AUM，或近一週 ≤ −1.0% AUM | ❔ 資料不足 | — | [1](https://www.invesco.com/qqq-etf/en/about.html) |
 | 1. 指數 ETF 資金外流 | SMH | —（VanEck 官網需 Cookie／瀏覽器，程式讀取被導向錯誤頁；未取得每日流通股數。） | 近一個月淨流量 ≤ −2.0% AUM，或近一週 ≤ −1.0% AUM | ❔ 資料不足 | — | [1](https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/) |
 | 2. CNN 恐懼貪婪指數 | CNN 恐懼貪婪指數 | 最新收盤日 33.5（11/10；盤中 33.5）；回檔區間自 2026-10-06（NDX 52 週收盤高點）起，區間最低 16.7（10/23）；符合位置且 <25 的日子：11/02 19.4、11/05 20.0、11/06 24.4；NDX 目前回落 -11.2% | NDX 回檔區間內（自 52 週收盤新高起、當天 NDX 回落 ≥10%）任一已收盤日 < 25 | ⚪ 未觸發 | 2026-11-10 | [1](https://edition.cnn.com/markets/fear-and-greed)<br>[2](https://production.dataviz.cnn.io/index/fearandgreed/graphdata/2025-10-07) |
-| 3. 週線 KDJ 的 J 值 ≤ 0 | 台灣加權指數 | J=-6.0（K=34.7, D=55.0；前一週 J=2.6） | 週 J ≤ 0 | ⚪ 未觸發 | 週線截至 2026-11-06（已完成週） | [1](https://finance.yahoo.com/quote/%5ETWII/history) |
-| 3. 週線 KDJ 的 J 值 ≤ 0 | NDX | J=-14.3（K=24.0, D=43.2；前一週 J=-9.5） | 週 J ≤ 0 | ⚪ 未觸發 | 週線截至 2026-11-06（已完成週） | [1](https://finance.yahoo.com/quote/%5ENDX/history) |
-| 3. 週線 KDJ 的 J 值 ≤ 0 | SOX | J=-9.4（K=20.1, D=34.9；前一週 J=-7.5） | 週 J ≤ 0 | ⚪ 未觸發 | 週線截至 2026-11-06（已完成週） | [1](https://finance.yahoo.com/quote/%5ESOX/history) |
-| 4. 估值進入便宜區間 | NDX | NTM P/E 19.01×（2026-11-09）；10年分位 9%（5年 1%）；最近週五分位 3%；隱含 NTM EPS 約1個月 +2.5%、自 08/05 起 +11.6% | 10 年分位 ≤ 20% | ⚪ 未觸發 | 2026-11-06 | [1](https://historyofmarket.com/nasdaq/ndx-forward-pe/)<br>[2](https://historyofmarket.com/api/ndx/forward-pe.json) |
-| 4. 估值進入便宜區間 | SOX | NTM P/E 14.14×（2026-11-09）；10年分位 9%（5年 4%）；最近週五分位 4%；隱含 NTM EPS 約1個月 +7.3%、自 08/05 起 +30.4% | 10 年分位 ≤ 20% | ⚪ 未觸發 | 2026-11-06 | [1](https://historyofmarket.com/zh-tw/semi/semi-fwdpe/)<br>[2](https://historyofmarket.com/api/sectors/forward-pe.json) |
+| 3. 週線 KDJ 的 J 值 ≤ 0 | 台灣加權指數 | 依最新已完成週K（2026-11-06）判定，維持到下一根週K｜目前數值：J=-6.0（K=34.7, D=55.0；前一週 J=2.6） | 週 J ≤ 0 | 🔴 已觸發 | 週線截至 2026-11-06（已完成週） | [1](https://finance.yahoo.com/quote/%5ETWII/history) |
+| 3. 週線 KDJ 的 J 值 ≤ 0 | NDX | 依最新已完成週K（2026-11-06）判定，維持到下一根週K｜目前數值：J=-14.3（K=24.0, D=43.2；前一週 J=-9.5） | 週 J ≤ 0 | 🔴 已觸發 | 週線截至 2026-11-06（已完成週） | [1](https://finance.yahoo.com/quote/%5ENDX/history) |
+| 3. 週線 KDJ 的 J 值 ≤ 0 | SOX | 依最新已完成週K（2026-11-06）判定，維持到下一根週K｜目前數值：J=-9.4（K=20.1, D=34.9；前一週 J=-7.5） | 週 J ≤ 0 | 🔴 已觸發 | 週線截至 2026-11-06（已完成週） | [1](https://finance.yahoo.com/quote/%5ESOX/history) |
+| 4. 估值進入便宜區間 | NDX | 依最新已完成週K（2026-11-06）判定，維持到下一根週K｜目前數值：NTM P/E 19.01×（2026-11-09）；10年分位 9%（5年 1%）；最近週五分位 3%；隱含 NTM EPS 約1個月 +2.5%、自 08/05 起 +11.6% | 10 年分位 ≤ 20% | 🔴 已觸發 | 2026-11-06 | [1](https://historyofmarket.com/nasdaq/ndx-forward-pe/)<br>[2](https://historyofmarket.com/api/ndx/forward-pe.json) |
+| 4. 估值進入便宜區間 | SOX | 依最新已完成週K（2026-11-06）判定，維持到下一根週K｜目前數值：NTM P/E 14.14×（2026-11-09）；10年分位 9%（5年 4%）；最近週五分位 4%；隱含 NTM EPS 約1個月 +7.3%、自 08/05 起 +30.4% | 10 年分位 ≤ 20% | 🔴 已觸發 | 2026-11-06 | [1](https://historyofmarket.com/zh-tw/semi/semi-fwdpe/)<br>[2](https://historyofmarket.com/api/sectors/forward-pe.json) |
 | 5. VIX／VXN 太高 | VIX | 本波（自 2026-10-06 NDX 52 週收盤高點起、NDX 回落 ≥10% 的日子）盤中最高 28.36（11/05）→ 未達恐慌；最新收盤 19.92（11/09） | 回檔區間內盤中最高 > 30 恐慌（> 40 極度恐慌）；接近：28–30 | ⚪ 未觸發 | 2026-11-09 | [1](https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv)<br>[2](https://fred.stlouisfed.org/series/VIXCLS) |
 | 5. VIX／VXN 太高 | VXN | 本波（自 2026-10-06 NDX 52 週收盤高點起、NDX 回落 ≥10% 的日子）盤中最高 38.66（11/05）→ 恐慌；最新收盤 28.57（11/10） | 回檔區間內盤中最高 > 35 恐慌（> 45 極度恐慌）；接近：33–35 | ⚪ 未觸發 | 2026-11-10 | [1](https://cdn.cboe.com/api/global/us_indices/daily_prices/VXN_History.csv)<br>[2](https://fred.stlouisfed.org/series/VXNCLS) |
 | 6. 台股融資維持率太低（扣除ETF） | 大盤融資維持率（扣除ETF，自算對照值） | 147.03%；近5日 11/04 144.91%、11/05 136.59%、11/06 132.99%、11/09 142.07%、11/10 147.03%；近20日最低 132.99%（11/06）；另一口徑（只排ETF）158.69% | < 130%（接近：130–140%） | ⚪ 未觸發 | 2026-11-10 | [1](https://www.wantgoo.com/stock/margin-trading/exclude-etf/taiex)<br>[2](https://www.twse.com.tw/zh/trading/margin/mi-margn.html)<br>[3](https://www.twse.com.tw/zh/trading/historical/mi-index.html)<br>[4](https://www.tpex.org.tw/zh-tw/mainboard/trading/margin-trading/transactions.html) |
@@ -34,8 +34,8 @@
 |---|---|---|---|
 | 1. 指數 ETF 資金外流 | 🟡 接近門檻 | any | — |
 | 2. CNN 恐懼貪婪指數 | ⚪ 未觸發 | single | — |
-| 3. 週線 KDJ 的 J 值 ≤ 0 | ⚪ 未觸發 | any（並分台股、美股各自列示） | 台股 ⚪、美股 ⚪ |
-| 4. 估值進入便宜區間 | ⚪ 未觸發 | any | — |
+| 3. 週線 KDJ 的 J 值 ≤ 0 | 🔴 已觸發 | any（並分台股、美股各自列示） | 台股 🔴、美股 🔴 |
+| 4. 估值進入便宜區間 | 🔴 已觸發 | any | — |
 | 5. VIX／VXN 太高 | ⚪ 未觸發 | any | — |
 | 6. 台股融資維持率太低（扣除ETF） | ⚪ 未觸發 | single（只依『上市，不含ETF，自算』） | — |
 | 7. 台股融資餘額降至低檔 | 🟡 接近門檻 | 以『上市＋上櫃合計』判定，上市、上櫃分別列示供參考 | — |

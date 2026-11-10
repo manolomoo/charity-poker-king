@@ -1,14 +1,16 @@
-"""全站 3 日維持（使用者指定 2026-11-11，不是 COBB 的規則）。
+"""維持規則（使用者指定 2026-11-11，不是 COBB 的規則）。
 
-🔴 從「最後一次符合觸發條件的資料日」起算，含當日共 3 個日曆天（台北日期比較）。
-窗口內再次觸發則從新的資料日重算。超過之後回到該列當下的 🟡／⚪／❔。
-週線／月線的資料日是已完成那根的日期，所以可能在下一根出來之前就先重置。
+日線（第 1、2、5、6、7、9 項）：🔴 從最後一次符合條件的資料日起算，含當日共 3 個日曆天。
+週線（第 3、4、8 項）：燈號就是最新一根已完成週K，維持到下一根週K 出來再重判，不套 3 日窗口。
+月線（第 10、11 項）：同樣維持到下一期資料發布。3 日窗口會在下一期出來之前先熄掉，所以不使用。
 """
 import datetime as dt, json, os
 from common import RED, WHT, STATUS_LABEL, DATA
 
 HOLD_DAYS = 3
 HOLD_LABEL = "使用者指定（2026-11-11）"
+WEEKLY_SIGNALS = {"3", "4", "8"}
+MONTHLY_SIGNALS = {"10", "11"}
 
 def parse_date(value):
     if value is None: return None
@@ -53,6 +55,30 @@ def hold_text(trigger, days=HOLD_DAYS):
     end = window_end(trigger, days)
     return f"最後觸發日：{trigger.isoformat()}（{days} 天內有效，至 {end.isoformat()}）"
 
+def period_kind(signal):
+    key = str(signal)
+    if key in WEEKLY_SIGNALS: return "weekly"
+    if key in MONTHLY_SIGNALS: return "monthly"
+    return "daily"
+
+def period_hold_text(kind, when):
+    stamp = when.isoformat() if isinstance(when, dt.date) else str(when)[:10]
+    if kind == "weekly":
+        return f"依最新已完成週K（{stamp}）判定，維持到下一根週K"
+    return f"依最新已發布月份（{stamp}）判定，維持到下一期資料"
+
+def _mark_red(row, extra, text, hold):
+    row["status"] = RED
+    prefix = text + "｜目前數值："
+    value = row.get("value") or "—"
+    if not str(value).startswith(text):
+        row["value"] = prefix + str(value)
+    extra["hold"] = hold
+    tag = f"維持規則為{HOLD_LABEL}，不是 COBB 的規則。"
+    note = row.get("note") or ""
+    if tag not in note:
+        row["note"] = (note + " " + tag).strip()
+
 def apply_three_day_hold(rows, asof):
     """就地改列的 status／value／note。回傳同一清單。"""
     asof = parse_date(asof)
@@ -71,29 +97,42 @@ def apply_three_day_hold(rows, asof):
         last = max(dates) if dates else None
         obs = parse_date(extra.get("obs_date")) or parse_date(row.get("data_date"))
         raw = row.get("status")
+        kind = period_kind(row.get("signal"))
+        if kind in ("weekly", "monthly"):
+            # 燈號＝最新一根已完成週／已發布月。不拿更早的紅燈蓋過，也不用 3 日窗口提前熄掉。
+            if raw == RED:
+                show = obs or last
+                text = period_hold_text(kind, show) if show else period_hold_text(kind, asof)
+                _mark_red(row, extra, text, {
+                    "mode": kind,
+                    "last_trigger": show.isoformat() if show else None,
+                    "text": text,
+                    "current": True,
+                    "held": True,
+                    "label": HOLD_LABEL,
+                })
+            if "red_dates" in extra:
+                extra["red_dates"] = [last.isoformat()] if last else []
+            row["status_label"] = STATUS_LABEL.get(row["status"], row.get("status_label"))
+            row["extra"] = extra
+            continue
         # 當下這筆資料本身就是 🔴，而且它的資料日還在窗口內 → 最後觸發日＝該資料日
         current = raw == RED and obs is not None and in_window(obs, asof)
         held = (not current) and last is not None and in_window(last, asof)
         if current or held:
             show = obs if current else last
             end = window_end(show)
-            row["status"] = RED
-            prefix = hold_text(show) + "｜目前數值："
-            value = row.get("value") or "—"
-            if not str(value).startswith("最後觸發日："):
-                row["value"] = prefix + str(value)
-            extra["hold"] = {
+            text = hold_text(show)
+            _mark_red(row, extra, text, {
+                "mode": "daily",
                 "last_trigger": show.isoformat(),
                 "valid_through": end.isoformat(),
                 "days": HOLD_DAYS,
+                "text": text,
                 "current": bool(current),
                 "held": bool(held),
                 "label": HOLD_LABEL,
-            }
-            tag = f"3 日維持為{HOLD_LABEL}，不是 COBB 的規則。"
-            note = row.get("note") or ""
-            if tag not in note:
-                row["note"] = (note + " " + tag).strip()
+            })
         elif raw == RED:
             # 最新一根仍寫著觸發，但資料日已超過 3 天（週線／月線會這樣）
             row["status"] = WHT
