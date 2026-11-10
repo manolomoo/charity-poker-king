@@ -58,33 +58,36 @@ def sig2_v2(row, completed_daily, P):
     except Exception as e:
         return [row("2", "CNN 恐懼貪婪指數", None, thr, UNK, None, src, f"抓取失敗：{e}")]
 
-# ---------- 5. VIX / VXN（v2：絕對值，回檔區間內收盤曾達門檻）----------
+# ---------- 5. VIX / VXN（v2：COBB 絕對門檻，回檔區間內盤中最高）----------
 def sig5_v2(row, completed_daily, P):
     p = P("5"); rows = []
     try:
-        ndx, peak, dd = us_episode(completed_daily, p)
+        ndx, peak, dd = us_episode(completed_daily, p); ep_err = None
     except Exception as e:
-        ndx = peak = dd = None; ep_err = e
+        peak = None; ep_err = e
     for s, fred in (("VIX", "VIXCLS"), ("VXN", "VXNCLS")):
         url = f"https://cdn.cboe.com/api/global/us_indices/daily_prices/{s}_History.csv"
-        trig, near = p[f"{s.lower()}_trigger"], p[f"{s.lower()}_near"]
-        thr = f"回檔區間內任一收盤 ≥ {trig}（接近：≥ {near}）"
+        panic, extreme, near = p[f"{s.lower()}_panic"], p[f"{s.lower()}_extreme"], p[f"{s.lower()}_panic"] - p["near_gap"]
+        thr = f"回檔區間內盤中最高 > {panic} 恐慌（> {extreme} 極度恐慌）；接近：{near:g}–{panic}"
         try:
             if peak is None: raise RuntimeError(f"NDX 回檔區間計算失敗：{ep_err}")
             c = get(url).text; save_raw(f"cboe_{s}.csv", c)
             x = pd.read_csv(io.StringIO(c)); x["DATE"] = pd.to_datetime(x["DATE"]); x = x.set_index("DATE")
-            cl = x["CLOSE"].dropna(); last, ld = cl.iloc[-1], cl.index[-1]
-            w, ok, hits, nears = latch_eval(cl, dd, peak, lambda v: v >= trig, lambda v: v >= near, p["dd_min"])
-            st = RED if len(hits) else YEL if len(nears) else WHT
-            mx = w.idxmax() if len(w) else None
-            h10 = cl[cl.index >= ld - pd.DateOffset(years=10)]; pct = (h10 < last).mean() * 100
-            hi_intraday = x["HIGH"][x.index > peak].max() if len(w) else None
-            val = (f"最新收盤 {last:.2f}（{ld.strftime('%m/%d')}）；回檔區間（自 {peak.strftime('%Y-%m-%d')}）最高收盤 {w.max():.2f}（{mx.strftime('%m/%d')}），盤中最高 {hi_intraday:.2f}；"
-                   f"參考：最新值 10 年分位 {pct:.0f}%（不參與判定）")
+            hi = x["HIGH"].dropna(); cl = x["CLOSE"].dropna(); last, ld = cl.iloc[-1], cl.index[-1]
+            w, ok, hits, nears = latch_eval(hi, dd, peak, lambda v: v > panic, lambda v: v >= near, p["dd_min"])
+            if len(ok) == 0:
+                st = WHT; mx_v, mx_d = (w.max(), w.idxmax()) if len(w) else (None, None)
+            else:
+                mx_d = ok.idxmax(); mx_v = ok.max()
+                st = RED if len(hits) else YEL if len(nears) else WHT
+            tag = "極度恐慌" if (mx_v is not None and mx_v > extreme) else "恐慌" if (mx_v is not None and mx_v > panic) else "未達恐慌"
+            whole_max = w.max() if len(w) else None
+            val = (f"本波（自 {peak.strftime('%Y-%m-%d')} NDX 52 週收盤高點起、NDX 回落 ≥{abs(p['dd_min'])}% 的日子）盤中最高 {mx_v:.2f}（{mx_d.strftime('%m/%d')}）→ {tag}；"
+                   f"最新收盤 {last:.2f}（{ld.strftime('%m/%d')}）" if mx_v is not None else f"本波尚無符合位置的交易日；最新收盤 {last:.2f}")
             rows.append(row("5", s, val, thr, st, ld.strftime("%Y-%m-%d"), [url, f"https://fred.stlouisfed.org/series/{fred}"],
-                "v2：改用絕對值（依 COBB 指正：不同年代分位會有落差）；只看收盤，盤中值僅列示。觸發後維持到 NDX 再創 52 週收盤新高。",
-                dict(close=last, window_max=float(w.max()), window_max_date=mx.strftime("%Y-%m-%d"), intraday_max=float(hi_intraday),
-                     episode_start=peak.strftime("%Y-%m-%d"), pct10=pct, hit_dates=[i.strftime("%Y-%m-%d") for i in hits.index])))
+                "門檻為 COBB 標準（VIX >30 恐慌、>40 極度恐慌；VXN >35 恐慌、>45 極度恐慌），看本波盤中最高。COBB 提醒：恐慌指數低不代表高點；高檔只是抄底分批布局的訊號之一。觸發後維持到 NDX 再創 52 週收盤新高。",
+                dict(window_high=float(mx_v) if mx_v is not None else None, window_high_date=mx_d.strftime("%Y-%m-%d") if mx_d is not None else None, label=tag,
+                     close=float(last), episode_start=peak.strftime("%Y-%m-%d"), hit_dates=[i.strftime("%Y-%m-%d") for i in hits.index])))
         except Exception as e:
             rows.append(row("5", s, None, thr, UNK, None, [url], f"失敗：{e}"))
     return rows
@@ -103,7 +106,7 @@ def _mr_cache(date):
 def sig6_v2(row, P):
     p = P("6"); rows = []
     TWM = "https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN?date={d}&selectType=ALL&response=json"
-    src = ["https://www.twse.com.tw/zh/trading/margin/mi-margn.html", "https://www.twse.com.tw/zh/trading/historical/mi-index.html",
+    src = ["https://www.wantgoo.com/stock/margin-trading/exclude-etf/taiex", "https://www.twse.com.tw/zh/trading/margin/mi-margn.html", "https://www.twse.com.tw/zh/trading/historical/mi-index.html",
            "https://www.tpex.org.tw/zh-tw/mainboard/trading/margin-trading/transactions.html"]
     thr = f"< {p['trigger']}%（接近：{p['trigger']}–{p['near']}%）"
     try:
@@ -120,9 +123,9 @@ def sig6_v2(row, P):
         fmt = lambda s: f"{s[4:6]}/{s[6:]}"
         recent = "、".join(f"{fmt(x['date'])} {x[key]:.2f}%" for x in got[-5:])
         ld = f"{last['date'][:4]}-{last['date'][4:6]}-{last['date'][6:]}"
-        rows.append(row("6", "大盤融資維持率（上市，不含ETF，自算）", f"{k:.2f}%；近5日 {recent}；近{len(got)}日最低 {mn[key]:.2f}%（{fmt(mn['date'])}）；另一口徑（{'只排ETF' if key.endswith('narrow') else '窄口徑'}）{last['twse_ex_etf' if key.endswith('narrow') else 'twse_narrow']:.2f}%",
+        rows.append(row("6", "大盤融資維持率（扣除ETF，自算對照值）", f"{k:.2f}%；近5日 {recent}；近{len(got)}日最低 {mn[key]:.2f}%（{fmt(mn['date'])}）；另一口徑（{'只排ETF' if key.endswith('narrow') else '窄口徑'}）{last['twse_ex_etf' if key.endswith('narrow') else 'twse_narrow']:.2f}%",
             thr, st, ld, src,
-            ("口徑＝窄口徑：分子只計上市本國普通股（排除 ETF／ETN／受益憑證／特別股、-KY／DR、當日停資 X）" if key.endswith("narrow") else "口徑＝只排 ETF：分子排除代號非 4 位數字者（ETF／ETN／受益憑證／特別股）") + "；公式 Σ(融資餘額張數×1000×收盤價) ÷ 證交所公布上市融資金額 ×100%；分母為官方總額（含 ETF 借款，官方不公布個別證券融資金額），所以比『含ETF』版本低。窄口徑與論壇流傳的『扣除ETF 融資維持率』（10/30–11/06）相差約 0.5–3.3 個百分點，是目前最接近 COBB 表上數字的版本，但算法屬第三方逆向推估、未經官方證實。",
+            "自算對照值，標準以玩股網「扣除ETF資券進出行情」為準（玩股網頁面有 Cloudflare 驗證，程式無法讀取）。" + ("口徑＝窄口徑：分子只計上市本國普通股（排除 ETF／ETN／受益憑證／特別股、-KY／DR、當日停資 X）" if key.endswith("narrow") else "口徑＝只排 ETF：分子排除代號非 4 位數字者（ETF／ETN／受益憑證／特別股）") + "；公式 Σ(融資餘額張數×1000×收盤價) ÷ 證交所公布上市融資金額 ×100%；分母為官方總額（含 ETF 借款，官方不公布個別證券融資金額），所以比『含ETF』版本低。窄口徑與論壇流傳的『扣除ETF 融資維持率』（10/30–11/06）相差約 0.5–3.3 個百分點，是目前最接近玩股網數字的版本（通常略高於玩股網 0.5–3.3 個百分點），但算法屬第三方逆向推估、未經官方證實。",
             dict(variant=p["primary_variant"], value=k, ex_etf_only=last["twse_ex_etf"], narrow=last["twse_narrow"], recent=[(x["date"], x[key]) for x in got], min=mn[key], min_date=mn["date"])))
         rows.append(row("6", "上市櫃融資維持率（不含ETF，自算，參考）", f"{last['both_ex_etf']:.2f}%（上櫃 {last['tpex_ex_etf']:.2f}%）" if "both_ex_etf" in last else None,
             "不參與判定", WHT if "both_ex_etf" in last else UNK, ld, src, "上市＋上櫃分子、分母各自加總後相除。"))
@@ -131,7 +134,7 @@ def sig6_v2(row, P):
             "市場常見口徑（愛玩股、財經M平方現行版）；本表計算值已與兩者 2026-11-06／11-09 公布值逐位核對一致。"))
     
     except Exception as e:
-        rows.append(row("6", "大盤融資維持率（上市，不含ETF，自算）", None, thr, UNK, None, src, f"失敗：{e}"))
+        rows.append(row("6", "大盤融資維持率（扣除ETF，自算對照值）", None, thr, UNK, None, src, f"失敗：{e}"))
     # 官方整戶擔保維持率：保留作背景
     TW = "https://www.twse.com.tw/rwd/zh/marginTrading/"
     try:
@@ -161,47 +164,49 @@ def zigzag(c, rev):
             elif v[i] >= v[lo] * (1 + rev): piv.append(("L", lo, v[lo], i)); trend = 1; hi = i
     return piv
 
-def sig9_v2(row, completed_daily, MKT, yf_src, P):
+def dow_pattern(c, rev, min_dd):
+    """依已確認波段點描述道氏型態。回傳 (code, 文字, 細節 dict)。code: confirmed / uptrend_pullback / hl_pending / lower_low_rebound / falling_below / pullback / unknown"""
+    pv = zigzag(c, rev); D = lambda i: c.index[i].strftime("%Y-%m-%d")
+    roll = c.rolling(52 if len(c) < 600 else 252, min_periods=10).max()
+    last = c.iloc[-1]
+    lows = [x for x in pv if x[0] == "L"]; highs = [x for x in pv if x[0] == "H"]
+    det = dict(pivots=[(t, D(i), round(float(v), 1), D(j)) for t, i, v, j in pv[-8:]])
+    if len(lows) < 2 or not pv: return "unknown", "波段點不足", det
+    lp = pv[-1]; L2, L1 = lows[-1], lows[-2]
+    hs = [h for h in highs if L1[1] < h[1] < L2[1]]; H = max(hs, key=lambda t: t[2]) if hs else None
+    invalid = (c.iloc[L2[1] + 1:] < L2[2]).any()
+    det.update(L1=float(L1[2]), L1_date=D(L1[1]), L2=float(L2[2]), L2_date=D(L2[1]), H=float(H[2]) if H else None, H_date=D(H[1]) if H else None)
+    if lp[0] == "L":   # 最後確認的是低點，目前在反彈段
+        if L2[2] > L1[2] and not invalid:
+            if H is not None and (c.iloc[L2[3]:] > H[2]).any():
+                return "confirmed", f"底底高＋頭頭高確認（L1 {L1[2]:,.0f} → L2 {L2[2]:,.0f}，收盤已突破反彈高 {H[2]:,.0f}）", det
+            return "hl_pending", f"底底高（L1 {L1[2]:,.0f} → L2 {L2[2]:,.0f}），頭頭高待確認：需收盤站上 {H[2]:,.0f}" if H else "底底高，頭頭高待確認", det
+        return "lower_low_rebound", f"破前低（{L2[2]:,.0f}＜前低 {L1[2]:,.0f}，{D(L2[1])}）後反彈中，底底高待確認：下一個回檔低點需高於 {L2[2]:,.0f}", det
+    # 最後確認的是高點，目前在回檔段
+    seg_min = c.iloc[lp[1]:].min()
+    if last < L2[2] or seg_min < L2[2]:
+        return "falling_below", f"破前低：自高點 {lp[2]:,.0f}（{D(lp[1])}）回落，已收破前低 {L2[2]:,.0f}，下跌中", det
+    if L2[2] > L1[2] and H is not None and lp[2] > H[2]:
+        return "uptrend_pullback", f"上升趨勢中回檔：底底高＋頭頭高已成立（L2 {L2[2]:,.0f}＞L1 {L1[2]:,.0f}，高點 {lp[2]:,.0f}＞{H[2]:,.0f}），目前回檔中、守 {L2[2]:,.0f}", det
+    return "pullback", f"自高點 {lp[2]:,.0f}（{D(lp[1])}）回檔中，尚未破前低 {L2[2]:,.0f}", det
+
+def sig9_v2(row, completed_daily, weekly, MKT, yf_src, P):
     p = P("9"); rows = []
     for tk, (name, tz, hm) in MKT.items():
-        rev = p["reversal_pct"][name] / 100
-        thr = f"道氏：L2>L1（底底高）後，收盤突破其間反彈高點 H（頭頭高）；波段反轉門檻 {rev*100:.0f}%（收盤）"
+        rd, rw = p["reversal_pct_daily"][name] / 100, p["reversal_pct_weekly"][name] / 100
+        thr = f"參考（需看型態判斷）；🔴 僅在日線與週線都『底底高＋頭頭高確認』時（自訂）。波段確認門檻：日線 {rd*100:.0f}%、週線 {rw*100:.0f}%（收盤）"
         try:
-            c = completed_daily(tk, tz, hm)["Close"]; c = c[c.index >= "2018-01-01"]
-            pv = zigzag(c, rev); D = lambda i: c.index[i].strftime("%Y-%m-%d")
-            lows = [x for x in pv if x[0] == "L"]; highs = [x for x in pv if x[0] == "H"]
-            roll = c.rolling(252, min_periods=60).max()
-            last = c.iloc[-1]; st = WHT; H = None; L1 = L2 = None; broke = False; invalid = False; brk_date = None
-            if len(lows) >= 2:
-                L2 = lows[-1]; L1 = lows[-2]
-                hs = [h for h in highs if L1[1] < h[1] < L2[1]]
-                H = max(hs, key=lambda t: t[2]) if hs else None
-                after = c.iloc[L2[3]:]  # 自 L2 確認日起
-                if H is not None:
-                    b = after[after > H[2]]
-                    broke = len(b) > 0; brk_date = b.index[0] if broke else None
-                invalid = (c.iloc[L2[1] + 1:] < L2[2]).any()
-                L1dd = (L1[2] / roll.iloc[L1[1]] - 1) * 100
-                prior_down = L1dd <= p["min_drawdown"]
-                if L2[2] > L1[2] and prior_down and not invalid:
-                    st = RED if broke else YEL
-            # 尚未確認的走勢（最後一個確認點之後）
-            lp = pv[-1] if pv else None
-            pend = ""
-            if lp:
-                seg = c.iloc[lp[1]:]
-                if lp[0] == "H": pend = f"目前自高點 {lp[2]:,.0f}（{D(lp[1])}）回落中，區間最低收盤 {seg.min():,.0f}（{seg.idxmin().strftime('%m/%d')}），尚未出現 {rev*100:.0f}% 反彈確認新低點"
-                else: pend = f"目前自低點 {lp[2]:,.0f}（{D(lp[1])}）反彈中，區間最高收盤 {seg.max():,.0f}（{seg.idxmax().strftime('%m/%d')}）"
-            if L1 and L2:
-                val = (f"L1={L1[2]:,.0f}（{D(L1[1])}，距 52 週高 {L1dd:+.1f}%）→ L2={L2[2]:,.0f}（{D(L2[1])}，{D(L2[3])} 確認）{'↑底底高' if L2[2] > L1[2] else '↓底底低'}；"
-                       f"其間反彈高 H={'%s（%s）' % (format(H[2], ',.0f'), D(H[1])) if H else '無'}；{('已於 ' + brk_date.strftime('%m/%d') + ' 收盤突破') if broke else '未突破'}"
-                       + ("；⚠️L2 之後已收破 L2，結構失效" if invalid else "") + f"；最新收盤 {last:,.0f}；{pend}")
-            else:
-                val = f"確認低點不足；{pend}"
-            rows.append(row("9", name, val, thr, st, c.index[-1].strftime("%Y-%m-%d"), [yf_src(tk)],
-                f"日收盤 zigzag：自極值反向 ≥{rev*100:.0f}% 才確認波段點，確認前不使用（無前視）。前提：L1 距 52 週最高收盤回落 ≥{abs(p['min_drawdown'])}%。",
-                dict(L1=L1[2] if L1 else None, L1_date=D(L1[1]) if L1 else None, L2=L2[2] if L2 else None, L2_date=D(L2[1]) if L2 else None,
-                     H=H[2] if H else None, broke=bool(broke), invalid=bool(invalid), pivots_last6=[(t, D(i), round(float(v), 1), D(j)) for t, i, v, j in pv[-6:]])))
+            dly = completed_daily(tk, tz, hm); c = dly["Close"][dly.index >= "2018-01-01"]
+            wc = weekly(dly, tz)["Close"]; wc = wc[wc.index >= "2015-01-01"]
+            cd, td, dd_ = dow_pattern(c, rd, p["min_drawdown"]); cw, tw, dw = dow_pattern(wc, rw, p["min_drawdown"])
+            st = RED if (cd == "confirmed" and cw == "confirmed") else REF
+            val = f"日線：{td}｜週線：{tw}｜最新收盤 {c.iloc[-1]:,.0f}（{c.index[-1].strftime('%m/%d')}）"
+            chart = dict(daily=[(i.strftime("%Y-%m-%d"), round(float(v), 1)) for i, v in c.iloc[-130:].items()],
+                         weekly=[(i.strftime("%Y-%m-%d"), round(float(v), 1)) for i, v in wc.iloc[-104:].items()],
+                         daily_pivots=dd_.get("pivots", []), weekly_pivots=dw.get("pivots", []))
+            rows.append(row("9", name, val, thr, st, f"日線 {c.index[-1].strftime('%Y-%m-%d')}；週線截至 {wc.index[-1].strftime('%Y-%m-%d')}（已完成週）", [yf_src(tk)],
+                "道氏理論（COBB）：看底底高＋頭頭高，時間框架依型態而定，所以本項只描述型態、不硬給燈號。只用收盤；波段點要反向達門檻才確認，確認前不使用（無前視）。",
+                dict(daily_code=cd, weekly_code=cw, daily=dd_, weekly=dw, chart=chart)))
         except Exception as e:
             rows.append(row("9", name, None, thr, UNK, None, [yf_src(tk)], f"失敗：{e}"))
     return rows

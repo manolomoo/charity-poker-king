@@ -451,7 +451,7 @@ def summarize(rows):
     for k, cfg in RULES["signals"].items():
         rs = [x for x in rows if x["signal"] == k]
         if k == "7": sts = [x["status"] for x in rs if "合計" in x["target"]]
-        elif k == "6": sts = [x["status"] for x in rs if x["target"].startswith("大盤融資維持率（上市，不含ETF")]
+        elif k == "6": sts = [x["status"] for x in rs if x["target"].startswith("大盤融資維持率（扣除ETF")]
         else: sts = [x["status"] for x in rs]
         st = agg_any(sts)
         extra = {}
@@ -516,7 +516,7 @@ def main():
     s5 = lambda: v2.sig5_v2(row, completed_daily, P)
     s6 = lambda: v2.sig6_v2(row, P)
     s8 = lambda: v2.sig8_v2(row, completed_daily, weekly, yf_src, P)
-    s9 = lambda: v2.sig9_v2(row, completed_daily, MKT, yf_src, P)
+    s9 = lambda: v2.sig9_v2(row, completed_daily, weekly, MKT, yf_src, P)
     for k, f in (("1", sig1), ("2", s2), ("3", sig3), ("4", sig4), ("5", s5), ("6", s6), ("7", sig7), ("8", s8), ("9", s9)):
         print("running signal", k, flush=True)
         try: rows += f()

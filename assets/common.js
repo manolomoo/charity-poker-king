@@ -2,8 +2,8 @@
 (function (global) {
   "use strict";
 
-  var STATUS_CLASS = { "🔴": "red", "🟡": "yellow", "⚪": "gray", "❔": "unknown" };
-  var STATUS_LABEL = { "🔴": "已觸發", "🟡": "接近門檻", "⚪": "未觸發", "❔": "資料不足" };
+  var STATUS_CLASS = { "🔴": "red", "🟡": "yellow", "⚪": "gray", "❔": "unknown", "🔍": "ref" };
+  var STATUS_LABEL = { "🔴": "已觸發", "🟡": "接近門檻", "⚪": "未觸發", "❔": "資料不足", "🔍": "型態參考" };
 
   function statusClass(emoji) {
     return STATUS_CLASS[emoji] || "gray";
@@ -67,6 +67,19 @@
     nav.replaceWith(topnav);
   }
 
+  function renderFraming(rules) {
+    var slot = document.getElementById("cobb-framing");
+    if (!slot) return;
+    var text = (rules && rules.framing) || "這些燈號不是量化指標，只是告訴你：可以因為這樣再買一點（分批布局）。— COBB";
+    var idx = text.lastIndexOf("—");
+    var quote = idx >= 0 ? text.slice(0, idx).trim() : text;
+    var attr = idx >= 0 ? text.slice(idx) : "";
+    var box = el("div", { class: "cobb-framing" }, [
+      el("p", {}, [el("strong", { text: quote }), attr ? " " + attr : null]),
+    ]);
+    slot.replaceWith(box);
+  }
+
   function renderFooter() {
     var slot = document.getElementById("site-footer");
     if (!slot) return;
@@ -120,6 +133,7 @@
     el: el,
     hostnameOf: hostnameOf,
     renderNav: renderNav,
+    renderFraming: renderFraming,
     renderFooter: renderFooter,
     fetchJson: fetchJson,
     fetchText: fetchText,

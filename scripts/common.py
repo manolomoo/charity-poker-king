@@ -12,8 +12,8 @@ NY = ZoneInfo("America/New_York")
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36"
 S = requests.Session(); S.headers.update({"User-Agent": UA})
 
-RED, YEL, WHT, UNK = "🔴", "🟡", "⚪", "❔"
-STATUS_LABEL = {RED: "已觸發", YEL: "接近門檻", WHT: "未觸發", UNK: "資料不足"}
+RED, YEL, WHT, UNK, REF = "🔴", "🟡", "⚪", "❔", "🔍"
+STATUS_LABEL = {RED: "已觸發", YEL: "接近門檻", WHT: "未觸發", UNK: "資料不足", REF: "參考（需看型態判斷）"}
 
 def now_tpe():
     return dt.datetime.now(TPE)
@@ -39,7 +39,7 @@ def agg_any(statuses):
     """任一符合：有🔴→🔴；否則有🟡→🟡；否則有❔→❔；否則⚪"""
     s = list(statuses)
     if not s: return UNK
-    for k in (RED, YEL, UNK):
+    for k in (RED, YEL, UNK, REF):
         if k in s: return k
     return WHT
 

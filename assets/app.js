@@ -86,7 +86,7 @@
     var card = document.getElementById("summary-card");
     card.innerHTML = "";
 
-    var counts = { "🔴": 0, "🟡": 0, "⚪": 0, "❔": 0 };
+    var counts = { "🔴": 0, "🟡": 0, "⚪": 0, "🔍": 0, "❔": 0 };
     var order = [];
     for (var i = 1; i <= 11; i++) {
       var s = latest.summary[String(i)];
@@ -95,12 +95,18 @@
       order.push(s.status);
     }
 
+    var breakdownParts = [
+      "已觸發 " + counts["🔴"] + " 項",
+      "接近 " + counts["🟡"] + " 項",
+      "未觸發 " + counts["⚪"] + " 項",
+    ];
+    if (counts["🔍"]) breakdownParts.push("型態參考 " + counts["🔍"] + " 項");
+    breakdownParts.push("資料不足 " + counts["❔"] + " 項");
+
     var inner = S.el("div", { class: "summary-card" });
     var top = S.el("div", { class: "summary-top" }, [
       S.el("div", { class: "summary-count" }, [String(counts["🔴"]), S.el("small", { text: " / 11 已觸發" })]),
-      S.el("div", { class: "summary-breakdown" }, [
-        "已觸發 " + counts["🔴"] + " 項・接近 " + counts["🟡"] + " 項・未觸發 " + counts["⚪"] + " 項・資料不足 " + counts["❔"] + " 項",
-      ]),
+      S.el("div", { class: "summary-breakdown" }, [breakdownParts.join("・")]),
     ]);
     inner.appendChild(top);
 
@@ -114,11 +120,122 @@
       S.el("span", {}, [S.el("span", { class: "dot red" }), "已觸發"]),
       S.el("span", {}, [S.el("span", { class: "dot yellow" }), "接近門檻"]),
       S.el("span", {}, [S.el("span", { class: "dot gray" }), "未觸發"]),
+      S.el("span", {}, [S.el("span", { class: "dot ref" }), "型態參考"]),
       S.el("span", {}, [S.el("span", { class: "dot unknown" }), "資料不足"]),
     ]);
     inner.appendChild(legend);
 
     card.appendChild(inner);
+  }
+
+  function formatNum(n) {
+    n = Math.round(n);
+    var s = String(Math.abs(n));
+    s = s.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return (n < 0 ? "-" : "") + s;
+  }
+
+  function svgNode(tag, attrs) {
+    var node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  function svgText(x, y, text, anchor) {
+    var t = svgNode("text", { x: x, y: y, class: "sig9-axis-label", "text-anchor": anchor || "start" });
+    t.textContent = text;
+    return t;
+  }
+
+  // 純 inline SVG 折線圖：收盤序列 + 落在範圍內的 zigzag 波段點（H 紅、L 綠）
+  function buildMiniChart(points, pivots) {
+    if (!points || points.length < 2) return null;
+    var W = 300, H = 140;
+    var plotL = 4, plotR = W - 4, plotT = 18, plotB = H - 30;
+    var n = points.length;
+    var closes = points.map(function (p) { return p[1]; });
+    var minV = Math.min.apply(null, closes);
+    var maxV = Math.max.apply(null, closes);
+
+    function xAt(i) { return plotL + (plotR - plotL) * (n === 1 ? 0 : i / (n - 1)); }
+    function yAt(v) {
+      if (maxV === minV) return (plotT + plotB) / 2;
+      return plotB - ((v - minV) / (maxV - minV)) * (plotB - plotT);
+    }
+
+    var dateIndex = {};
+    points.forEach(function (p, i) { dateIndex[p[0]] = i; });
+
+    var svg = svgNode("svg", {
+      viewBox: "0 0 " + W + " " + H,
+      preserveAspectRatio: "none",
+      class: "sig9-svg",
+    });
+
+    var polyPoints = points.map(function (p, i) { return xAt(i) + "," + yAt(p[1]); }).join(" ");
+    svg.appendChild(svgNode("polyline", { points: polyPoints, class: "sig9-line" }));
+
+    (pivots || []).forEach(function (piv) {
+      var type = piv[0], date = piv[1], val = piv[2];
+      var idx = dateIndex[date];
+      if (idx === undefined) return;
+      var cx = xAt(idx), cy = yAt(val);
+      svg.appendChild(svgNode("circle", { cx: cx, cy: cy, r: 3, class: "sig9-dot " + (type === "H" ? "sig9-dot-h" : "sig9-dot-l") }));
+      var anchor = cx > W - 40 ? "end" : cx < 40 ? "start" : "middle";
+      svg.appendChild(svgText(cx, type === "H" ? cy - 6 : cy + 11, formatNum(val), anchor));
+    });
+
+    svg.appendChild(svgText(plotL, plotT - 6, formatNum(maxV), "start"));
+    svg.appendChild(svgText(plotL, plotB + 12, formatNum(minV), "start"));
+    svg.appendChild(svgText(plotL, H - 4, points[0][0], "start"));
+    svg.appendChild(svgText(plotR, H - 4, points[n - 1][0], "end"));
+
+    return svg;
+  }
+
+  function buildSig9Charts(row) {
+    var chart = row.extra && row.extra.chart;
+    if (!chart) return null;
+
+    var pair = S.el("div", { class: "sig9-chart-pair" });
+    var any = false;
+
+    if (chart.daily && chart.daily.length > 1) {
+      var dailySvg = buildMiniChart(chart.daily, chart.daily_pivots);
+      if (dailySvg) {
+        any = true;
+        var dailyBox = S.el("div", { class: "sig9-chart-box" }, [
+          S.el("div", { class: "sig9-chart-title", text: row.target + "：日線（近 130 日）" }),
+        ]);
+        dailyBox.appendChild(dailySvg);
+        pair.appendChild(dailyBox);
+      }
+    }
+
+    if (chart.weekly && chart.weekly.length > 1) {
+      var weeklySvg = buildMiniChart(chart.weekly, chart.weekly_pivots);
+      if (weeklySvg) {
+        any = true;
+        var weeklyBox = S.el("div", { class: "sig9-chart-box" }, [
+          S.el("div", { class: "sig9-chart-title", text: row.target + "：週線（近 104 週）" }),
+        ]);
+        weeklyBox.appendChild(weeklySvg);
+        pair.appendChild(weeklyBox);
+      }
+    }
+
+    if (!any) return null;
+
+    var wrap = S.el("div", { class: "sig9-charts" });
+    wrap.appendChild(pair);
+
+    if (row.value) {
+      var caption = String(row.value).split("｜").slice(0, 2).join("｜");
+      if (caption) wrap.appendChild(S.el("div", { class: "sig9-chart-caption", text: caption }));
+    }
+
+    return wrap;
   }
 
   function renderSources(sources) {
@@ -249,6 +366,12 @@
     if (rows && rows.length) {
       body.appendChild(buildRowsTable(rows));
       body.appendChild(buildRowCards(rows));
+      if (id === "9") {
+        rows.forEach(function (row) {
+          var chartsEl = buildSig9Charts(row);
+          if (chartsEl) body.appendChild(chartsEl);
+        });
+      }
     } else {
       body.appendChild(S.el("p", { text: "本次沒有明細資料。" }));
     }
@@ -348,6 +471,7 @@
           single: "單一資料來源：只依這一項數字判定",
         };
 
+        S.renderFraming(rules);
         renderMeta(latest);
         renderStaleNotice(latest);
         renderSummaryCard(latest);

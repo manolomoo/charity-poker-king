@@ -20,6 +20,10 @@
   --purple: #8a7ca8;
   --purple-bg: #ece6f5;
   --purple-ink: #5c4f7a;
+  --ref: #5b7a99;
+  --ref-bg: #e3edf5;
+  --ref-ink: #3a5a78;
+  --green: #3f8f5f;
   --accent: #b23b3b;
   --link: #9a3324;
   --shadow: 0 1px 3px rgba(60, 40, 20, 0.08), 0 1px 2px rgba(60, 40, 20, 0.06);
@@ -144,6 +148,19 @@ header.page-header .subtitle {
 }
 .notice ul { margin: 6px 0 0; padding-left: 20px; }
 
+/* COBB 提醒框 */
+.cobb-framing {
+  background: #fdecd2;
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 0 0 18px;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+.cobb-framing p { margin: 0; }
+.cobb-framing strong { color: var(--red-ink); font-weight: 700; }
+
 /* 總計數卡 */
 .summary-card {
   background: var(--bg-card);
@@ -189,6 +206,7 @@ header.page-header .subtitle {
 .progress-segments .seg.red { background: var(--red); }
 .progress-segments .seg.yellow { background: var(--yellow); }
 .progress-segments .seg.gray { background: var(--gray); }
+.progress-segments .seg.ref { background: var(--ref); }
 .progress-segments .seg.unknown {
   background: repeating-linear-gradient(45deg, var(--purple), var(--purple) 3px, #ffffff 3px, #ffffff 6px);
 }
@@ -212,6 +230,7 @@ header.page-header .subtitle {
 .legend .dot.red { background: var(--red); }
 .legend .dot.yellow { background: var(--yellow); }
 .legend .dot.gray { background: var(--gray); }
+.legend .dot.ref { background: var(--ref); }
 .legend .dot.unknown { background: var(--purple); }
 
 /* 狀態膠囊標籤 */
@@ -228,6 +247,7 @@ header.page-header .subtitle {
 .pill.red { background: var(--red-bg); color: var(--red-ink); }
 .pill.yellow { background: var(--yellow-bg); color: var(--yellow-ink); }
 .pill.gray { background: var(--gray-bg); color: var(--gray-ink); }
+.pill.ref { background: var(--ref-bg); color: var(--ref-ink); }
 .pill.unknown { background: var(--purple-bg); color: var(--purple-ink); }
 
 .pill.small { font-size: 0.76rem; padding: 2px 8px; }
@@ -274,6 +294,7 @@ header.page-header .subtitle {
 .signal-card.red { border-left-color: var(--red); }
 .signal-card.yellow { border-left-color: var(--yellow); }
 .signal-card.gray { border-left-color: var(--gray); }
+.signal-card.ref { border-left-color: var(--ref); }
 .signal-card.unknown { border-left-color: var(--purple); }
 
 .signal-card summary {
@@ -499,6 +520,7 @@ table.heatmap td.cell { font-size: 1.1rem; }
 table.heatmap td.cell.red { background: var(--red-bg); }
 table.heatmap td.cell.yellow { background: var(--yellow-bg); }
 table.heatmap td.cell.gray { background: var(--gray-bg); }
+table.heatmap td.cell.ref { background: var(--ref-bg); }
 table.heatmap td.cell.unknown { background: var(--purple-bg); }
 table.heatmap .stale-mark { font-size: 0.7rem; color: var(--yellow-ink); display: block; }
 
@@ -580,3 +602,19 @@ details.report-table-collapse > summary { cursor: pointer; font-weight: 600; pad
 /* 規則變更紀錄表（手機也顯示，必要時橫向捲動） */
 .changelog-wrap { overflow-x: auto; margin: 10px 0 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
 .changelog-table th, .changelog-table td { white-space: normal; }
+
+/* 第 9 項：日線／週線小圖 */
+.sig9-charts { margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.sig9-chart-pair { display: flex; gap: 12px; flex-wrap: wrap; }
+.sig9-chart-box { flex: 1 1 260px; min-width: 220px; }
+.sig9-chart-title { font-size: 0.78rem; color: var(--ink-soft); font-weight: 600; margin-bottom: 4px; }
+.sig9-svg { display: block; width: 100%; height: 140px; }
+.sig9-line { fill: none; stroke: var(--link); stroke-width: 1.5; }
+.sig9-dot { stroke: #fff; stroke-width: 1; }
+.sig9-dot-h { fill: var(--red); }
+.sig9-dot-l { fill: var(--green); }
+.sig9-axis-label { font-size: 8px; fill: var(--ink-faint); }
+.sig9-chart-caption { font-size: 0.82rem; color: var(--ink-soft); margin-top: 6px; }
+@media (max-width: 680px) {
+  .sig9-chart-pair { flex-direction: column; }
+}

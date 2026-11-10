@@ -57,6 +57,7 @@
   function init() {
     S.fetchJson("rules.json")
       .then(function (rules) {
+        S.renderFraming(rules);
         renderChangelog(rules);
       })
       .catch(function (err) {
