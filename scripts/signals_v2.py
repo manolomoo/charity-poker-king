@@ -44,17 +44,22 @@ def sig2_v2(row, completed_daily, P):
         ndx, peak, dd = us_episode(completed_daily, p)
         ser = ser[ser.index <= ndx.index[-1]]
         s, ok, hits, nears = latch_eval(ser, dd, peak, lambda v: v < p["trigger"], lambda v: v < p["near"], p["dd_min"])
-        st = RED if len(hits) else YEL if len(nears) else WHT
         last_d, last_v = ser.index[-1], ser.iloc[-1]
+        dd_on = dd.reindex(ser.index, method="ffill")
+        in_pos = bool(last_d > peak and pd.notna(dd_on.loc[last_d]) and dd_on.loc[last_d] <= p["dd_min"])
+        # 只看最新已收盤日；不再把整段回檔鎖成紅燈。3 日維持由 hold.py 處理。
+        st = RED if (in_pos and last_v < p["trigger"]) else YEL if (in_pos and last_v < p["near"]) else WHT
         mn = s.idxmin() if len(s) else None
         hit_txt = "、".join(f"{i.strftime('%m/%d')} {v:.1f}" for i, v in hits.items()) or "無"
         val = (f"最新收盤日 {last_v:.1f}（{last_d.strftime('%m/%d')}；盤中 {sc:.1f}）；回檔區間自 {peak.strftime('%Y-%m-%d')}（NDX 52 週收盤高點）起，"
                f"區間最低 {s.min():.1f}（{mn.strftime('%m/%d')}）；符合位置且 <{p['trigger']} 的日子：{hit_txt}；NDX 目前回落 {dd.iloc[-1]:.1f}%")
         return [row("2", "CNN 恐懼貪婪指數", val, thr, st, last_d.strftime("%Y-%m-%d"), src,
-                    "v2：觸發後維持到 NDX 再創 52 週收盤新高為止（回檔區間結束）。CNN 未公開 API，結構可能變動；日值取每日最後一筆，已收盤日才計入。",
+                    "v2.2：當天在對的位置且 <25 才算觸發；不再維持到 NDX 創新高。CNN 未公開 API，結構可能變動；日值取每日最後一筆，已收盤日才計入。",
                     dict(score_live=sc, last_close=last_v, last_date=last_d.strftime("%Y-%m-%d"), episode_start=peak.strftime("%Y-%m-%d"),
-                         window_min=float(s.min()), window_min_date=mn.strftime("%Y-%m-%d"), hit_dates=[i.strftime("%Y-%m-%d") for i in hits.index],
-                         ndx_dd_now=float(dd.iloc[-1]), current_reading_status=(RED if last_v < p["trigger"] else YEL if last_v < p["near"] else WHT)))]
+                         window_min=float(s.min()) if len(s) else None, window_min_date=mn.strftime("%Y-%m-%d") if mn is not None else None,
+                         hit_dates=[i.strftime("%Y-%m-%d") for i in hits.index],
+                         obs_date=last_d.strftime("%Y-%m-%d"), red_dates=[i.strftime("%Y-%m-%d") for i in hits.index],
+                         ndx_dd_now=float(dd.iloc[-1]), in_position=in_pos))]
     except Exception as e:
         return [row("2", "CNN 恐懼貪婪指數", None, thr, UNK, None, src, f"抓取失敗：{e}")]
 
@@ -75,19 +80,24 @@ def sig5_v2(row, completed_daily, P):
             x = pd.read_csv(io.StringIO(c)); x["DATE"] = pd.to_datetime(x["DATE"]); x = x.set_index("DATE")
             hi = x["HIGH"].dropna(); cl = x["CLOSE"].dropna(); last, ld = cl.iloc[-1], cl.index[-1]
             w, ok, hits, nears = latch_eval(hi, dd, peak, lambda v: v > panic, lambda v: v >= near, p["dd_min"])
+            dd_on = dd.reindex(hi.index, method="ffill")
+            last_hi_d, last_hi = hi.index[-1], hi.iloc[-1]
+            in_pos = bool(last_hi_d > peak and pd.notna(dd_on.loc[last_hi_d]) and dd_on.loc[last_hi_d] <= p["dd_min"])
             if len(ok) == 0:
-                st = WHT; mx_v, mx_d = (w.max(), w.idxmax()) if len(w) else (None, None)
+                mx_v, mx_d = (w.max(), w.idxmax()) if len(w) else (None, None)
             else:
                 mx_d = ok.idxmax(); mx_v = ok.max()
-                st = RED if len(hits) else YEL if len(nears) else WHT
+            # 燈號只看最新交易日的盤中高點是否在對的位置；歷史觸發日交給 3 日維持。
+            st = RED if (in_pos and last_hi > panic) else YEL if (in_pos and last_hi >= near) else WHT
             tag = "極度恐慌" if (mx_v is not None and mx_v > extreme) else "恐慌" if (mx_v is not None and mx_v > panic) else "未達恐慌"
             whole_max = w.max() if len(w) else None
             val = (f"本波（自 {peak.strftime('%Y-%m-%d')} NDX 52 週收盤高點起、NDX 回落 ≥{abs(p['dd_min'])}% 的日子）盤中最高 {mx_v:.2f}（{mx_d.strftime('%m/%d')}）→ {tag}；"
                    f"最新收盤 {last:.2f}（{ld.strftime('%m/%d')}）" if mx_v is not None else f"本波尚無符合位置的交易日；最新收盤 {last:.2f}")
             rows.append(row("5", s, val, thr, st, ld.strftime("%Y-%m-%d"), [url, f"https://fred.stlouisfed.org/series/{fred}"],
-                "門檻為 COBB 標準（VIX >30 恐慌、>40 極度恐慌；VXN >35 恐慌、>45 極度恐慌），看本波盤中最高。COBB 提醒：恐慌指數低不代表高點；高檔只是抄底分批布局的訊號之一。觸發後維持到 NDX 再創 52 週收盤新高。",
+                "門檻為 COBB 標準（VIX >30 恐慌、>40 極度恐慌；VXN >35 恐慌、>45 極度恐慌）。當天要在對的位置，盤中最高才算觸發。v2.2 起不再維持到 NDX 創新高。COBB 提醒：恐慌指數低不代表高點；高檔只是抄底分批布局的訊號之一。",
                 dict(window_high=float(mx_v) if mx_v is not None else None, window_high_date=mx_d.strftime("%Y-%m-%d") if mx_d is not None else None, label=tag,
-                     close=float(last), episode_start=peak.strftime("%Y-%m-%d"), hit_dates=[i.strftime("%Y-%m-%d") for i in hits.index])))
+                     close=float(last), episode_start=peak.strftime("%Y-%m-%d"), hit_dates=[i.strftime("%Y-%m-%d") for i in hits.index],
+                     obs_date=last_hi_d.strftime("%Y-%m-%d"), red_dates=[i.strftime("%Y-%m-%d") for i in hits.index], in_position=in_pos, last_high=float(last_hi))))
         except Exception as e:
             rows.append(row("5", s, None, thr, UNK, None, [url], f"失敗：{e}"))
     return rows
@@ -119,6 +129,7 @@ def sig6_v2(row, P):
         if not got: raise RuntimeError("近期查無證交所融資資料")
         got = got[::-1]; last = got[-1]; key = "twse_" + p["primary_variant"]; k = last[key]
         st = RED if k < p["trigger"] else YEL if k < p["near"] else WHT
+        red_dates = [f"{x['date'][:4]}-{x['date'][4:6]}-{x['date'][6:]}" for x in got if x[key] < p["trigger"]]
         mn = min(got, key=lambda x: x[key])
         fmt = lambda s: f"{s[4:6]}/{s[6:]}"
         recent = "、".join(f"{fmt(x['date'])} {x[key]:.2f}%" for x in got[-5:])
@@ -126,7 +137,8 @@ def sig6_v2(row, P):
         rows.append(row("6", "大盤融資維持率（扣除ETF，自算對照值）", f"{k:.2f}%；近5日 {recent}；近{len(got)}日最低 {mn[key]:.2f}%（{fmt(mn['date'])}）；另一口徑（{'只排ETF' if key.endswith('narrow') else '窄口徑'}）{last['twse_ex_etf' if key.endswith('narrow') else 'twse_narrow']:.2f}%",
             thr, st, ld, src,
             "自算對照值，標準以玩股網「扣除ETF資券進出行情」為準（玩股網頁面有 Cloudflare 驗證，程式無法讀取）。" + ("口徑＝窄口徑：分子只計上市本國普通股（排除 ETF／ETN／受益憑證／特別股、-KY／DR、當日停資 X）" if key.endswith("narrow") else "口徑＝只排 ETF：分子排除代號非 4 位數字者（ETF／ETN／受益憑證／特別股）") + "；公式 Σ(融資餘額張數×1000×收盤價) ÷ 證交所公布上市融資金額 ×100%；分母為官方總額（含 ETF 借款，官方不公布個別證券融資金額），所以比『含ETF』版本低。窄口徑與論壇流傳的『扣除ETF 融資維持率』（10/30–11/06）相差約 0.5–3.3 個百分點，是目前最接近玩股網數字的版本（通常略高於玩股網 0.5–3.3 個百分點），但算法屬第三方逆向推估、未經官方證實。",
-            dict(variant=p["primary_variant"], value=k, ex_etf_only=last["twse_ex_etf"], narrow=last["twse_narrow"], recent=[(x["date"], x[key]) for x in got], min=mn[key], min_date=mn["date"])))
+            dict(variant=p["primary_variant"], value=k, ex_etf_only=last["twse_ex_etf"], narrow=last["twse_narrow"], recent=[(x["date"], x[key]) for x in got], min=mn[key], min_date=mn["date"],
+                 obs_date=ld, red_dates=red_dates)))
         rows.append(row("6", "上市櫃融資維持率（不含ETF，自算，參考）", f"{last['both_ex_etf']:.2f}%（上櫃 {last['tpex_ex_etf']:.2f}%）" if "both_ex_etf" in last else None,
             "不參與判定", WHT if "both_ex_etf" in last else UNK, ld, src, "上市＋上櫃分子、分母各自加總後相除。"))
         rows.append(row("6", "上市融資維持率（含ETF，參考）", f"{last['twse_all']:.2f}%；上市櫃含ETF {last.get('both_all', float('nan')):.2f}%",
@@ -210,12 +222,19 @@ def sig9_v2(row, completed_daily, weekly, MKT, yf_src, P):
             wc = weekly(dly, tz)["Close"]; wc = wc[wc.index >= "2015-01-01"]
             cd, td, dd_ = dow_pattern(c, rd, p["min_drawdown"]); cw, tw, dw = dow_pattern(wc, rw, p["min_drawdown"])
             st = sig9_daily_light(cd)
+            red_dates = []
+            start_i = max(60, len(c) - 15)
+            for i in range(start_i, len(c)):
+                code_i, _, _ = dow_pattern(c.iloc[:i + 1], rd, p["min_drawdown"])
+                if code_i == "confirmed":
+                    red_dates.append(c.index[i].strftime("%Y-%m-%d"))
+            obs9 = c.index[-1].strftime("%Y-%m-%d")
             val = f"日K（判燈）：{td}｜週K（參考）：{tw}｜最新收盤 {c.iloc[-1]:,.0f}（{c.index[-1].strftime('%m/%d')}）"
             chart = dict(daily=[(i.strftime("%Y-%m-%d"), round(float(v), 1)) for i, v in c.iloc[-130:].items()],
                          weekly=[(i.strftime("%Y-%m-%d"), round(float(v), 1)) for i, v in wc.iloc[-104:].items()],
                          daily_pivots=dd_.get("pivots", []), weekly_pivots=dw.get("pivots", []))
             rows.append(row("9", name, val, thr, st, f"日K {c.index[-1].strftime('%Y-%m-%d')}；週K截至 {wc.index[-1].strftime('%Y-%m-%d')}（已完成週，參考）", [yf_src(tk)],
-                note, dict(daily_code=cd, weekly_code=cw, daily=dd_, weekly=dw, chart=chart)))
+                note, dict(daily_code=cd, weekly_code=cw, daily=dd_, weekly=dw, chart=chart, obs_date=obs9, red_dates=red_dates)))
         except Exception as e:
             rows.append(row("9", name, None, thr, UNK, None, [yf_src(tk)], f"失敗：{e}"))
     return rows
@@ -242,6 +261,8 @@ def sig8_v2(row, completed_daily, weekly, yf_src, P):
             m = w.rolling(n).mean(); sd = w.rolling(n).std(ddof=0); z = (w - m) / sd
             zl = z.iloc[-1]; last4 = z.iloc[-4:]; zmax, zmax_d = last4.max(), last4.idxmax()
             st = RED if zl >= p["extra_high"] else YEL if zl >= p["high"] else WHT
+            obs8 = w.index[-1].strftime("%Y-%m-%d")
+            red_dates = [i.strftime("%Y-%m-%d") for i, v in z.dropna().items() if v >= p["extra_high"]]
             spl = yf.Ticker(tk).splits
             if len(spl): spl.index = spl.index.tz_localize(None)
             win_start = w.index[-n] if len(w) >= n else w.index[0]
@@ -251,6 +272,7 @@ def sig8_v2(row, completed_daily, weekly, yf_src, P):
             rows.append(row("8", tk, f"上週（{w.index[-1].strftime('%m/%d')} 當週）量 {w.iloc[-1]/1e6:,.0f}M 股；Z = {zl:+.2f}σ（{hmv_zone(zl, p)}）；200 週均量 {m.iloc[-1]/1e6:,.0f}M、σ {sd.iloc[-1]/1e6:,.0f}M；近 4 週最高 Z {zmax:+.2f}σ（{zmax_d.strftime('%m/%d')} 當週，{hmv_zone(zmax, p)}）",
                 thr, st, f"週線截至 {w.index[-1].strftime('%Y-%m-%d')}（已完成週）", [yf_src(tk)], note,
                 dict(z=zl, zone=hmv_zone(zl, p), z_max4=zmax, z_max4_week=zmax_d.strftime("%Y-%m-%d"), sma200=m.iloc[-1], sd200=sd.iloc[-1], weeks=len(w),
+                     obs_date=obs8, red_dates=red_dates,
                      last4=[(i.strftime("%Y-%m-%d"), round(float(v), 2)) for i, v in last4.items()])))
         except Exception as e:
             rows.append(row("8", tk, None, thr, UNK, None, [yf_src(tk)], f"失敗：{e}"))

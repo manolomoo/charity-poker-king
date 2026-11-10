@@ -328,6 +328,14 @@
     if (summaryItem.by_market) {
       summaryEl.appendChild(S.el("span", { class: "by-market", text: byMarketText(summaryItem.by_market) }));
     }
+    var holdSeen = {};
+    (rows || []).forEach(function (row) {
+      var h = row.extra && row.extra.hold;
+      if (!h || holdSeen[h.last_trigger + h.valid_through]) return;
+      holdSeen[h.last_trigger + h.valid_through] = true;
+      summaryEl.appendChild(S.el("span", { class: "by-market", text:
+        "最後觸發日：" + h.last_trigger + "（" + h.days + " 天內有效，至 " + h.valid_through + "）｜" + (h.label || "使用者指定（2026-11-11）") }));
+    });
     var origin = (rulesSignal && rulesSignal.origin) || "";
     // 整項門檻為自訂 → 「自訂規則／尚未回測」；只有「接近」定義等部分為自訂 → 「部分自訂規則」
     if (origin.indexOf("自訂規則") === 0) {

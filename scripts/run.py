@@ -7,6 +7,7 @@ import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 import signals_v2 as v2
+from hold import apply_three_day_hold
 
 RULES = json.load(open(os.path.join(ROOT, "rules.json")))
 P = lambda k: RULES["signals"][k]["params"]
@@ -69,11 +70,18 @@ def sig1():
         wf, wp = win(p["week_days"]); mf, mp = win(p["month_days"])
         st = RED if (mp <= p["m_trigger"] or wp <= p["w_trigger"]) else YEL if (mp <= p["m_near"] or wp <= p["w_near"]) else WHT
         last = x.index[-1].strftime("%Y-%m-%d")
+        red_dates = []
+        for i in range(p["month_days"] + 1, len(x)):
+            wflow = f.iloc[i - p["week_days"] + 1:i + 1].sum(); wbase = x["TNA"].iloc[i - p["week_days"]]
+            mflow = f.iloc[i - p["month_days"] + 1:i + 1].sum(); mbase = x["TNA"].iloc[i - p["month_days"]]
+            if not wbase or not mbase: continue
+            if mflow / mbase * 100 <= p["m_trigger"] or wflow / wbase * 100 <= p["w_trigger"]:
+                red_dates.append(x.index[i].strftime("%Y-%m-%d"))
         rows.append(row("1", "SPY", f"近1週 {wf/1e9:+.2f}B 美元（{wp:+.2f}% AUM）；近1月 {mf/1e9:+.2f}B（{mp:+.2f}% AUM）；AUM {x['TNA'].iloc[-1]/1e9:.1f}B；流通股數 {x['SO'].iloc[-1]/1e6:.1f}M",
             RULES["signals"]["1"]["trigger"], st, last, [url],
             "以官方每日流通股數變動×NAV 推算；SSGA 檔案約延遲 1 個交易日。",
             dict(week_flow_usd=wf, week_pct=wp, month_flow_usd=mf, month_pct=mp, aum=x["TNA"].iloc[-1], shares=x["SO"].iloc[-1],
-                 aum_change_1m_pct=(x["TNA"].iloc[-1]/x["TNA"].iloc[-22]-1)*100)))
+                 aum_change_1m_pct=(x["TNA"].iloc[-1]/x["TNA"].iloc[-22]-1)*100, obs_date=last, red_dates=red_dates)))
     except Exception as e:
         rows.append(row("1", "SPY", None, RULES["signals"]["1"]["trigger"], UNK, None, [url], f"抓取失敗：{e}"))
     # SOXX：iShares 頁面僅有當日流通股數（無歷史）→ 存快照，未來累積後可計算
@@ -102,11 +110,14 @@ def sig1():
     s = snap.get("SOXX")
     rows.append(row("1", "SOXX", (f"流通股數 {s['shares']/1e6:.2f}M、AUM {s['aum']/1e9:.2f}B（{s['asof']}）；近1週／近1月淨流量：無歷史資料" if s else None),
         RULES["signals"]["1"]["trigger"], UNK, s["asof"] if s else None, [soxx_url],
-        "iShares 官網只公開當日流通股數，歷史下載檔以程式讀取失敗；已開始每日存快照（data/etf_shares_snapshots.csv），累積 22 個交易日後即可依規則計算。"))
+        "iShares 官網只公開當日流通股數，歷史下載檔以程式讀取失敗；已開始每日存快照（data/etf_shares_snapshots.csv），累積 22 個交易日後即可依規則計算。",
+        dict(red_dates=[])))
     rows.append(row("1", "QQQ", None, RULES["signals"]["1"]["trigger"], UNK, None, ["https://www.invesco.com/qqq-etf/en/about.html"],
-        "Invesco 資料 API 拒絕程式存取（HTTP 406），未取得每日流通股數；不以資產規模縮水代替資金外流。"))
+        "Invesco 資料 API 拒絕程式存取（HTTP 406），未取得每日流通股數；不以資產規模縮水代替資金外流。",
+        dict(red_dates=[])))
     rows.append(row("1", "SMH", None, RULES["signals"]["1"]["trigger"], UNK, None, ["https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/"],
-        "VanEck 官網需 Cookie／瀏覽器，程式讀取被導向錯誤頁；未取得每日流通股數。"))
+        "VanEck 官網需 Cookie／瀏覽器，程式讀取被導向錯誤頁；未取得每日流通股數。",
+        dict(red_dates=[])))
     return rows
 
 # ---------------- 2. CNN F&G ----------------
@@ -146,9 +157,12 @@ def sig3():
             w = weekly(d, tz); k = kdj(w, p["n"], p["m1"], p["m2"])
             j = k["J"].iloc[-1]; prev = k["J"].iloc[-2]
             st = RED if j <= p["trigger"] else YEL if j <= p["near"] else WHT
+            obs = w.index[-1].strftime("%Y-%m-%d")
+            red_dates = [i.strftime("%Y-%m-%d") for i, v in k["J"].dropna().items() if v <= p["trigger"]]
             rows.append(row("3", name, f"J={j:.1f}（K={k['K'].iloc[-1]:.1f}, D={k['D'].iloc[-1]:.1f}；前一週 J={prev:.1f}）",
-                "週 J ≤ 0", st, f"週線截至 {w.index[-1].strftime('%Y-%m-%d')}（已完成週）", [yf_src(tk)],
-                "週K由 Yahoo 日線重組，KDJ(9,3,3)。", dict(J=j, K=k['K'].iloc[-1], D=k['D'].iloc[-1], J_prev=prev,
+                "週 J ≤ 0", st, f"週線截至 {obs}（已完成週）", [yf_src(tk)],
+                "週K由 Yahoo 日線重組，KDJ(9,3,3)。觸發日＝該週週五。", dict(J=j, K=k['K'].iloc[-1], D=k['D'].iloc[-1], J_prev=prev,
+                     obs_date=obs, red_dates=red_dates,
                      last5=[(i.strftime('%Y-%m-%d'), round(v, 1)) for i, v in k['J'].iloc[-5:].items()])))
         except Exception as e:
             rows.append(row("3", name, None, "週 J ≤ 0", UNK, None, [yf_src(tk)], f"失敗：{e}"))
@@ -171,16 +185,36 @@ def sig4():
                 h = ser[ser.index >= cur_date - pd.DateOffset(years=years)]
                 return (h < cur).mean() * 100, len(h), h.index[0]
             p10, n10, s10 = pct(p["window_years"]); p5, n5, _ = pct(5)
-            st = RED if p10 <= p["pct_trigger"] else YEL if p10 <= p["pct_near"] else WHT
+            today = pd.Timestamp(now_tpe().date())
+            end = min(cur_date, today - pd.Timedelta(days=1))
+            red_dates = []
+            fri_pct = None
+            last_fri = None
+            if end >= ow.index[0]:
+                for fri in pd.date_range(end=end, periods=8, freq="W-FRI"):
+                    hist_own = ow.loc[:fri]
+                    if hist_own.empty: continue
+                    pe_f = hist_own.iloc[-1]
+                    hist = ser[(ser.index <= fri) & (ser.index >= fri - pd.DateOffset(years=p["window_years"]))]
+                    if len(hist) < 10: continue
+                    pct_f = (hist < pe_f).mean() * 100
+                    last_fri, fri_pct = fri, pct_f
+                    if pct_f <= p["pct_trigger"]:
+                        red_dates.append(fri.strftime("%Y-%m-%d"))
+            # 週線訊號：燈號看最近一根已完成週五，不看週中的日線讀數
+            judge = fri_pct if fri_pct is not None else p10
+            st = RED if judge <= p["pct_trigger"] else YEL if judge <= p["pct_near"] else WHT
+            obs_date = last_fri.strftime("%Y-%m-%d") if last_fri is not None else cur_date.strftime("%Y-%m-%d")
             px = daily(tk)["Close"]
             eps = (px.reindex(ow.index, method="ffill") / ow).dropna()
             e1 = (eps.iloc[-1] / eps.iloc[-21] - 1) * 100 if len(eps) > 21 else None
             e3 = (eps.iloc[-1] / eps.iloc[0] - 1) * 100
             flag = " ⚠️EPS 下修中，可能為假便宜" if e3 < p["eps_down_flag"] else ""
-            rows.append(row("4", name, f"NTM P/E {cur:.2f}×；10年分位 {p10:.0f}%（5年 {p5:.0f}%）；隱含 NTM EPS 約1個月 {e1:+.1f}%、自 {eps.index[0].strftime('%m/%d')} 起 {e3:+.1f}%{flag}",
-                "10 年分位 ≤ 20%", st, cur_date.strftime("%Y-%m-%d"), [page, url],
+            rows.append(row("4", name, f"NTM P/E {cur:.2f}×（{cur_date.strftime('%Y-%m-%d')}）；10年分位 {p10:.0f}%（5年 {p5:.0f}%）；最近週五分位 {judge:.0f}%；隱含 NTM EPS 約1個月 {e1:+.1f}%、自 {eps.index[0].strftime('%m/%d')} 起 {e3:+.1f}%{flag}",
+                "10 年分位 ≤ 20%", st, obs_date, [page, url],
                 f"單一資料商 History of Market；歷史分位以終端機週頻序列（{s10.strftime('%Y-%m')}–{ser.index[-1].strftime('%Y-%m-%d')}，{n10} 筆）計算，最新值為同口徑自算日線 forwardOwn（官方說明與終端機序列差距 <3%）。EPS 由指數收盤÷本益比推得，非資料商直接公布。",
-                dict(pe=cur, pct10=p10, pct5=p5, eps_chg_1m=e1, eps_chg_since=e3, eps_since=eps.index[0].strftime('%Y-%m-%d'), terminal_last=ser.index[-1].strftime('%Y-%m-%d'))))
+                dict(pe=cur, pct10=p10, pct5=p5, eps_chg_1m=e1, eps_chg_since=e3, eps_since=eps.index[0].strftime('%Y-%m-%d'), terminal_last=ser.index[-1].strftime('%Y-%m-%d'),
+                     obs_date=obs_date, red_dates=red_dates, friday_pct10=fri_pct)))
         except Exception as e:
             rows.append(row("4", name, None, "10 年分位 ≤ 20%", UNK, None, [url], f"失敗：{e}"))
     return rows
@@ -287,11 +321,23 @@ def sig7():
         elif dd_c <= p["dd_trigger"] and ratio_ok: st = RED
         elif (dd_c <= p["dd_near"] and ratio_ok) or dd_c <= p["dd_trigger"]: st = YEL
         else: st = WHT
+        red_dates = []
+        twa_all = tw["marginAmt"].astype(float)
+        for dt_i in comb.index[-20:]:
+            window = comb.loc[:dt_i].iloc[-p["lookback_days"]:]
+            if len(window) < 20 or dt_i not in twa_all.index or dt_i not in tw.index: continue
+            dd_i = (window.iloc[-1] / window.max() - 1) * 100
+            mv = tw["marketValue"].loc[dt_i]
+            if not mv: continue
+            ratio_i = twa_all.loc[dt_i] / 1e5 / mv * 100
+            if dd_i <= p["dd_trigger"] and ratio_i <= base:
+                red_dates.append(dt_i.strftime("%Y-%m-%d"))
         src = ["https://www.twse.com.tw/zh/trading/margin/mi-margn.html", TW + "MI_MARGN_TREND?response=json&days=60", "https://www.tpex.org.tw/zh-tw/mainboard/trading/margin-trading/transactions.html", TW + "MI_MARGN_HISTORY?response=json"]
         rows.append(row("7", "上市＋上櫃融資餘額合計", f"{comb.iloc[-1]/1e5:,.0f} 億元；較 {len(tw)} 日高點（{hi_c.strftime('%Y-%m-%d')}）{dd_c:+.1f}%；上市融資／上市市值 {ratio:.3f}%（近{p['ratio_years']}年年底中位數 {base:.2f}%，{'≤' if ratio_ok else '>'}基準）",
             "回落 ≥20% 且 比重 ≤ 基準", st, ld.strftime("%Y-%m-%d"), src,
             f"上櫃日資料涵蓋 {len(ot)}/{len(tw)} 日；比重僅計上市（櫃買總市值未納入）。",
-            dict(total_100m=comb.iloc[-1]/1e5, dd_pct=dd_c, high_date=hi_c.strftime('%Y-%m-%d'), ratio_pct=ratio, ratio_base=base, coverage=cover)))
+            dict(total_100m=comb.iloc[-1]/1e5, dd_pct=dd_c, high_date=hi_c.strftime('%Y-%m-%d'), ratio_pct=ratio, ratio_base=base, coverage=cover,
+                 obs_date=ld.strftime("%Y-%m-%d"), red_dates=red_dates)))
         rows.append(row("7", "上市融資餘額（參考）", f"{twa.iloc[-1]/1e5:,.0f} 億元；較高點（{hi_tw.strftime('%Y-%m-%d')}）{dd_tw:+.1f}%", "（整項以合計判定）", WHT if dd_tw > p["dd_near"] else YEL if dd_tw > p["dd_trigger"] else RED, ld.strftime("%Y-%m-%d"), src[:2], "分項燈號僅供參考，不參與彙總。"))
         if len(ot):
             dd_o, hi_o = dd(ot)
@@ -426,19 +472,39 @@ def sig10_11(release_note):
             if v < p["level"]: below += 1
             else: break
         st = RED if below >= 3 else YEL if below >= 1 else WHT
+        pub_m = re.search(r"(\d{4}-\d{2}-\d{2})", release_note or "")
+        pub = pub_m.group(1) if pub_m else None
+        def month_end(yyyymm):
+            y, mth = int(yyyymm[:4]), int(yyyymm[4:6])
+            nxt = dt.date(y + 1, 1, 1) if mth == 12 else dt.date(y, mth + 1, 1)
+            return (nxt - dt.timedelta(days=1)).isoformat()
+        red10 = []
+        for i in range(len(vals)):
+            streak = 0
+            for _, vv in reversed(vals[:i + 1]):
+                if vv < p["level"]: streak += 1
+                else: break
+            if streak >= 3:
+                red10.append(pub if (i == len(vals) - 1 and pub) else month_end(vals[i][0]))
+        obs10 = pub or month_end(vals[-1][0])
         mm = lambda s: f"{s[:4]}/{s[4:]}"
         revtxt = ("；與上次存檔相比之修正：" + "；".join(rev)) if rev else "；首次建立，尚無前一版本可比對修正（每月發布會回溯修正歷史值）"
         rows.append(row("10", "領先指標不含趨勢指數", "；".join(f"{mm(a)} {v:.2f}" for a, v in vals[-4:]) + f"（連續低於100：{below} 個月）",
             "連續3個月皆 <100", st, f"{mm(vals[-1][0])}（{release_note}）", [NDC_DS, "https://index.ndc.gov.tw/n/zh_tw/data/eco", url],
-            f"資料檔更新時間 {mt}" + revtxt, dict(values=vals, below_streak=below, revisions=rev)))
+            f"資料檔更新時間 {mt}" + revtxt, dict(values=vals, below_streak=below, revisions=rev, obs_date=obs10, red_dates=red10)))
         sc = df[["Date", "景氣對策信號綜合分數", "景氣對策信號"]].tail(6)
         sv = [(r_["Date"], int(r_["景氣對策信號綜合分數"]), r_["景氣對策信號"]) for _, r_ in sc.iterrows()]
         s = sv[-1][1]; p = P("11")
         st = RED if s <= p["blue_max"] else YEL if s <= p["yb_max"] else WHT
+        red11 = []
+        for i in range(len(sv)):
+            if sv[i][1] <= p["blue_max"]:
+                red11.append(pub if (i == len(sv) - 1 and pub) else month_end(sv[i][0]))
+        obs11 = pub or month_end(sv[-1][0])
         rows.append(row("11", "景氣對策信號", f"{mm(sv[-1][0])} {s} 分 {sv[-1][2]}燈；近月：" + "、".join(f"{mm(a)} {b}({c})" for a, b, c in sv[-6:-1]),
             "藍燈（9–16分）", st, f"{mm(sv[-1][0])}（{release_note}）", [NDC_DS, "https://www.ndc.gov.tw/nc_332_40618", url],
             "歷史修正：國發會每月回溯修正；本表以最新一版資料檔為準" + (revtxt if rev else "") ,
-            dict(series=sv)))
+            dict(series=sv, obs_date=obs11, red_dates=red11)))
     except Exception as e:
         traceback.print_exc()
         rows.append(row("10", "領先指標不含趨勢指數", None, "連續3個月皆 <100", UNK, None, [NDC_DS], f"失敗：{e}"))
@@ -526,6 +592,7 @@ def main():
     except Exception as e:
         traceback.print_exc(); failed["10"] = e; failed["11"] = e
     rows, stale = apply_stale_fallback(rows, prev, failed)
+    rows = apply_three_day_hold(rows, dt.date.fromisoformat(RUN_DATE))
     summ = summarize(rows)
     changes = []
     has_prev = bool(prev and prev.get("queried_at") and prev.get("queried_at") != RUN_TS)
