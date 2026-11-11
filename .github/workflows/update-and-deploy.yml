@@ -39,11 +39,11 @@ jobs:
       - name: 安裝相依套件
         run: pip install -r requirements.txt
 
-      - name: 執行追蹤器（個別來源失敗不中斷流程，run.py 會沿用上次數值並標記資料過期）
+      - name: 執行追蹤器（個別來源失敗會沿用上次並標資料過期；整個程式失敗則此步驟失敗）
         env:
           TZ: Asia/Taipei
           PYTHON: python
-        run: ./run.sh || echo "::warning::run.sh 執行過程出現錯誤，但流程繼續（個別來源失敗已由 run.py 標記為資料過期）"
+        run: ./run.sh
 
       - name: 檢查是否有資料變更
         id: diff

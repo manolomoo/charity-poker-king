@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 重跑：抓最新資料 → data/YYYY-MM-DD.json、data/latest.json、data/history.jsonl → 總表 reports/_table.md → data/manifest.json
-# 個別來源失敗時沿用上次數值並標「資料過期」，不會讓整個流程失敗。
+# 個別來源失敗時沿用上次數值並標「資料過期」。程式本身失敗（非零結束）會讓這個腳本失敗。
 set -e
 cd "$(dirname "$0")"
 PY=${PYTHON:-}

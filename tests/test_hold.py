@@ -6,15 +6,13 @@ from common import RED, YEL, WHT
 
 ASOF = dt.date(2026, 11, 11)
 
-def test_inclusive_three_calendar_days():
+def test_inclusive_seven_calendar_days():
     assert in_window(dt.date(2026, 11, 11), ASOF)
-    assert in_window(dt.date(2026, 11, 10), ASOF)
-    assert in_window(dt.date(2026, 11, 9), ASOF)
-    assert not in_window(dt.date(2026, 11, 8), ASOF)  # 第 4 個日曆天，重置
-    assert not in_window(dt.date(2026, 11, 6), ASOF)  # 週五 bar，週三已過期
+    assert in_window(dt.date(2026, 11, 5), ASOF)   # 含當天共 7 天
+    assert not in_window(dt.date(2026, 11, 4), ASOF)  # 第 8 個日曆天，重置
     assert not in_window(dt.date(2026, 11, 12), ASOF)  # 不前視
-    assert window_end(dt.date(2026, 11, 9)) == dt.date(2026, 11, 11)
-    assert HOLD_DAYS == 3
+    assert window_end(dt.date(2026, 11, 5)) == dt.date(2026, 11, 11)
+    assert HOLD_DAYS == 7
 
 def test_restart_uses_last_date():
     rows = [{
@@ -25,9 +23,10 @@ def test_restart_uses_last_date():
     apply_three_day_hold(rows, ASOF)
     assert rows[0]["status"] == RED
     assert rows[0]["extra"]["hold"]["last_trigger"] == "2026-11-10"
-    assert rows[0]["extra"]["hold"]["valid_through"] == "2026-11-12"
+    assert rows[0]["extra"]["hold"]["valid_through"] == "2026-11-16"
     assert rows[0]["extra"]["hold"]["held"] is True
-    assert rows[0]["value"].startswith("最後觸發日：2026-11-10（3 天內有效，至 2026-11-12）｜目前數值：")
+    assert rows[0]["extra"]["last_trigger_info"]["within_hold"] is True
+    assert rows[0]["value"].startswith("最後觸發日：2026-11-10（7 天內有效，至 2026-11-16）｜目前數值：")
 
 def test_current_trigger_uses_obs_date():
     rows = [{
@@ -85,10 +84,35 @@ def test_reference_row_untouched():
     assert rows[0]["value"] == "x"
 
 def test_hold_text():
-    assert hold_text(dt.date(2026, 11, 10)) == "最後觸發日：2026-11-10（3 天內有效，至 2026-11-12）"
+    assert hold_text(dt.date(2026, 11, 10)) == "最後觸發日：2026-11-10（7 天內有效，至 2026-11-16）"
+
+def test_expired_daily_still_records_last_trigger():
+    rows = [{
+        "signal": "2", "target": "CNN", "value": "最新 33", "threshold": "< 25",
+        "status": YEL, "status_label": "接近門檻", "data_date": "2026-11-11",
+        "note": "", "extra": {"obs_date": "2026-11-11", "red_dates": ["2026-11-01"]},
+    }]
+    apply_three_day_hold(rows, ASOF)
+    assert rows[0]["status"] == YEL
+    info = rows[0]["extra"]["last_trigger_info"]
+    assert info["date"] == "2026-11-01"
+    assert info["within_hold"] is False
+    assert info["phrase"] == "已超過維持"
+
+def test_signal9_hold_does_not_stack():
+    rows = [{
+        "signal": "9", "target": "NDX", "value": "型態", "threshold": "轉折",
+        "status": WHT, "status_label": "未觸發", "data_date": "2026-11-11",
+        "note": "", "extra": {"obs_date": "2026-11-11", "red_dates": ["2026-11-10"],
+                              "last_trigger_info": {"date": "2026-10-01", "within_hold": False, "phrase": "已超過維持", "mode": "turn"}},
+    }]
+    apply_three_day_hold(rows, ASOF)
+    assert rows[0]["status"] == WHT
+    assert rows[0]["extra"]["last_trigger_info"]["date"] == "2026-10-01"
+    assert "hold" not in rows[0]["extra"]
 
 if __name__ == "__main__":
-    test_inclusive_three_calendar_days()
+    test_inclusive_seven_calendar_days()
     test_restart_uses_last_date()
     test_current_trigger_uses_obs_date()
     test_weekly_bar_holds_until_next_week()
@@ -96,4 +120,6 @@ if __name__ == "__main__":
     test_monthly_holds_past_three_days()
     test_reference_row_untouched()
     test_hold_text()
+    test_expired_daily_still_records_last_trigger()
+    test_signal9_hold_does_not_stack()
     print("hold tests ok")

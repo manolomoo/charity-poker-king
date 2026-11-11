@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 import signals_v2 as v2
 from hold import apply_three_day_hold
+from episode import build_episode
 
 RULES = json.load(open(os.path.join(ROOT, "rules.json")))
 P = lambda k: RULES["signals"][k]["params"]
@@ -17,7 +18,7 @@ RUN_DATE = now_tpe().strftime("%Y-%m-%d")
 def row(signal, target, value, threshold, status, data_date, sources, note="", extra=None):
     d = dict(signal=signal, target=target, value=value, threshold=threshold, status=status,
              status_label=STATUS_LABEL[status], data_date=data_date, sources=sources,
-             queried_at=RUN_TS, note=note)
+             queried_at=RUN_TS, note=note, asof=data_date)
     if extra: d["extra"] = extra
     return d
 
@@ -28,6 +29,7 @@ def daily(tk, start="2009-01-01"):
         import yfinance as yf
         d = yf.Ticker(tk).history(start=start, auto_adjust=False, actions=False)
         d.index = d.index.tz_localize(None).normalize()
+        d = d.replace([np.inf, -np.inf], np.nan).dropna(subset=["Close"])
         _px[tk] = d
     return _px[tk]
 
@@ -594,6 +596,12 @@ def main():
     rows, stale = apply_stale_fallback(rows, prev, failed)
     rows = apply_three_day_hold(rows, dt.date.fromisoformat(RUN_DATE))
     summ = summarize(rows)
+    try:
+        ndx_px = completed_daily("^NDX", NY, (16, 15))["Close"]
+        episode = build_episode(rows, ndx_px, [(k, cfg["name"]) for k, cfg in RULES["signals"].items()])
+    except Exception as e:
+        traceback.print_exc()
+        episode = {"error": str(e), "rows": []}
     changes = []
     has_prev = bool(prev and prev.get("queried_at") and prev.get("queried_at") != RUN_TS)
     if has_prev:
@@ -603,7 +611,7 @@ def main():
     out = dict(schema="bottom-signals/v1", site=SITE_NAME, rules_version=RULES["version"], run_date=RUN_DATE,
                queried_at=RUN_TS, previous_run=prev.get("queried_at") if has_prev else None,
                changes_vs_previous=(changes or "與上次相比，整項燈號沒有變化") if has_prev else "首次建立，無上次紀錄",
-               stale_rows=stale, summary=summ, rows=rows)
+               stale_rows=stale, summary=summ, episode=episode, rows=rows)
     def conv(o):
         if isinstance(o, (np.integer,)): return int(o)
         if isinstance(o, (np.floating,)): return None if np.isnan(o) else float(o)

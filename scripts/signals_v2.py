@@ -202,39 +202,126 @@ def dow_pattern(c, rev, min_dd):
         return "uptrend_pullback", f"上升趨勢中回檔：底底高＋頭頭高已成立（L2 {L2[2]:,.0f}＞L1 {L1[2]:,.0f}，高點 {lp[2]:,.0f}＞{H[2]:,.0f}），目前回檔中、守 {L2[2]:,.0f}", det
     return "pullback", f"自高點 {lp[2]:,.0f}（{D(lp[1])}）回檔中，尚未破前低 {L2[2]:,.0f}", det
 
+TURN_WINDOW = 10  # 轉折日起算，含當天共 10 個交易日
+
+def pattern_code_at(v, piv, i):
+    """與 dow_pattern 同一套分類，只用 v[:i+1] 與已確認的 piv（無前視）。"""
+    if not piv: return "unknown"
+    lows = [x for x in piv if x[0] == "L"]
+    highs = [x for x in piv if x[0] == "H"]
+    if len(lows) < 2: return "unknown"
+    lp = piv[-1]
+    L2, L1 = lows[-1], lows[-2]
+    hs = [h for h in highs if L1[1] < h[1] < L2[1]]
+    H = max(hs, key=lambda t: t[2]) if hs else None
+    invalid = bool(np.any(v[L2[1] + 1:i + 1] < L2[2])) if L2[1] + 1 <= i else False
+    last = v[i]
+    if lp[0] == "L":
+        if L2[2] > L1[2] and not invalid:
+            broke = H is not None and L2[3] <= i and bool(np.any(v[L2[3]:i + 1] > H[2]))
+            return "confirmed" if broke else "hl_pending"
+        return "lower_low_rebound"
+    seg = v[lp[1]:i + 1]
+    seg_min = float(np.min(seg)) if len(seg) else last
+    if last < L2[2] or seg_min < L2[2]:
+        return "falling_below"
+    if L2[2] > L1[2] and H is not None and lp[2] > H[2]:
+        return "uptrend_pullback"
+    return "pullback"
+
+def scan_turns(c, rev):
+    """沿日線往前走，記下第一次變成 confirmed／hl_pending 的交易日。回傳 (最後 code, confirmed 日, pending 日)。"""
+    v = np.asarray(c.to_numpy(dtype=float) if hasattr(c, "to_numpy") else c.values, dtype=float)
+    n = len(v)
+    piv = []
+    hi = lo = 0
+    trend = 0
+    prev = None
+    confirmed, pending = [], []
+    last_code = "unknown"
+    for i in range(1, n):
+        if not np.isfinite(v[i]): continue
+        if trend == 0:
+            if v[i] > v[hi]: hi = i
+            if v[i] < v[lo]: lo = i
+            if v[i] >= v[lo] * (1 + rev) and lo < i:
+                piv.append(("L", lo, float(v[lo]), i)); trend = 1; hi = i
+            elif v[i] <= v[hi] * (1 - rev) and hi < i:
+                piv.append(("H", hi, float(v[hi]), i)); trend = -1; lo = i
+        elif trend == 1:
+            if v[i] > v[hi]: hi = i
+            elif v[i] <= v[hi] * (1 - rev):
+                piv.append(("H", hi, float(v[hi]), i)); trend = -1; lo = i
+        else:
+            if v[i] < v[lo]: lo = i
+            elif v[i] >= v[lo] * (1 + rev):
+                piv.append(("L", lo, float(v[lo]), i)); trend = 1; hi = i
+        code = pattern_code_at(v, piv, i)
+        last_code = code
+        if code == "confirmed" and prev != "confirmed":
+            confirmed.append(c.index[i])
+        elif code == "hl_pending" and prev != "hl_pending":
+            pending.append(c.index[i])
+        prev = code
+    return last_code, confirmed, pending
+
+def within_turn(turns, index, window=TURN_WINDOW):
+    """含轉折日共 window 個交易日。"""
+    if not turns: return False, None
+    last = turns[-1]
+    loc = index.get_loc(last)
+    if isinstance(loc, slice): loc = loc.start
+    dist = len(index) - 1 - int(loc)
+    return 0 <= dist <= window - 1, last
+
 def sig9_daily_light(code):
-    """日K 機械燈號（自訂規則／尚未回測）。週K 不參與。"""
-    if code == "confirmed": return RED   # 底底高＋頭頭高確認
-    if code == "hl_pending": return YEL  # 底底高（頭頭高待確認）
+    """舊的狀態燈。v3 起改走 scan_turns，這個函式只留給對照。"""
+    if code == "confirmed": return RED
+    if code == "hl_pending": return YEL
     return WHT
 
 def sig9_v2(row, completed_daily, weekly, MKT, yf_src, P):
     p = P("9"); rows = []
-    note = ("COBB：看 4小時／日K／週K 哪個高低點軌跡最清楚（例如 2022 明顯看週K）；本站預設用日K 判燈，週K 僅供參考。4 小時K 暫無穩定免費資料，未納入。"
-            "燈號門檻為自訂規則／尚未回測：🔴＝日K『底底高＋頭頭高確認』；🟡＝僅日K『底底高（頭頭高待確認）』；其餘日K 型態（含破前低後反彈）為⚪。"
+    note = ("COBB：看 4小時／日K／週K 哪個高低點軌跡最清楚（例如 2022 明顯看週K）；本站預設用日K，週K 僅供參考。4 小時K 暫無穩定免費資料，未納入。"
+            "v3 起是轉折燈（使用者同意（2026-11-11），自訂）：🔴＝日K 第一次變成『底底高＋頭頭高確認』之後的 10 個交易日；"
+            "🟡＝第一次變成『底底高（頭頭高待確認）』之後的 10 個交易日；否則⚪，型態文字仍照現況顯示。不另疊 7 日維持。"
             "只用收盤；波段點要反向達門檻才確認，確認前不使用（無前視）。")
     for tk, (name, tz, hm) in MKT.items():
         rd, rw = p["reversal_pct_daily"][name] / 100, p["reversal_pct_weekly"][name] / 100
-        thr = (f"🔴 日K『底底高＋頭頭高確認』；🟡 僅日K『底底高（頭頭高待確認）』；其餘⚪（自訂規則／尚未回測）。"
-               f"波段確認門檻：日K {rd*100:.0f}%、週K 參考 {rw*100:.0f}%（收盤）")
+        thr = (f"轉折燈：🔴＝日K 剛變成『底底高＋頭頭高確認』的 10 個交易日內；🟡＝剛變成『底底高（頭頭高待確認）』的 10 個交易日內；否則⚪。"
+               f"使用者同意（2026-11-11），自訂。波段確認門檻：日K {rd*100:.0f}%、週K 參考 {rw*100:.0f}%（收盤）")
         try:
-            dly = completed_daily(tk, tz, hm); c = dly["Close"][dly.index >= "2018-01-01"]
-            wc = weekly(dly, tz)["Close"]; wc = wc[wc.index >= "2015-01-01"]
+            dly = completed_daily(tk, tz, hm); c = dly["Close"].dropna()
+            c = c[c.index >= "2018-01-01"]
+            wc = weekly(dly, tz)["Close"].dropna(); wc = wc[wc.index >= "2015-01-01"]
             cd, td, dd_ = dow_pattern(c, rd, p["min_drawdown"]); cw, tw, dw = dow_pattern(wc, rw, p["min_drawdown"])
-            st = sig9_daily_light(cd)
-            red_dates = []
-            start_i = max(60, len(c) - 15)
-            for i in range(start_i, len(c)):
-                code_i, _, _ = dow_pattern(c.iloc[:i + 1], rd, p["min_drawdown"])
-                if code_i == "confirmed":
-                    red_dates.append(c.index[i].strftime("%Y-%m-%d"))
+            _, confirmed, pending = scan_turns(c, rd)
+            red_on, red_day = within_turn(confirmed, c.index)
+            yel_on, yel_day = within_turn(pending, c.index)
+            st = RED if red_on else YEL if yel_on else WHT
+            turns = [t for t in confirmed]
+            last_turn = None
+            pool = list(confirmed) + list(pending)
+            if pool: last_turn = max(pool)
+            within = st in (RED, YEL)
             obs9 = c.index[-1].strftime("%Y-%m-%d")
-            val = f"日K（判燈）：{td}｜週K（參考）：{tw}｜最新收盤 {c.iloc[-1]:,.0f}（{c.index[-1].strftime('%m/%d')}）"
+            px = c.iloc[-1]
+            px_txt = f"{px:,.0f}" if pd.notna(px) else "—"
+            val = f"日K（目前型態）：{td}｜週K（參考）：{tw}｜最新收盤 {px_txt}（{c.index[-1].strftime('%m/%d')}）"
             chart = dict(daily=[(i.strftime("%Y-%m-%d"), round(float(v), 1)) for i, v in c.iloc[-130:].items()],
                          weekly=[(i.strftime("%Y-%m-%d"), round(float(v), 1)) for i, v in wc.iloc[-104:].items()],
                          daily_pivots=dd_.get("pivots", []), weekly_pivots=dw.get("pivots", []))
             rows.append(row("9", name, val, thr, st, f"日K {c.index[-1].strftime('%Y-%m-%d')}；週K截至 {wc.index[-1].strftime('%Y-%m-%d')}（已完成週，參考）", [yf_src(tk)],
-                note, dict(daily_code=cd, weekly_code=cw, daily=dd_, weekly=dw, chart=chart, obs_date=obs9, red_dates=red_dates)))
+                note, dict(daily_code=cd, weekly_code=cw, daily=dd_, weekly=dw, chart=chart, obs_date=obs9,
+                           red_dates=[t.strftime("%Y-%m-%d") for t in confirmed],
+                           trigger_dates=[t.strftime("%Y-%m-%d") for t in turns],
+                           pending_turns=[t.strftime("%Y-%m-%d") for t in pending],
+                           last_trigger_info={
+                               "date": last_turn.strftime("%Y-%m-%d") if last_turn is not None else None,
+                               "within_hold": bool(within),
+                               "phrase": ("仍在維持內（轉折後 10 個交易日）" if within else "已超過維持") if last_turn is not None else None,
+                               "mode": "turn",
+                           })))
         except Exception as e:
             rows.append(row("9", name, None, thr, UNK, None, [yf_src(tk)], f"失敗：{e}"))
     return rows

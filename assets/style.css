@@ -618,3 +618,43 @@ details.report-table-collapse > summary { cursor: pointer; font-weight: 600; pad
 @media (max-width: 680px) {
   .sig9-chart-pair { flex-direction: column; }
 }
+
+.notice-warn {
+  background: var(--red-bg);
+  border-color: #e7b2a8;
+  color: var(--red-ink);
+  font-weight: 650;
+}
+.cat-sum {
+  margin: -4px 0 12px;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+.badge-source, .badge-hold {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink-soft);
+}
+.badge-source { border-color: #ddcdf0; background: #f1e9fb; color: #6b4fa0; }
+.episode { margin: 22px 0 8px; }
+.episode h2 { font-size: 1.15rem; margin: 0 0 8px; }
+.episode-lead, .episode-note { color: var(--ink-soft); font-size: 0.92rem; }
+.episode-note { margin-top: 10px; }
+.episode-scroll { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+.episode-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.episode-table th, .episode-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.episode-table th { color: var(--ink-soft); font-weight: 600; }
+@media (max-width: 680px) {
+  .signal-card summary { align-items: flex-start; }
+  .episode-table { font-size: 0.8rem; }
+  .badge-source, .badge-hold { white-space: normal; }
+}

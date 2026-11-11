@@ -9,9 +9,11 @@
   Site.renderFooter();
 
   var GROUPS = [
-    { title: "一、恐慌、籌碼與估值（第 1–8 項）", ids: ["1", "2", "3", "4", "5", "6", "7", "8"] },
-    { title: "二、價格回穩確認（第 9 項）", ids: ["9"] },
-    { title: "三、台灣總體景氣背景（第 10–11 項）", ids: ["10", "11"] },
+    { title: "恐慌類", ids: ["2", "5", "8"] },
+    { title: "技術類", ids: ["3", "9"] },
+    { title: "估值類", ids: ["4"] },
+    { title: "籌碼類", ids: ["6", "7"] },
+    { title: "景氣／資金類", ids: ["1", "10", "11"] },
   ];
 
   var AGG_LABELS = null; // 待 rules.json 載入後填入
@@ -56,9 +58,28 @@
     }
   }
 
+  function queriedAgeHours(latest) {
+    var m = String(latest.queried_at || "").match(/(\d{4}-\d{2}-\d{2})[ T](\d{2}):(\d{2})/);
+    if (!m) return null;
+    var t = new Date(m[1] + "T" + m[2] + ":" + m[3] + ":00+08:00");
+    if (isNaN(t.getTime())) return null;
+    return (Date.now() - t.getTime()) / 36e5;
+  }
+
+  function taipeiWeekday() {
+    var wd = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Taipei", weekday: "short" }).format(new Date());
+    return wd !== "Sat" && wd !== "Sun";
+  }
+
   function renderStaleNotice(latest) {
     var box = document.getElementById("stale-notice");
     box.innerHTML = "";
+    var age = queriedAgeHours(latest);
+    if (taipeiWeekday() && age != null && age > 36) {
+      box.appendChild(S.el("div", { class: "notice notice-warn", role: "status" }, [
+        "資料可能過期：上次查詢是 " + (latest.queried_at || "—") + "，距現在超過 36 小時（平日）。",
+      ]));
+    }
     var staleRows = (latest.rows || []).filter(function (r) { return r.stale; });
     var staleList = latest.stale_rows;
 
@@ -82,51 +103,9 @@
     );
   }
 
-  function renderSummaryCard(latest) {
+  function renderSummaryCard() {
     var card = document.getElementById("summary-card");
-    card.innerHTML = "";
-
-    var counts = { "🔴": 0, "🟡": 0, "⚪": 0, "🔍": 0, "❔": 0 };
-    var order = [];
-    for (var i = 1; i <= 11; i++) {
-      var s = latest.summary[String(i)];
-      if (!s) continue;
-      counts[s.status] = (counts[s.status] || 0) + 1;
-      order.push(s.status);
-    }
-
-    var breakdownParts = [
-      "已觸發 " + counts["🔴"] + " 項",
-      "接近 " + counts["🟡"] + " 項",
-      "未觸發 " + counts["⚪"] + " 項",
-    ];
-    if (counts["🔍"]) breakdownParts.push("型態參考 " + counts["🔍"] + " 項");
-    breakdownParts.push("資料不足 " + counts["❔"] + " 項");
-
-    var inner = S.el("div", { class: "summary-card" });
-    var top = S.el("div", { class: "summary-top" }, [
-      S.el("div", { class: "summary-count" }, [String(counts["🔴"]), S.el("small", { text: " / 11 已觸發" })]),
-      S.el("div", { class: "summary-breakdown" }, [breakdownParts.join("・")]),
-    ]);
-    inner.appendChild(top);
-
-    var segWrap = S.el("div", { class: "progress-segments", "aria-hidden": "true" });
-    order.forEach(function (st) {
-      segWrap.appendChild(S.el("div", { class: "seg " + S.statusClass(st) }));
-    });
-    inner.appendChild(segWrap);
-
-    var legendItems = [
-      S.el("span", {}, [S.el("span", { class: "dot red" }), "已觸發"]),
-      S.el("span", {}, [S.el("span", { class: "dot yellow" }), "接近門檻"]),
-      S.el("span", {}, [S.el("span", { class: "dot gray" }), "未觸發"]),
-    ];
-    if (counts["🔍"]) legendItems.push(S.el("span", {}, [S.el("span", { class: "dot ref" }), "型態參考"]));
-    legendItems.push(S.el("span", {}, [S.el("span", { class: "dot unknown" }), "資料不足"]));
-    var legend = S.el("div", { class: "legend" }, legendItems);
-    inner.appendChild(legend);
-
-    card.appendChild(inner);
+    if (card) card.innerHTML = "";
   }
 
   function formatNum(n) {
@@ -207,7 +186,7 @@
       if (dailySvg) {
         any = true;
         var dailyBox = S.el("div", { class: "sig9-chart-box" }, [
-          S.el("div", { class: "sig9-chart-title", text: row.target + "：日K（判燈，近 130 日）" }),
+          S.el("div", { class: "sig9-chart-title", text: row.target + "：日K（轉折燈，近 130 日）" }),
         ]);
         dailyBox.appendChild(dailySvg);
         pair.appendChild(dailyBox);
@@ -328,26 +307,28 @@
     if (summaryItem.by_market) {
       summaryEl.appendChild(S.el("span", { class: "by-market", text: byMarketText(summaryItem.by_market) }));
     }
-    var holdSeen = {};
+    var pres = (window.__rulesPresentation) || {};
+    var sourceTag = (pres.source_tags && pres.source_tags[id]) || "";
+    var holdLabel = (pres.hold_labels && pres.hold_labels[id]) || "";
+    if (sourceTag) {
+      summaryEl.appendChild(S.el("span", { class: "badge-source", text: sourceTag }));
+    }
+    if (holdLabel) {
+      summaryEl.appendChild(S.el("span", { class: "badge-hold", text: holdLabel }));
+    }
+    var seenTrig = {};
     (rows || []).forEach(function (row) {
-      var h = row.extra && row.extra.hold;
-      if (!h) return;
-      var sentence = h.text || ("最後觸發日：" + h.last_trigger + "（" + h.days + " 天內有效，至 " + h.valid_through + "）");
-      if (holdSeen[sentence]) return;
-      holdSeen[sentence] = true;
-      summaryEl.appendChild(S.el("span", { class: "by-market", text:
-        sentence + "｜" + (h.label || "使用者指定（2026-11-11）") }));
+      var thr = row.threshold || "";
+      if (thr.indexOf("不參與") !== -1 || thr.indexOf("不納入") !== -1) return;
+      if ((row.target || "").indexOf("參考") !== -1) return;
+      var info = row.extra && row.extra.last_trigger_info;
+      var line = (!info || !info.date) ? "最近一次觸發日：無" : ("最近一次觸發日：" + info.date + (info.phrase ? "（" + info.phrase + "）" : ""));
+      if (seenTrig[line]) return;
+      seenTrig[line] = true;
+      summaryEl.appendChild(S.el("span", { class: "by-market", text: line }));
     });
-    var origin = (rulesSignal && rulesSignal.origin) || "";
-    // 整項門檻為自訂 → 「自訂規則／尚未回測」；只有「接近」定義等部分為自訂 → 「部分自訂規則」
-    if (origin.indexOf("自訂規則") === 0) {
-      summaryEl.appendChild(
-        S.el("span", { class: "badge-custom", title: origin, tabindex: "0" }, ["自訂規則／尚未回測"])
-      );
-    } else if (origin.indexOf("自訂規則") !== -1) {
-      summaryEl.appendChild(
-        S.el("span", { class: "badge-custom partial", title: origin, tabindex: "0" }, ["部分自訂規則"])
-      );
+    if ((rows || []).some(function (row) { return row.stale; })) {
+      summaryEl.appendChild(S.el("span", { class: "badge-stale" }, ["資料過期"]));
     }
     summaryEl.appendChild(S.el("span", { class: "chev", "aria-hidden": "true", text: "▸" }));
     details.appendChild(summaryEl);
@@ -379,7 +360,7 @@
       body.appendChild(buildRowCards(rows));
       if (id === "9") {
         body.appendChild(S.el("p", { class: "sig9-chart-caption" }, [
-          "COBB：看 4小時／日K／週K 哪個高低點軌跡最清楚（例如 2022 明顯看週K）；本站預設用日K 判燈，週K 僅供參考。4 小時K 暫無穩定免費資料，未納入。燈號門檻為自訂規則／尚未回測。",
+          "COBB：看 4小時／日K／週K 哪個高低點軌跡最清楚（例如 2022 明顯看週K）；本站用日K 的轉折判燈，週K 僅供參考。4 小時K 暫無穩定免費資料，未納入。燈號為使用者同意（2026-11-11），自訂：轉折後 10 個交易日。",
         ]));
         rows.forEach(function (row) {
           var chartsEl = buildSig9Charts(row);
@@ -402,8 +383,19 @@
       (rowsBySignal[r.signal] = rowsBySignal[r.signal] || []).push(r);
     });
 
-    GROUPS.forEach(function (group) {
+    var pres = (rules && rules.presentation) || {};
+    window.__rulesPresentation = pres;
+    var groups = (pres.groups && pres.groups.length) ? pres.groups : GROUPS;
+    groups.forEach(function (group) {
       container.appendChild(S.el("h2", { class: "group-title", text: group.title }));
+      var bits = [];
+      ["🔴", "🟡", "⚪", "❔"].forEach(function (st) {
+        var n = group.ids.filter(function (id) {
+          return latest.summary[id] && latest.summary[id].status === st;
+        }).length;
+        if (n) bits.push(st + " " + n);
+      });
+      container.appendChild(S.el("p", { class: "cat-sum", text: bits.join(" · ") }));
       group.ids.forEach(function (id) {
         var summaryItem = latest.summary[id];
         if (!summaryItem) return;
@@ -472,6 +464,43 @@
       });
   }
 
+  function renderEpisode(latest) {
+    var box = document.getElementById("episode-section");
+    if (!box) return;
+    box.innerHTML = "";
+    var ep = latest.episode || {};
+    var sec = S.el("section", { class: "episode" });
+    sec.appendChild(S.el("h2", { text: "本波觸發紀錄" }));
+    if (ep.error || !ep.rows) {
+      sec.appendChild(S.el("p", { text: "本波區間這次算不出來。" + (ep.error ? "（" + ep.error + "）" : "") }));
+      box.appendChild(sec);
+      return;
+    }
+    sec.appendChild(S.el("p", { class: "episode-lead", text:
+      "本波自 NDX 最近一次 252 日收盤新高 " + ep.peak_date + "（收盤 " + ep.peak_close + "）起。目前回落 " + ep.ndx_dd_now + "%（" + ep.ndx_last + "）。" }));
+    var scroll = S.el("div", { class: "episode-scroll" });
+    var table = S.el("table", { class: "episode-table" });
+    table.appendChild(S.el("thead", {}, [
+      S.el("tr", {}, ["訊號", "本波第一次觸發", "當天 NDX 距高點", "最近一次觸發"].map(function (h) {
+        return S.el("th", { text: h });
+      })),
+    ]));
+    var tb = S.el("tbody");
+    ep.rows.forEach(function (r) {
+      tb.appendChild(S.el("tr", {}, [
+        S.el("td", { text: r.signal + ". " + r.name }),
+        S.el("td", { text: r.first || "—" }),
+        S.el("td", { text: r.ndx_dd == null ? "—" : (r.ndx_dd + "%") }),
+        S.el("td", { text: r.latest || "—" }),
+      ]));
+    });
+    table.appendChild(tb);
+    scroll.appendChild(table);
+    sec.appendChild(scroll);
+    sec.appendChild(S.el("p", { class: "episode-note", text: ep.note || "參考 2022：第一次 4 盞是 1 月，之後一年 NDX 又跌 15%；燈號是分批布局理由，不是一次重押。" }));
+    box.appendChild(sec);
+  }
+
   function init() {
     Promise.all([S.fetchJson("data/latest.json"), S.fetchJson("rules.json"), S.fetchJson("data/manifest.json")])
       .then(function (results) {
@@ -488,8 +517,9 @@
         S.renderFraming(rules);
         renderMeta(latest);
         renderStaleNotice(latest);
-        renderSummaryCard(latest);
+        renderSummaryCard();
         renderSignalGroups(latest, rules);
+        renderEpisode(latest);
         renderReport(latest, manifest);
       })
       .catch(function (err) {
