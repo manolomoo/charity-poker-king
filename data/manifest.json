@@ -4,6 +4,7 @@
   ],
   "latest_report": "reports/2026-11-10.md",
   "daily": [
+    "data/2026-11-13.json",
     "data/2026-11-12.json",
     "data/2026-11-11.json",
     "data/2026-11-10.json"
