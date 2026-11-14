@@ -86,12 +86,30 @@ section{margin-top:28px}
 .legend i{display:inline-block; width:14px; height:0; border-top:2px solid}
 .legend i.d{border-top-style:dashed}
 
+
+/* 教學段落晶片：樣式跟 /trend/ta-book/ 導覽列同一套（深色版） */
+.book-nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 0;margin:20px 0 0}
+.book-nav a{
+  display:inline-block;padding:5px 13px;border:1px solid #3a4864;border-radius:999px;
+  background:var(--card);color:var(--head);text-decoration:none;font-size:14px;line-height:1.6;white-space:nowrap;
+}
+.book-nav a:hover,.book-nav a:focus-visible{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
 footer{margin-top:28px; color:var(--mute); font-size:12px}
 footer p{margin:0}
 footer .more{margin:6px 0 0; color:var(--mute)}
 footer .more a{color:var(--mute); text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px}
 footer .more a:hover{color:var(--accent)}
 
+@media (max-width:620px){
+
+  .book-nav{
+    flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    margin-left:-18px;margin-right:-18px;padding:10px 18px 4px;
+  }
+  .book-nav::-webkit-scrollbar{display:none}
+  .book-nav a{flex:0 0 auto}
+}
 @media (max-width:420px){
   .wrap{padding:24px 16px 28px}
   section{margin-top:20px}
@@ -100,6 +118,7 @@ footer .more a:hover{color:var(--accent)}
   .pat .pic{flex-basis:136px; width:136px}
   .pat .pname{font-size:14px}
   footer{margin-top:20px}
+  .book-nav{margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
 }
 @media (min-width:640px){
   .wrap{padding:48px 24px 64px}
@@ -134,14 +153,18 @@ footer .more a:hover{color:var(--accent)}
     <div class="idx" id="idx"></div>
   </section>
 
+  <nav id="ta-nav" class="book-nav" aria-label="技術分析教學段落"></nav>
+
   <footer>
     <p>僅供參考，非投資建議。</p>
-    <p class="more">更多：<a href="./trend/stage/">牛熊階段</a>｜<a href="./trend/expectancy/">期望值</a>｜<a href="./trend/ta-book/">教學</a></p>
+    <p class="more">更多：<a href="./trend/stage/">階段現況</a>｜<a href="./trend/expectancy/">期望值表</a></p>
   </footer>
 </div>
 
 <script src="./trend/data.js"></script>
+<script src="./trend/ta-book/nav.js"></script>
 <script>
+renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
 /* ---------- 燈號：只列 🔴 / 🟡，其餘一行帶過 ---------- */
 (function(){
   "use strict";
