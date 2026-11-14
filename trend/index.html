@@ -103,6 +103,7 @@ a{color:var(--edge)}
   <p class="sub">SOX、NDX、SPX 走勢觀察，加上 COBB 我大哥燈號摘要</p>
   <p class="lede">這頁把最近一年的指數走勢，對照<a href="./ta-book/">股市趨勢技術分析圖解</a>的觀念來標註，並把<a href="../signals/">COBB我大哥</a>的 11 盞燈號做成簡單圖示。數字都有來源、都寫截至日。這裡是觀察，不是進出場指令，也不保證會怎樣走。</p>
   <p class="meta" id="src-line"></p>
+  <p class="meta" id="trend-stale" role="status" style="color:var(--amber);margin-top:4px" hidden></p>
 </header>
 
 <nav>
@@ -179,12 +180,14 @@ a{color:var(--edge)}
   function chgClass(n){ return Number(n)>0?"chg-up":(Number(n)<0?"chg-dn":""); }
   function el(html){ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content; }
 
-  /* ---------- header meta ---------- */
+  /* ---------- header meta（日期全部來自 analysis.meta，不寫死） ---------- */
+  const mktTimes = IDS.filter(id=>(meta.regular_market_time_taipei||{})[id])
+    .map(id=>id+" "+meta.regular_market_time_taipei[id]).join("、");
   document.getElementById("src-line").innerHTML =
     "行情來源：Yahoo Finance 圖表 API（^SOX、^NDX、^GSPC）。"+
-    "抓資料時間（台北時間 UTC+8）：2026-11-14 11:53。"+
-    "價格截至：美股 <strong>2026-11-13（週五）收盤</strong>。"+
-    "Yahoo 時間戳轉台北時間：SOX／NDX 為 2026-11-14 06:15，SPX 為 2026-11-14 05:43。<br>"+
+    "抓資料時間（台北時間 UTC+8）："+esc(String(meta.fetched_at_taipei||"").slice(0,16).replace("T"," "))+"。"+
+    "價格截至：美股 <strong>"+esc(meta.price_asof)+(meta.price_asof_weekday?"（"+esc(meta.price_asof_weekday)+"）":"")+"收盤</strong>。"+
+    (mktTimes ? "Yahoo 時間戳轉台北時間："+esc(mktTimes)+"。" : "")+"<br>"+
     "燈號來源：<a href=\""+esc(cobb.data_url)+"\">latest.json</a>，規則 "+esc(cobb.rules_version)+"，查詢時間 "+esc(cobb.queried_at)+"。<br>"+
     esc(cobb.note_timing);
 
@@ -254,7 +257,7 @@ a{color:var(--edge)}
   document.getElementById("cobb-episode").innerHTML =
     "燈號站的這一波參考：NDX 自 "+esc(ep.peak_date)+" 收盤高點 "+esc(num(ep.peak_close,2))+
     " 起算，資料裡 "+esc(ep.ndx_last)+" 回落 "+esc(pct(ep.ndx_dd_now,1))+
-    "。這是燈號站的數字；本頁 Yahoo 11-13 收盤相對同一收盤高點是 "+
+    "。這是燈號站的數字；本頁 Yahoo "+esc(String(meta.price_asof||"").slice(5))+" 收盤相對 52 週收盤高點（"+esc(A.indices.NDX.range_52w.close_high_date)+"）是 "+
     esc(pct(A.indices.NDX.range_52w.close_vs_close_high_pct))+
     "，兩邊不要混用。燈號站備註："+esc(ep.note||"");
 
@@ -267,7 +270,7 @@ a{color:var(--edge)}
     d.innerHTML = "<div class='k'>"+esc(NAMES[id])+"</div>"+
       "<div class='price-row'><span class='big'>"+esc(num(last.close,2))+"</span>"+
       "<span class='"+chgClass(last.day_change_pct)+"'>"+esc(pct(last.day_change_pct))+"</span></div>"+
-      "<div class='note'>2026-11-13 收盤</div>"+
+      "<div class='note'>"+esc(last.date||meta.price_asof)+" 收盤</div>"+
       "<p style='margin:8px 0 0'>距 52 週收盤高點 <strong class='chg-dn'>"+esc(pct(r.close_vs_close_high_pct))+"</strong>"+
       "<br><span style='white-space:nowrap'>（"+esc(r.close_high_date)+"，"+esc(num(r.close_high,2))+"）</span><br>"+
       "50 日均 "+(ma.sma50.above?"之上":"之下")+" "+esc(pct(ma.sma50.pct))+"；"+
@@ -291,15 +294,42 @@ a{color:var(--edge)}
         "<td class='"+chgClass(ix.returns["252d"].pct)+"'>"+esc(pct(ix.returns["252d"].pct))+"</td></tr>";
     }).join("")+"</tbody>";
 
-  document.getElementById("compare-obs").innerHTML =
-    "<h3>觀察</h3><ul class='ops'>"+
-    "<li>高點時間不一致：SOX 在 <strong>2026-06-22</strong> 先見到 52 週收盤高點，NDX 與 SPX 到 <strong>2026-10-06</strong> 才見到。原書要指數互相印證（見 <a href='./ta-book/#trend'>趨勢</a>），這裡只記分歧。</li>"+
-    "<li>粗週線「已確認擺動」（左右各 8 根週K，所以最近 8 週的新高／新低還不算已確認）看起來仍是高點創新高、低點墊高，但最新收盤已經在考驗這段結構："+
-    "SOX 收盤較 2026-07-27 低點 11,311.08 再跌超過 3%（"+esc(pct(A.indices.SOX.dow_weekly_coarse_swings.structure.close_vs_last_swing_low_pct))+"），這段「低點墊高」已被收盤破壞；"+
-    "NDX 收盤低於 2026-07-20 的 28,128.34，但只有 "+esc(pct(A.indices.NDX.dow_weekly_coarse_swings.structure.close_vs_last_swing_low_pct))+"，尚未達 3% 濾網；"+
-    "SPX 相對 2026-03-23 低點 6,368.85 仍高 "+esc(pct(A.indices.SPX.dow_weekly_coarse_swings.structure.close_vs_last_swing_low_pct))+"，尚未跌破。</li>"+
-    "<li>三者並非都在 200 日均線同一側：SOX、NDX 在下方，SPX 在上方。這也不是互相印證。</li>"+
-    "</ul>";
+  /* 觀察：每一句都由 analysis 欄位組出來，下一個交易日資料變了，句子跟著變。 */
+  (function(){
+    // 1. 52 週收盤高點的日期是否一致
+    const byDate={};
+    IDS.forEach(id=>{ const d=A.indices[id].range_52w.close_high_date; (byDate[d]=byDate[d]||[]).push(id); });
+    const dates=Object.keys(byDate).sort();
+    let li1;
+    if(dates.length===1){
+      li1="高點時間一致：SOX、NDX、SPX 都在 <strong>"+esc(dates[0])+"</strong> 見到 52 週收盤高點。";
+    }else{
+      li1="高點時間不一致："+dates.map(d=>esc(byDate[d].join("、"))+" 在 <strong>"+esc(d)+"</strong>").join("，")+
+        " 見到 52 週收盤高點。原書要指數互相印證（見 <a href='./ta-book/#trend'>趨勢</a>），這裡只記分歧。";
+    }
+    // 2. 粗週線已確認擺動：最新收盤相對最近一個已確認擺動低點
+    const parts=IDS.map(id=>{
+      const st=A.indices[id].dow_weekly_coarse_swings.structure||{};
+      const lows=st.last_two_lows;
+      if(!lows||lows.length<2) return esc(id)+" 已確認擺動點不足，無法比較";
+      const low=lows[1], p=esc(pct(st.close_vs_last_swing_low_pct));
+      const ref=esc(low.date)+" 低點 "+esc(num(low.price,2));
+      if(st.close_broke_last_swing_low_by_3pct===true) return esc(id)+" 收盤較 "+ref+" 再跌超過 3%（"+p+"），已用收盤跌破這個低點";
+      if(st.close_broke_last_swing_low===true) return esc(id)+" 收盤低於 "+ref+"，但只有 "+p+"，尚未達 3% 濾網";
+      return esc(id)+" 相對 "+ref+" 仍高 "+p+"，尚未跌破";
+    });
+    const li2="粗週線「已確認擺動」（左右各 8 根週K，所以最近 8 週的新高／新低還不算已確認）各自的結構寫在下面三個指數的觀察裡；"+
+      "這裡只比最新收盤（"+esc(meta.price_asof)+"）和最近一個已確認擺動低點："+parts.join("；")+"。";
+    // 3. 相對 200 日均線
+    const up=IDS.filter(id=>A.indices[id].moving_averages.sma200.above===true);
+    const dn=IDS.filter(id=>A.indices[id].moving_averages.sma200.above===false);
+    let li3;
+    if(up.length===IDS.length) li3="三者收盤都在 200 日均線上方。";
+    else if(dn.length===IDS.length) li3="三者收盤都在 200 日均線下方。";
+    else li3="三者並非都在 200 日均線同一側："+esc(dn.join("、"))+" 在下方，"+esc(up.join("、"))+" 在上方。這也不是互相印證。";
+    document.getElementById("compare-obs").innerHTML =
+      "<h3>觀察</h3><ul class='ops'><li>"+li1+"</li><li>"+li2+"</li><li>"+li3+"</li></ul>";
+  })();
 
   /* ---------- charts ---------- */
   function niceTicks(min,max,n){
@@ -474,7 +504,7 @@ a{color:var(--edge)}
       return `<path d="${p.join(" ")}" fill="none" stroke="${color}" stroke-width="1.5" ${dash||""}/>`;
     }
     container.innerHTML =
-      `<p class="hint">週線近兩年（已去掉 Yahoo 重複的週五棒）。黃線 10 週均、白虛線 40 週均。</p>`+
+      `<p class="hint">週線近兩年（Yahoo 若多給重複的週K 已去掉；週中更新時最後一根還沒走完）。黃線 10 週均、白虛線 40 週均。</p>`+
       `<div class="chart-wrap"><svg class="chart weekly" viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(id)} 週線圖">`+
       `<rect x="0" y="0" width="${W}" height="${H}" fill="#172135"/>`+
       grid+
@@ -523,16 +553,13 @@ a{color:var(--edge)}
   }
 
   function pickRefs(refs, id){
-    // choose a few meaningful lows: last leg, ~1y earlier major, 2022 low if present
+    // 從高點前的粗週線低點挑幾個並陳：最近一個、再前一個、以及其中最低的一個（不寫死日期）。
     if(!refs||!refs.length) return refs||[];
-    const wantDates = {
-      SOX:["2026-03-23","2025-03-31","2022-10-10"],
-      NDX:["2026-07-20","2026-03-23","2022-10-10"],
-      SPX:["2026-03-23","2025-03-31","2022-10-10"]
-    }[id] || [];
     const got=[];
-    wantDates.forEach(d=>{ const r=refs.find(x=>x.from_date===d); if(r) got.push(r); });
-    if(!got.length) return refs.slice(-3).reverse();
+    const add=r=>{ if(r && got.indexOf(r)<0) got.push(r); };
+    add(refs[refs.length-1]);
+    add(refs[refs.length-2]);
+    add(refs.reduce((a,b)=>(b.from_price<a.from_price?b:a)));
     return got;
   }
 
@@ -592,6 +619,27 @@ a{color:var(--edge)}
   renderIndex("sox","SOX");
   renderIndex("ndx","NDX");
   renderIndex("spx","SPX");
+  /* ---------- 走勢資料過期提醒（不擋圖；規則同首頁） ----------
+     status.json 說更新失敗，或資料本身太舊（抓取時間超過 3 天、行情截至日超過 5 天）就提醒。 */
+  (function(){
+    const box=document.getElementById("trend-stale");
+    const DAY=86400000;
+    const ageDays=s=>{ const t=Date.parse(s); return isFinite(t)?(Date.now()-t)/DAY:null; };
+    function show(st){
+      const fa=ageDays(meta.fetched_at_taipei);
+      const pa=ageDays(meta.price_asof?meta.price_asof+"T16:00:00-05:00":"");
+      const failed=!!(st&&(st.stale===true||st.ok===false));
+      const old=fa==null||fa>3||pa==null||pa>5;
+      if(!failed&&!old) return;
+      const asof=meta.price_asof||(st&&st.last_good_asof)||"不明";
+      box.textContent="⚠ 走勢資料"+(failed?"這次更新失敗":"已久未更新")+"，本頁數字與圖表停在 "+asof+" 收盤，可能已過期。";
+      if(st&&st.error) box.title=String(st.error);
+      box.hidden=false;
+    }
+    fetch("status.json",{cache:"no-store"})
+      .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+      .then(show,()=>show(null));
+  })();
 })();
 </script>
 </body>

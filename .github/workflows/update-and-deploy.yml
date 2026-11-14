@@ -45,10 +45,17 @@ jobs:
           PYTHON: python
         run: ./run.sh
 
+      # 要排在 ./run.sh 之後：走勢頁的燈號摘要讀 data/latest.json。
+      # Yahoo 抓不到時腳本仍以 0 結束，只把 trend/status.json 標成過期、保留上次成功的 data.json／data.js。
+      - name: 更新 SOX／NDX／SPX 走勢資料（不影響燈號規則）
+        run: TZ=Asia/Taipei python scripts/update_trend.py
+
       - name: 檢查是否有資料變更
         id: diff
         run: |
           git add -A data reports
+          # 只收走勢的產生檔；trend/index.html、trend/ta-book 不在每日自動 commit 範圍
+          git add -f trend/data.json trend/data.js trend/status.json
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else

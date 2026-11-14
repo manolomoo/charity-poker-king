@@ -30,6 +30,8 @@ h1{
   font-size:clamp(30px,8vw,42px); font-weight:700; line-height:1.25;
 }
 .asof{margin:6px 0 0; color:var(--mute); font-size:12px; line-height:1.5}
+.stale{margin:8px 0 0; color:var(--near); font-size:12px; line-height:1.5}
+.stale[hidden]{display:none}
 section{margin-top:28px}
 
 /* 燈號：只列亮的，其餘一行帶過 */
@@ -113,6 +115,7 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
   <header>
     <h1>慈善撲克王</h1>
     <p class="asof"><span id="asof-lights"></span>行情截至 <span id="asof-px">2026-11-13</span></p>
+    <p class="stale" id="trend-stale" role="status" hidden></p>
   </header>
 
   <section id="lights" aria-label="燈號">
@@ -316,7 +319,20 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
 
   // 型態挑選：照順序 A → B → C，只看 analysis 的欄位。
   // 三角形、頭肩、雙重頂、楔形這類有名字的型態沒有寫嚴格判定式，所以這裡一律不給。
+  // 優先用 scripts/update_trend.py 算好的 ix.home_pattern（同一套規則）；
+  // 舊資料沒有這個欄位時才退回下面的 pickPatternFallback。
   function pickPattern(ix){
+    var hp = ix && ix.home_pattern;
+    if(hp && typeof hp.name === "string" && hp.name && BADGE[hp.badge] && typeof hp.slug === "string" && hp.slug){
+      return {
+        name: hp.name, badge: hp.badge, badgeLabel: hp.badge_label || BADGE[hp.badge][1],
+        icon: ICONS[hp.icon] ? hp.icon : (hp.slug === "moving-avg" ? "below200" : "tlBreak"),
+        slug: hp.slug, confirmed: hp.confirmed === true, evidence: hp.evidence || ""
+      };
+    }
+    return pickPatternFallback(ix);
+  }
+  function pickPatternFallback(ix){
     if(!ix) return null;
     var tl = ix.trendlines && ix.trendlines.rising_support_major;
     var below = !!tl && (tl.close_is === "below" ||
@@ -344,11 +360,12 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
   function patternRow(ix){
     var p = pickPattern(ix);
     if(!p) return "";
-    var b = BADGE[p.badge];
+    var b = [BADGE[p.badge][0], p.badgeLabel || BADGE[p.badge][1]];
     return '<a class="pat" href="./trend/ta-book/#'+esc(p.slug)+'" data-pattern="'+esc(p.slug)+'" data-confirmed="'+(p.confirmed?"1":"0")+'"'+
-      ' aria-label="'+esc(p.name)+'（'+b[1]+'）：看技術分析教學的型態卡">'+
+      (p.evidence ? ' title="'+esc(p.evidence)+'"' : '')+
+      ' aria-label="'+esc(p.name)+'（'+esc(b[1])+'）：看技術分析教學的型態卡">'+
       '<span class="pic">'+ICON_OPEN+esc(p.name)+' 型態示意圖">'+ICONS[p.icon]+'</svg></span>'+
-      '<span class="ptxt"><span class="pname">'+esc(p.name).replace('（','<wbr>（')+'</span><span class="badge '+b[0]+'">'+b[1]+'</span></span>'+
+      '<span class="ptxt"><span class="pname">'+esc(p.name).replace('（','<wbr>（')+'</span><span class="badge '+b[0]+'">'+esc(b[1])+'</span></span>'+
       '</a>';
   }
 
@@ -547,6 +564,32 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
   }
   drawAll(true);
   window.addEventListener("resize", function(){ drawAll(false); });
+
+  /* ---------- 走勢資料過期提醒（不擋圖：圖照樣用上次成功的資料畫） ----------
+     兩種情況會提醒：
+     1. trend/status.json 說這次更新失敗（stale）。
+     2. 資料本身太舊：抓取時間超過 3 天，或行情截至日超過 5 天（連假最長約 5 天沒有新收盤）。
+        這樣即使排程整個沒跑、連 status.json 都沒更新，也看得到提醒。 */
+  (function(){
+    var box = document.getElementById("trend-stale");
+    var meta = (A && A.meta) || {};
+    var DAY = 86400000;
+    function ageDays(s){ var t = Date.parse(s); return isFinite(t) ? (Date.now() - t) / DAY : null; }
+    function show(st){
+      var fa = ageDays(meta.fetched_at_taipei);
+      var pa = ageDays(meta.price_asof ? meta.price_asof + "T16:00:00-05:00" : "");
+      var failed = !!(st && (st.stale === true || st.ok === false));
+      var old = fa == null || fa > 3 || pa == null || pa > 5;
+      if(!failed && !old) return;
+      var asof = meta.price_asof || (st && st.last_good_asof) || "不明";
+      box.textContent = "⚠ 走勢資料" + (failed ? "這次更新失敗" : "已久未更新") + "，圖表停在 " + asof + " 收盤，可能已過期。";
+      if(st && st.error) box.title = String(st.error);
+      box.hidden = false;
+    }
+    fetch("./trend/status.json", { cache:"no-store" })
+      .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(show, function(){ show(null); });
+  })();
 })();
 </script>
 </body>
