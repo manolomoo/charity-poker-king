@@ -80,9 +80,19 @@ def test_build_uses_2016_home_window_and_skips_ndx_long_windows():
     assert val["indices"]["SOX"]["memo_print"]["date"] == "2026-11-05"
 
 
+def test_event_short_labels():
+    shorts = {e["ym"]: e["short"] for e in VP.EVENT_BOTTOMS}
+    assert shorts["2020-03"] == "疫情"
+    assert shorts["2022-10"] == "升息"
+    assert shorts["2025-04"] == "關稅"
+    assert shorts["2026-03"] == "戰爭"
+    assert all("short" in e for e in VP.EVENT_BOTTOMS)
+
+
 if __name__ == "__main__":
     test_sigma_band_edges()
     test_sox_monthly_through_memo_date_matches_cobb()
     test_completed_month_excludes_current_month()
     test_build_uses_2016_home_window_and_skips_ndx_long_windows()
+    test_event_short_labels()
     print("ok")

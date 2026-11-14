@@ -65,15 +65,15 @@ COBB_MEMO = {
 
 # 股價觸底月份與事件名稱來自 COBB MEMO 圖上標註；P/E 數字由本站用 HOM 計算。
 EVENT_BOTTOMS = [
-    {"ym": "2015-08", "label": "中國股災+美國預期升息"},
-    {"ym": "2016-02", "label": "美國升息+中國股災"},
-    {"ym": "2018-12", "label": "中美貿易戰加劇"},
-    {"ym": "2020-03", "label": "疫情風暴"},
-    {"ym": "2022-10", "label": "暴力升息+庫存調整"},
-    {"ym": "2023-10", "label": "殖利率倒掛收斂+美債信評降評"},
-    {"ym": "2024-08", "label": "日圓套利平倉+薩姆法則觸發"},
-    {"ym": "2025-04", "label": "對等關稅"},
-    {"ym": "2026-03", "label": "美以伊戰爭+油價失控"},
+    {"ym": "2015-08", "label": "中國股災+美國預期升息", "short": "股災"},
+    {"ym": "2016-02", "label": "美國升息+中國股災", "short": "美升息"},
+    {"ym": "2018-12", "label": "中美貿易戰加劇", "short": "貿易戰"},
+    {"ym": "2020-03", "label": "疫情風暴", "short": "疫情"},
+    {"ym": "2022-10", "label": "暴力升息+庫存調整", "short": "升息"},
+    {"ym": "2023-10", "label": "殖利率倒掛收斂+美債信評降評", "short": "信評"},
+    {"ym": "2024-08", "label": "日圓套利平倉+薩姆法則觸發", "short": "日圓"},
+    {"ym": "2025-04", "label": "對等關稅", "short": "關稅"},
+    {"ym": "2026-03", "label": "美以伊戰爭+油價失控", "short": "戰爭"},
 ]
 
 HOME_WINDOW = "2016"  # 與第 4 項燈號的約 10 年窗口較接近；不用 2020 起（偏短、含零利率高估值期）
@@ -268,6 +268,7 @@ def _event_rows(name: str, stitched: pd.Series, prices: pd.Series | None) -> lis
         row = {
             "ym": ym,
             "label": ev["label"],
+            "short": ev.get("short") or ev["label"],
             "source": "事件名稱來自 COBB MEMO 圖上標註；P/E 為 History of Market 同口徑（週頻接日線）",
         }
         if sl.empty:

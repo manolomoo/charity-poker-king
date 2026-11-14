@@ -112,6 +112,29 @@ footer .more a:hover{color:var(--accent)}
 }
 .iblk .pe-tag:hover,.iblk .pe-tag:focus-visible{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
 
+
+/* 首頁下方估值圖：極簡、深色、兩張 Forward P/E */
+#pe-charts{margin:24px 0 0}
+.pe-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 12px;padding:0 2px}
+.pe-title{color:var(--head);font-weight:700;font-size:16px;text-decoration:none;letter-spacing:.02em}
+.pe-title:hover,.pe-title:focus-visible{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.pe-wins{display:flex;gap:4px}
+.pe-wins button{
+  font:inherit;font-size:11px;line-height:1.5;color:var(--mute);
+  background:transparent;border:1px solid var(--line);border-radius:999px;
+  padding:1px 9px;cursor:pointer;
+}
+.pe-wins button.on{color:var(--head);border-color:var(--accent);background:rgba(143,166,216,.12)}
+.pe-wins button:hover,.pe-wins button:focus-visible{color:var(--head);border-color:var(--accent)}
+.pe-leg{margin:6px 0 10px;padding:0 2px;color:var(--mute);font-size:11px;line-height:1.5}
+.pe-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 8px 6px;margin:0 0 10px;min-width:0}
+.pe-card .pe-row{display:flex;align-items:baseline;gap:8px;padding:0 2px 2px}
+.pe-card .pe-sym{color:var(--head);font-weight:700;font-size:15px;letter-spacing:.04em;text-decoration:none}
+.pe-card .pe-sym:hover,.pe-card .pe-sym:focus-visible{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.pe-card .pe-sub{color:var(--mute);font-size:11px}
+.pe-card svg{display:block;width:100%;height:auto}
+.pe-miss{margin:8px 2px;color:var(--mute);font-size:13px}
+
 @media (max-width:620px){
 
   .book-nav{
@@ -167,6 +190,20 @@ footer .more a:hover{color:var(--accent)}
   </section>
 
   <nav id="ta-nav" class="book-nav" aria-label="技術分析教學段落"></nav>
+
+  <section id="pe-charts" aria-label="Forward P/E 估值位置">
+    <div class="pe-top">
+      <a class="pe-title" href="./trend/valuation/">估值位置</a>
+      <div class="pe-wins" role="group" aria-label="統計視窗">
+        <button type="button" data-w="2020">2020起</button>
+        <button type="button" data-w="2016">2016起</button>
+        <button type="button" data-w="2011">2011起</button>
+      </div>
+    </div>
+    <p class="pe-leg">Forward P/E，虛線為 μ、μ±1σ、μ±1.5σ；紅三角為股價觸底月（簡稱，完整名稱見內頁或游標說明）</p>
+    <article class="pe-card" id="pe-sox"></article>
+    <article class="pe-card" id="pe-ndx"></article>
+  </section>
 
   <footer>
     <p>僅供參考，非投資建議。</p>
@@ -721,6 +758,180 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
       .then(show, function(){ show(null); });
   })();
 })();
+
+/* ---------- 首頁下方：SOX／NDX Forward P/E 月線（預設 2016 起，與小標同一視窗） ---------- */
+(function(){
+  "use strict";
+  var D = window.SITE_DATA || {};
+  var V = (D.analysis && D.analysis.valuation) || {};
+  var section = document.getElementById("pe-charts");
+  if(!section) return;
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function num(v,d){
+    if(typeof v !== "number" || !isFinite(v)) return "";
+    return v.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+  }
+  if(!V.available){
+    section.hidden = true;
+    return;
+  }
+  var win = V.home_window || "2016";
+  var NARROW = 520;
+
+  function parseYM(s){
+    var p = String(s).split("-");
+    return Date.UTC(+p[0], (+p[1] || 1) - 1, 1);
+  }
+  function md(dateStr){
+    if(!dateStr) return "";
+    var p = String(dateStr).split("-");
+    return (p.length >= 3) ? (Number(p[1]) + "/" + Number(p[2])) : dateStr;
+  }
+  function ymShort(ym){
+    var p = String(ym).split("-");
+    return p.length >= 2 ? (p[0].slice(2) + "/" + p[1]) : ym;
+  }
+
+  function drawOne(host, id, winKey, narrow){
+    var ix = V.indices && V.indices[id];
+    if(!ix || !ix.windows || !ix.windows[winKey]){
+      host.innerHTML = '<p class="pe-miss">這次沒有 '+esc(id)+' 估值圖資料</p>';
+      return;
+    }
+    var w = ix.windows[winKey];
+    var pts = (ix.monthly || []).filter(function(p){ return p.date >= w.start; });
+    var href = "./trend/valuation/#" + id.toLowerCase();
+    var tag = (V.home_tags && V.home_tags[id] && V.home_tags[id].band) ? V.home_tags[id].band : (w.current_vs && w.current_vs.band) || "";
+    var sub = num(ix.latest.value, 2) + "×（" + esc(ix.latest.date || "") + "）";
+    if(tag) sub += "　" + tag + "（" + winKey + "起）";
+    var W = narrow ? 640 : 800;
+    var H = narrow ? 210 : 200;
+    var pl = 36, pr = narrow ? 10 : 14, pt = 16, pb = narrow ? 46 : 40;
+    var ys = [];
+    [w.up15, w.up10, w.mean, w.dn10, w.dn15, ix.latest && ix.latest.value].forEach(function(v){
+      if(typeof v === "number" && isFinite(v)) ys.push(v);
+    });
+    pts.forEach(function(p){ if(typeof p.value === "number") ys.push(p.value); });
+    if(!pts.length || ys.length < 2){
+      host.innerHTML = '<p class="pe-miss">點數不足，畫不出圖</p>';
+      return;
+    }
+    var ymin = Math.min.apply(null, ys), ymax = Math.max.apply(null, ys);
+    var pad = (ymax - ymin) * 0.08 || 1;
+    ymin -= pad; ymax += pad;
+    var t0 = parseYM(pts[0].date), t1 = parseYM(pts[pts.length - 1].date);
+    function x(date){ return pl + (parseYM(date) - t0) / Math.max(t1 - t0, 1) * (W - pl - pr); }
+    function y(v){ return pt + (ymax - v) / (ymax - ymin) * (H - pt - pb); }
+
+    var s = '<div class="pe-row"><a class="pe-sym" href="'+href+'">'+esc(id)+'</a><span class="pe-sub">'+sub+'</span></div>';
+    s += '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(id)+' Forward P/E，自'+esc(winKey)+'，現值 '+num(ix.latest.value,2)+' 倍">';
+
+    // 水平帶：μ、±1σ、±1.5σ（首頁不畫 ±0.5σ，手機才讀得清）
+    var bands = [
+      [w.up15, "#ff7482"], [w.dn15, "#ff7482"],
+      [w.up10, "#f2b552"], [w.dn10, "#f2b552"],
+      [w.mean, "#e8edf5"]
+    ];
+    bands.forEach(function(b){
+      if(typeof b[0] !== "number") return;
+      var thick = (b[1] === "#e8edf5") ? 1.3 : 1;
+      s += '<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(b[0])+'" y2="'+y(b[0])+'" stroke="'+b[1]+'" stroke-width="'+thick+'" stroke-dasharray="4 4" opacity="0.9"/>';
+    });
+    // 現值虛線
+    if(typeof ix.latest.value === "number"){
+      s += '<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(ix.latest.value)+'" y2="'+y(ix.latest.value)+'" stroke="#c6cfdc" stroke-width="1" stroke-dasharray="6 4" opacity="0.7"/>';
+    }
+    // 事件月細線
+    var evs = ((V.events && V.events[id]) || []).filter(function(ev){
+      return ev.available && ev.ym >= w.start && ev.ym <= pts[pts.length-1].date;
+    });
+    evs.forEach(function(ev){
+      var xx = x(ev.ym);
+      s += '<line x1="'+xx+'" x2="'+xx+'" y1="'+pt+'" y2="'+(H-pb)+'" stroke="#3a4864" stroke-width="1" stroke-dasharray="2 3"/>';
+    });
+    // 月線
+    var d = "";
+    pts.forEach(function(p,i){
+      if(typeof p.value !== "number") return;
+      d += (d ? "L" : "M") + x(p.date) + "," + y(p.value) + " ";
+    });
+    s += '<path d="'+d+'" fill="none" stroke="#8fa6d8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    // 當月未完成空心圓
+    pts.forEach(function(p){
+      if(p.complete === false && typeof p.value === "number"){
+        s += '<circle cx="'+x(p.date)+'" cy="'+y(p.value)+'" r="3.6" fill="none" stroke="#f2b552" stroke-width="1.6"/>';
+      }
+    });
+    // 現值實心點＋標籤（放在最後一點左側，避免出界）
+    var last = pts[pts.length-1];
+    if(last && typeof ix.latest.value === "number"){
+      var lx = x(last.date), ly = y(ix.latest.value);
+      s += '<circle cx="'+lx+'" cy="'+ly+'" r="4" fill="#f2b552" stroke="#0f1724" stroke-width="1.2"/>';
+      var label = num(ix.latest.value, 1) + "×  " + md(ix.latest.date);
+      var anchor = "end", tx = lx - 8, ty = ly - 8;
+      if(lx < pl + 90){ anchor = "start"; tx = lx + 8; }
+      s += '<text x="'+tx+'" y="'+ty+'" text-anchor="'+anchor+'" fill="#f3ecdc" font-size="12" font-weight="700">'+esc(label)+'</text>';
+    }
+    // 紅三角＋短標（完整名稱放 title，點進去看內頁）
+    evs.forEach(function(ev, i){
+      var xx = x(ev.ym);
+      var yy = H - pb + 1;
+      var full = (ev.ym.replace("-", "/") + " " + (ev.label || ""));
+      var short = ev.short || ev.label || ev.ym;
+      var txt = narrow ? short : (short + " " + ymShort(ev.ym));
+      s += '<g><title>'+esc(full)+'</title>';
+      s += '<polygon points="'+xx+','+yy+' '+(xx-5)+','+(yy+8)+' '+(xx+5)+','+(yy+8)+'" fill="#ff7482"/>';
+      // 交錯兩行，左右靠邊改錨點，減少擠在一起或被裁切
+      var ly2 = yy + (i % 2 === 0 ? 20 : 30);
+      var anchor = "middle", tx = xx;
+      if(xx < pl + 24){ anchor = "start"; tx = pl; }
+      else if(xx > W - pr - 24){ anchor = "end"; tx = W - pr; }
+      s += '<text x="'+tx+'" y="'+ly2+'" text-anchor="'+anchor+'" fill="#ff9aa3" font-size="10">'+esc(txt)+'</text>';
+      s += '</g>';
+    });
+    // 左軸：μ、±1.5σ、現值
+    [w.up15, w.mean, w.dn15, ix.latest.value].forEach(function(v){
+      if(typeof v !== "number") return;
+      s += '<text x="'+(pl-4)+'" y="'+(y(v)+3)+'" text-anchor="end" fill="#a3aec0" font-size="10">'+num(v,1)+'</text>';
+    });
+    s += '</svg>';
+    host.innerHTML = s;
+  }
+
+  var wins = section.querySelector(".pe-wins");
+  function render(){
+    var narrow = (section.clientWidth || window.innerWidth) < NARROW;
+    if(wins){
+      Array.prototype.forEach.call(wins.querySelectorAll("button"), function(b){
+        b.className = (b.getAttribute("data-w") === win) ? "on" : "";
+        b.setAttribute("aria-pressed", b.getAttribute("data-w") === win ? "true" : "false");
+      });
+    }
+    drawOne(document.getElementById("pe-sox"), "SOX", win, narrow);
+    drawOne(document.getElementById("pe-ndx"), "NDX", win, narrow);
+  }
+  if(wins){
+    wins.addEventListener("click", function(e){
+      var b = e.target.closest("button");
+      if(!b) return;
+      win = b.getAttribute("data-w") || win;
+      render();
+    });
+  }
+  render();
+  var mode = (section.clientWidth || window.innerWidth) < NARROW;
+  window.addEventListener("resize", function(){
+    var n = (section.clientWidth || window.innerWidth) < NARROW;
+    if(n === mode) return;
+    mode = n;
+    render();
+  });
+})();
+
 </script>
 </body>
 </html>

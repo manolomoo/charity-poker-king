@@ -41,6 +41,24 @@ def test_homepage_has_valuation_entry():
     assert val.exists(), "缺少 /trend/valuation/ 頁面"
 
 
+def test_homepage_has_valuation_charts():
+    home = HOME.read_text(encoding="utf-8")
+    # 極簡首頁既有內容下面（晶片列之後、頁腳之前）放兩張 Forward P/E 圖
+    assert 'id="pe-charts"' in home
+    assert 'id="pe-sox"' in home
+    assert 'id="pe-ndx"' in home
+    assert 'id="ta-nav"' in home
+    nav_at = home.find('id="ta-nav"')
+    pe_at = home.find('id="pe-charts"')
+    foot_at = home.find("<footer>")
+    assert 0 < nav_at < pe_at < foot_at, "估值圖應在教學晶片下面、頁腳上面"
+    assert 'data-w="2016"' in home
+    assert 'data-w="2020"' in home
+    assert 'data-w="2011"' in home
+    # 既有小標仍在
+    assert "pe-tag" in home
+
+
 def test_expected_labels_in_order():
     labels = [label for _, label in load_nav_items()]
     assert labels == [
@@ -53,5 +71,6 @@ if __name__ == "__main__":
     test_nav_js_matches_ta_book_sections()
     test_homepage_uses_same_nav_source()
     test_homepage_has_valuation_entry()
+    test_homepage_has_valuation_charts()
     test_expected_labels_in_order()
     print("ok", " / ".join(label for _, label in load_nav_items()))
