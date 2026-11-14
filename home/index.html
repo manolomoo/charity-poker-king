@@ -86,19 +86,11 @@ section{margin-top:28px}
 .legend i{display:inline-block; width:14px; height:0; border-top:2px solid}
 .legend i.d{border-top-style:dashed}
 
-/* 入口 */
-.entry{
-  display:flex; justify-content:space-between; align-items:center;
-  border:1px solid var(--line); border-radius:10px; padding:12px 14px;
-  color:var(--accent); font-weight:500;
-}
-.entry:hover{border-color:var(--accent)}
-
-.stage-line{margin:0;font-size:14px;line-height:1.55}
-.stage-line a{color:var(--head);text-decoration:none}
-.stage-line a:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
-.entries{display:flex;flex-direction:column;gap:8px}
 footer{margin-top:28px; color:var(--mute); font-size:12px}
+footer p{margin:0}
+footer .more{margin:6px 0 0; color:var(--mute)}
+footer .more a{color:var(--mute); text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px}
+footer .more a:hover{color:var(--accent)}
 
 @media (max-width:420px){
   .wrap{padding:24px 16px 28px}
@@ -129,10 +121,6 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
     <p class="msg">燈號載入中…</p>
   </section>
 
-  <section id="stage" aria-label="牛熊階段">
-    <p class="stage-line" id="stage-line"><a href="./trend/stage/">牛熊階段（參考）載入中…</a></p>
-  </section>
-
   <section aria-label="指數走勢">
     <div class="legend" aria-hidden="true">
       <span><i style="border-color:#f2b552"></i>20</span>
@@ -141,16 +129,15 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
       <span><i class="d" style="border-color:#3fd0a0"></i>升勢支撐</span>
       <span><i class="d" style="border-color:#ff7482"></i>降勢壓力</span>
       <span><i class="d" style="border-color:#f2ab3c"></i>下降直角三角</span>
+      <span>右側橫條＝籌碼分布（估算）</span>
     </div>
     <div class="idx" id="idx"></div>
   </section>
 
-  <section class="entries">
-    <a class="entry" href="./trend/ta-book/"><span>技術分析教學</span><span aria-hidden="true">→</span></a>
-    <a class="entry" href="./trend/expectancy/"><span>期望值與盈虧比</span><span aria-hidden="true">→</span></a>
-  </section>
-
-  <footer>僅供參考，非投資建議。</footer>
+  <footer>
+    <p>僅供參考，非投資建議。</p>
+    <p class="more">更多：<a href="./trend/stage/">牛熊階段</a>｜<a href="./trend/expectancy/">期望值</a>｜<a href="./trend/ta-book/">教學</a></p>
+  </footer>
 </div>
 
 <script src="./trend/data.js"></script>
@@ -260,24 +247,6 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
     .catch(fail);
 })();
 
-
-/* ---------- 牛熊階段：一行，點進去看條件 ---------- */
-(function(){
-  "use strict";
-  var el=document.getElementById("stage-line");
-  if(!el) return;
-  var a=el.querySelector("a")||el;
-  var D=window.SITE_DATA||{};
-  var S=(D.analysis&&D.analysis.stages)||{};
-  var line=S.home_line;
-  if(!line){
-    a.textContent="牛熊階段（參考）暫時沒有資料 →";
-    a.href="./trend/stage/";
-    return;
-  }
-  a.textContent="階段（參考）："+line+" →";
-  a.href="./trend/stage/";
-})();
 
 /* ---------- SOX / NDX / SPX：近六個月日線小圖＋一行型態 ---------- */
 (function(){
@@ -480,8 +449,11 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
     var dates=all.slice(s0);
     var W=narrow?480:960, H=narrow?250:250;
     var fs=narrow?12:13;
-    var pl=narrow?48:60, pr=narrow?8:16, pt=22, pb=narrow?24:26;
+    // 右側留一條籌碼分布（估算）橫條，與價格軸對齊。
+    var vbpW=narrow?40:56;
+    var pl=narrow?48:60, pr=(narrow?6:10)+vbpW, pt=22, pb=narrow?24:26;
     var iw=W-pl-pr, ih=H-pt-pb;
+    var vbpX=W-pr+3, vbpBar=vbpW-5;
     var tri=activeTri(ix);
     var lo=Infinity, hi=-Infinity;
     for(var i=s0;i<NA;i++){
@@ -600,12 +572,44 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
     }
 
     var cid="hc"+(++uid);
+    var vbpSvg = drawVbpSvg(id, y, pt, ih, vbpX, vbpBar, fs, narrow);
     container.innerHTML =
-      '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="'+esc(id)+' 近六個月日線圖">'+
+      '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="'+esc(id)+' 近六個月日線圖與籌碼分布（估算）">'+
       '<defs><clipPath id="'+cid+'"><rect x="'+pl+'" y="'+pt+'" width="'+iw+'" height="'+ih+'"/></clipPath></defs>'+
       '<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="#172135"/>'+
-      grid+candles+'<g clip-path="url(#'+cid+')">'+mas+tls+'</g>'+marks+
+      grid+candles+'<g clip-path="url(#'+cid+')">'+mas+tls+'</g>'+marks+vbpSvg+
       '</svg>';
+  }
+
+  function drawVbpSvg(id, y, pt, ih, vx, vw, fs, narrow){
+    var vbp = A.indices[id] && A.indices[id].volume_by_price;
+    var soxNote = (id==="SOX");
+    var cap = narrow ? (soxNote ? "SOXX估" : "估算") : (soxNote ? "籌碼（估算·SOXX）" : "籌碼（估算）");
+    var label = '<text x="'+(vx+vw)+'" y="'+(pt-7)+'" text-anchor="end" fill="#a3aec0" font-size="'+(fs-2)+'">'+esc(cap)+'</text>';
+    if(!vbp || !vbp.available || !vbp.bins || !vbp.bins.length){
+      var miss = (vbp && vbp.reason) ? "無量" : "無量";
+      return label+'<text x="'+vx+'" y="'+(pt+ih/2)+'" fill="#a3aec0" font-size="'+(fs-1)+'">'+esc(miss)+'</text>';
+    }
+    var mx=0;
+    vbp.bins.forEach(function(b){ if(b.volume>mx) mx=b.volume; });
+    if(!(mx>0)) return label;
+    var bars="";
+    vbp.bins.forEach(function(b){
+      var y1=y(b.high), y2=y(b.low);
+      // 與價格軸對齊；超出圖表視窗的箱子裁掉
+      var top=Math.max(pt, Math.min(pt+ih, Math.min(y1,y2)));
+      var bot=Math.min(pt+ih, Math.max(pt, Math.max(y1,y2)));
+      var h=bot-top;
+      if(h<=0.4) return;
+      var w=Math.max(1, (b.volume/mx)*vw);
+      var fill=b.is_poc ? "#f2b552" : "#5b6f94";
+      var stroke=b.contains_last ? ' stroke="#f3ecdc" stroke-width="1"' : "";
+      var title=(b.low+"–"+b.high)+"　佔比 "+((b.share||0)*100).toFixed(1)+"%"+(b.is_poc?"　堆積最多":"")+(b.contains_last?"　現價":"");
+      bars += '<rect x="'+vx+'" y="'+top+'" width="'+w+'" height="'+Math.max(1,h-0.4)+'" fill="'+fill+'"'+stroke+'>'+
+              '<title>'+esc(title)+'</title></rect>';
+    });
+    var axis='<line x1="'+vx+'" x2="'+vx+'" y1="'+pt+'" y2="'+(pt+ih)+'" stroke="#2b3850" stroke-width="1"/>';
+    return axis+label+bars;
   }
 
   var charts = [];   // {el,id}
