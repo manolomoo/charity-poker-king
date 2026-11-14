@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>慈善撲克王｜指數走勢觀察與燈號摘要</title>
+<meta name="description" content="SOX、NDX、SPX 走勢觀察，對照技術分析觀念，並摘要 COBB我大哥燈號。僅供參考，非投資建議。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#f3ecdc; --ink:#e8edf5; --text:#c6cfdc; --muted:#a3aec0;
+  --red:#ff7482; --green:#3fd0a0; --amber:#f2b552;
+  --line:#2b3850; --bg:#0f1724; --surface:#172135; --edge:#8fa6d8;
+  --serif:"Noto Serif TC","Noto Serif CJK TC","Songti TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","Noto Sans CJK TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; color:var(--text); font-family:var(--sans); font-size:15px; line-height:1.75;
+  background-color:var(--bg);
+  background-image:linear-gradient(rgba(190,210,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(190,210,255,.045) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:22px 18px 80px}
+h1{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(28px,6vw,50px);line-height:1.2;margin:0 0 6px;text-wrap:balance}
+.sub{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(17px,3.1vw,22px);line-height:1.4;margin:0 0 12px;text-wrap:balance}
+.lede{margin:0 0 12px;max-width:46em}
+.meta{color:var(--muted);font-size:13px;line-height:1.7}
+.meta a{color:var(--edge)}
+nav{
+  display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 14px;margin:8px 0 18px;
+  border-bottom:3px double var(--edge);position:sticky;top:0;z-index:5;
+  background:rgba(15,23,36,.95);backdrop-filter:blur(4px);
+}
+nav a{
+  display:inline-block;padding:5px 13px;border:1px solid #3a4864;border-radius:999px;
+  background:var(--surface);color:var(--ink);text-decoration:none;font-size:14px;line-height:1.6;white-space:nowrap;
+}
+nav a:hover,nav a.on{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+h2{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(22px,4.2vw,30px);line-height:1.3;margin:0 0 6px}
+h3{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:19px;line-height:1.4;margin:0 0 8px}
+section{margin:36px 0 44px}
+.sec-lead{color:var(--muted);margin:0 0 16px;max-width:48em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.35);min-width:0}
+.btn{
+  display:inline-block;margin:6px 8px 0 0;padding:8px 16px;border-radius:999px;
+  background:#a9c1f5;color:#0f1724;text-decoration:none;font-weight:700;font-size:14px;
+}
+.btn.ghost{background:transparent;color:var(--navy);border:1px solid var(--edge)}
+.badge{display:inline-block;vertical-align:.18em;margin:0 4px 0 0;padding:0 9px;border:1.5px solid;border-radius:999px;font-size:12px;font-weight:700;line-height:1.7;white-space:nowrap;background:transparent}
+.b-red{color:var(--red);border-color:var(--red);background:#2a1518}
+.b-green{color:var(--green);border-color:var(--green);background:#10241e}
+.b-amber{color:var(--amber);border-color:var(--amber);background:#2b2412}
+.b-mute{color:var(--muted);border-color:#4a5870}
+.b-edge{color:var(--edge);border-color:var(--edge)}
+.facts,.ops{margin:0;padding:0 0 0 1.15em}
+.facts li,.ops li{margin:0 0 8px}
+.box-f{background:#141e30;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+.box-o{background:#2a2414;border:1px solid #5c4b1f;border-radius:12px;padding:14px 16px;margin:12px 0}
+.k{color:var(--muted);font-size:12px;letter-spacing:.04em}
+.big{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(26px,4vw,34px);line-height:1.15}
+.chg-up{color:var(--green)} .chg-dn{color:var(--red)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:820px){.grid3,.grid2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
+th{color:var(--navy);font-weight:700}
+tbody tr:nth-child(even){background:#1c2840}
+.chart-wrap{overflow-x:auto;margin:8px 0 4px;-webkit-overflow-scrolling:touch}
+svg.chart{display:block;width:100%;height:auto;max-width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:12px;color:var(--muted);margin:4px 0 8px}
+.legend i{display:inline-block;width:16px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.group-title{font-family:var(--serif);color:var(--navy);font-size:17px;margin:18px 0 8px}
+.sig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.sig{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.sig:hover{border-color:var(--edge)}
+.sig .nm{font-weight:700;color:var(--ink);line-height:1.4}
+.sig .val{color:var(--muted);font-size:13px;margin-top:4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.dot{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:2px solid}
+.dot-red{background:var(--red);border-color:#ffb3ba}
+.dot-yellow{background:var(--amber);border-color:#ffe1a6}
+.dot-white{background:#d5dbe6;border-color:#f3ecdc}
+.dot-unk{background:transparent;border-color:var(--muted);position:relative}
+.counts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.framing{font-family:var(--serif);color:var(--navy);font-size:17px;line-height:1.55;margin:0 0 10px}
+.note{color:var(--muted);font-size:13px}
+footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted)}
+a{color:var(--edge)}
+.price-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin:0 0 8px}
+.hint{font-size:12px;color:var(--muted);margin:0 0 8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>慈善撲克王</h1>
+  <p class="sub">SOX、NDX、SPX 走勢觀察，加上 COBB 我大哥燈號摘要</p>
+  <p class="lede">這頁把最近一年的指數走勢，對照<a href="./ta-book/">股市趨勢技術分析圖解</a>的觀念來標註，並把<a href="https://manolomoo.github.io/charity-poker-king/">COBB我大哥</a>的 11 盞燈號做成簡單圖示。數字都有來源、都寫截至日。這裡是觀察，不是進出場指令，也不保證會怎樣走。</p>
+  <p class="meta" id="src-line"></p>
+</header>
+
+<nav>
+  <a href="#lights">燈號</a>
+  <a href="#compare">三指數對照</a>
+  <a href="#sox">SOX</a>
+  <a href="#ndx">NDX</a>
+  <a href="#spx">SPX</a>
+  <a href="#tabook">技術分析圖解</a>
+  <a href="#disclaimer">免責</a>
+</nav>
+
+<section id="lights">
+  <h2>COBB我大哥燈號</h2>
+  <p class="framing" id="cobb-framing"></p>
+  <div class="counts" id="cobb-counts"></div>
+  <p class="meta" id="cobb-meta"></p>
+  <div id="cobb-groups"></div>
+  <p class="note" id="cobb-episode"></p>
+  <p>
+    <a class="btn" href="https://manolomoo.github.io/charity-poker-king/">看燈號詳細說明與規則</a>
+    <a class="btn ghost" href="./ta-book/#trend">對照技術分析圖解</a>
+  </p>
+</section>
+
+<section id="compare">
+  <h2>三指數對照</h2>
+  <p class="sec-lead">原書道氏理論要求<a href="./ta-book/#trend">兩個指數互相印證</a>才採信主要趨勢訊號。這裡把 SOX、NDX、SPX 並列，不一致就只記分歧，不合成一句「全面多頭」或「全面空頭」。</p>
+  <div class="grid3" id="compare-cards"></div>
+  <div class="card" style="margin-top:12px;overflow-x:auto">
+    <table id="compare-table"></table>
+  </div>
+  <div class="box-o" id="compare-obs"></div>
+</section>
+
+<section id="sox"></section>
+<section id="ndx"></section>
+<section id="spx"></section>
+
+<section id="tabook">
+  <h2>技術分析圖解</h2>
+  <p class="lede">想對照原書裡的趨勢、型態、缺口、支撐壓力、3% 突破與戰術，看這份圖解。本頁只做最近走勢的觀察，圖解裡才有完整規則說明。</p>
+  <p>
+    <a class="btn" href="./ta-book/">打開股市趨勢技術分析圖解</a>
+    <a class="btn ghost" href="./ta-book/#breakout">3% 突破濾網</a>
+    <a class="btn ghost" href="./ta-book/#sr">支撐與趨勢線</a>
+    <a class="btn ghost" href="./ta-book/#gaps">缺口</a>
+  </p>
+</section>
+
+<footer id="disclaimer">
+  <h2>免責聲明</h2>
+  <p>本頁只整理公開行情與既有燈號狀態，不是投資建議，也不保證任何報酬。技術形態與趨勢判斷可能失敗，市場有虧損本金的風險。數字會過時；燈號規則與維持天數以<a href="https://manolomoo.github.io/charity-poker-king/">燈號站首頁</a>為準。行情來自 Yahoo Finance 圖表 API，來源與截至日寫在本頁開頭。</p>
+</footer>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+  if(!window.SITE_DATA){document.body.insertAdjacentHTML("afterbegin","<p style='padding:20px;color:#ff7482'>找不到 data.js，請與 index.html 放在同一層。</p>");return;}
+  const A = SITE_DATA.analysis, C = SITE_DATA.charts, meta = A.meta, cobb = A.cobb;
+  const IDS = ["SOX","NDX","SPX"];
+  const NAMES = {SOX:"費城半導體（SOX）", NDX:"那斯達克 100（NDX）", SPX:"標普 500（SPX）"};
+
+  function esc(s){
+    return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  function num(n,d){ if(n==null||n==="") return "—"; const x=Number(n); if(!isFinite(x)) return "—";
+    const neg=x<0, ax=Math.abs(x);
+    const s=ax.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+    return (neg?"-":"")+s;
+  }
+  function pct(n,d){ if(n==null||n==="") return "—"; const x=Number(n); const sign=x>0?"+":""; return sign+num(x,d==null?2:d)+"%"; }
+  function chgClass(n){ return Number(n)>0?"chg-up":(Number(n)<0?"chg-dn":""); }
+  function el(html){ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content; }
+
+  /* ---------- header meta ---------- */
+  document.getElementById("src-line").innerHTML =
+    "行情來源：Yahoo Finance 圖表 API（^SOX、^NDX、^GSPC）。"+
+    "抓資料時間（台北時間 UTC+8）：2026-11-14 11:53。"+
+    "價格截至：美股 <strong>2026-11-13（週五）收盤</strong>。"+
+    "Yahoo 時間戳轉台北時間：SOX／NDX 為 2026-11-14 06:15，SPX 為 2026-11-14 05:43。<br>"+
+    "燈號來源：<a href=\""+esc(cobb.data_url)+"\">latest.json</a>，規則 "+esc(cobb.rules_version)+"，查詢時間 "+esc(cobb.queried_at)+"。<br>"+
+    esc(cobb.note_timing);
+
+  /* ---------- lights ---------- */
+  document.getElementById("cobb-framing").textContent = cobb.framing;
+  const legend = cobb.status_legend || {};
+  const countMap = { "🔴":["dot-red","已觸發"], "🟡":["dot-yellow","接近門檻"], "⚪":["dot-white","未觸發"], "❔":["dot-unk","資料不足"] };
+  const counts = document.getElementById("cobb-counts");
+  ["🔴","🟡","⚪","❔"].forEach(k=>{
+    const n = (cobb.status_counts||{})[k]||0;
+    const lab = (countMap[k]||[])[1]||k;
+    const cls = (countMap[k]||[])[0]||"";
+    counts.insertAdjacentHTML("beforeend",
+      "<span class='badge "+(k==="🔴"?"b-red":k==="🟡"?"b-amber":k==="❔"?"b-mute":"b-mute")+"'><span class='dot "+cls+"'></span>"+esc(k)+" "+n+"　"+esc(lab)+"</span>");
+  });
+  document.getElementById("cobb-meta").innerHTML =
+    "規則 "+esc(cobb.rules_version)+"　查詢時間 "+esc(cobb.queried_at)+"　"+esc(cobb.changes_vs_previous)+
+    "　<a href=\""+esc(cobb.live_url)+"\">詳細說明在原站</a>";
+
+  const byId = {};
+  cobb.signals.forEach(s=>byId[s.id]=s);
+  const groupsEl = document.getElementById("cobb-groups");
+  cobb.groups.forEach(g=>{
+    const h = document.createElement("div");
+    h.className="group-title";
+    h.textContent=g.title;
+    groupsEl.appendChild(h);
+    const grid=document.createElement("div");
+    grid.className="sig-grid";
+    g.ids.forEach(id=>{
+      const s=byId[id]; if(!s) return;
+      const cls = s.status==="🔴"?"dot-red":s.status==="🟡"?"dot-yellow":s.status==="❔"?"dot-unk":"dot-white";
+      const bcls = s.status==="🔴"?"b-red":s.status==="🟡"?"b-amber":s.status==="❔"?"b-mute":"b-mute";
+      let market="";
+      if(s.by_market){
+        market = "　"+Object.keys(s.by_market).map(k=>esc(k)+s.by_market[k]).join(" ");
+      }
+      const rows=s.rows||[];
+      const primary = rows.find(r=>r.status===s.status) || rows[0];
+      let val="";
+      if(rows.length>1){
+        val = rows.map(r=>{
+          const st=r.status+" "+(r.status_label||"");
+          let short = r.value? String(r.value): "";
+          if(short.length>72) short=short.slice(0,70)+"…";
+          return (r.target||"")+" "+st+(short? "："+short:"");
+        }).join("／");
+        if(val.length>220) val=val.slice(0,217)+"…";
+      }else if(primary && primary.value){
+        val=String(primary.value);
+        if(val.length>160) val=val.slice(0,157)+"…";
+      }
+      const dateStr=[...new Set(rows.map(r=>r.data_date).filter(Boolean))].join("、");
+      const a=document.createElement("a");
+      a.className="sig";
+      a.href=cobb.live_url;
+      a.innerHTML = "<div class='nm'><span class='dot "+cls+"'></span>"+esc(s.id)+". "+esc(s.name)+
+        " <span class='badge "+bcls+"'>"+esc(s.status)+" "+esc(s.status_label||"")+"</span>"+market+"</div>"+
+        (val?"<div class='val'>"+esc(val)+"</div>":"")+
+        (dateStr?"<div class='val'>資料日："+esc(dateStr)+"</div>":"");
+      grid.appendChild(a);
+    });
+    groupsEl.appendChild(grid);
+  });
+
+  const ep = cobb.episode||{};
+  document.getElementById("cobb-episode").innerHTML =
+    "燈號站的這一波參考：NDX 自 "+esc(ep.peak_date)+" 收盤高點 "+esc(num(ep.peak_close,2))+
+    " 起算，資料裡 "+esc(ep.ndx_last)+" 回落 "+esc(pct(ep.ndx_dd_now,1))+
+    "。這是燈號站的數字；本頁 Yahoo 11-13 收盤相對同一收盤高點是 "+
+    esc(pct(A.indices.NDX.range_52w.close_vs_close_high_pct))+
+    "，兩邊不要混用。燈號站備註："+esc(ep.note||"");
+
+  /* ---------- compare ---------- */
+  const cards = document.getElementById("compare-cards");
+  IDS.forEach(id=>{
+    const ix=A.indices[id], last=ix.last, r=ix.range_52w, ma=ix.moving_averages;
+    const d=document.createElement("div");
+    d.className="card";
+    d.innerHTML = "<div class='k'>"+esc(NAMES[id])+"</div>"+
+      "<div class='price-row'><span class='big'>"+esc(num(last.close,2))+"</span>"+
+      "<span class='"+chgClass(last.day_change_pct)+"'>"+esc(pct(last.day_change_pct))+"</span></div>"+
+      "<div class='note'>2026-11-13 收盤</div>"+
+      "<p style='margin:8px 0 0'>距 52 週收盤高點 <strong class='chg-dn'>"+esc(pct(r.close_vs_close_high_pct))+"</strong>"+
+      "<br><span style='white-space:nowrap'>（"+esc(r.close_high_date)+"，"+esc(num(r.close_high,2))+"）</span><br>"+
+      "50 日均 "+(ma.sma50.above?"之上":"之下")+" "+esc(pct(ma.sma50.pct))+"；"+
+      "200 日均 "+(ma.sma200.above?"之上":"之下")+" "+esc(pct(ma.sma200.pct))+"<br>"+
+      "一年 "+ "<span class='"+chgClass(ix.returns["252d"].pct)+"'>"+esc(pct(ix.returns["252d"].pct))+"</span></p>";
+    cards.appendChild(d);
+  });
+
+  const tb=document.getElementById("compare-table");
+  tb.innerHTML = "<thead><tr><th>指數</th><th>收盤</th><th>當日</th><th>5 日</th><th>21 日</th><th>距收盤高點</th><th>高點日</th><th>50 日</th><th>200 日</th><th>一年</th></tr></thead><tbody>"+
+    IDS.map(id=>{
+      const ix=A.indices[id], last=ix.last, r=ix.range_52w, ma=ix.moving_averages;
+      return "<tr><td>"+esc(id)+"</td><td>"+esc(num(last.close,2))+"</td>"+
+        "<td class='"+chgClass(last.day_change_pct)+"'>"+esc(pct(last.day_change_pct))+"</td>"+
+        "<td class='"+chgClass(ix.returns["5d"].pct)+"'>"+esc(pct(ix.returns["5d"].pct))+"</td>"+
+        "<td class='"+chgClass(ix.returns["21d"].pct)+"'>"+esc(pct(ix.returns["21d"].pct))+"</td>"+
+        "<td class='chg-dn'>"+esc(pct(r.close_vs_close_high_pct))+"</td>"+
+        "<td>"+esc(r.close_high_date)+"</td>"+
+        "<td class='"+chgClass(ma.sma50.pct)+"'>"+esc(pct(ma.sma50.pct))+"</td>"+
+        "<td class='"+chgClass(ma.sma200.pct)+"'>"+esc(pct(ma.sma200.pct))+"</td>"+
+        "<td class='"+chgClass(ix.returns["252d"].pct)+"'>"+esc(pct(ix.returns["252d"].pct))+"</td></tr>";
+    }).join("")+"</tbody>";
+
+  document.getElementById("compare-obs").innerHTML =
+    "<h3>觀察</h3><ul class='ops'>"+
+    "<li>高點時間不一致：SOX 在 <strong>2026-06-22</strong> 先見到 52 週收盤高點，NDX 與 SPX 到 <strong>2026-10-06</strong> 才見到。原書要指數互相印證（見 <a href='./ta-book/#trend'>趨勢</a>），這裡只記分歧。</li>"+
+    "<li>粗週線「已確認擺動」（左右各 8 根週K，所以最近 8 週的新高／新低還不算已確認）看起來仍是高點創新高、低點墊高，但最新收盤已經在考驗這段結構："+
+    "SOX 收盤較 2026-07-27 低點 11,311.08 再跌超過 3%（"+esc(pct(A.indices.SOX.dow_weekly_coarse_swings.structure.close_vs_last_swing_low_pct))+"），這段「低點墊高」已被收盤破壞；"+
+    "NDX 收盤低於 2026-07-20 的 28,128.34，但只有 "+esc(pct(A.indices.NDX.dow_weekly_coarse_swings.structure.close_vs_last_swing_low_pct))+"，尚未達 3% 濾網；"+
+    "SPX 相對 2026-03-23 低點 6,368.85 仍高 "+esc(pct(A.indices.SPX.dow_weekly_coarse_swings.structure.close_vs_last_swing_low_pct))+"，尚未跌破。</li>"+
+    "<li>三者並非都在 200 日均線同一側：SOX、NDX 在下方，SPX 在上方。這也不是互相印證。</li>"+
+    "</ul>";
+
+  /* ---------- charts ---------- */
+  function niceTicks(min,max,n){
+    const span0=max-min||1;
+    const nn=n||5;
+    let step0=Math.pow(10,Math.floor(Math.log10(span0/nn)));
+    let err=(span0/nn)/step0;
+    let step = err>=7.5?step0*10:err>=3?step0*5:err>=1.5?step0*2:step0;
+    let tmin=Math.floor(min/step)*step, tmax=Math.ceil(max/step)*step;
+    if ((min-tmin) > span0*0.18 || (tmax-max) > span0*0.18) {
+      const cands=[step/2, step/5, step0, step0*2].filter(s=>s>0);
+      for (const s of cands) {
+        const a=Math.floor(min/s)*s, b=Math.ceil(max/s)*s;
+        const ticksEst=Math.round((b-a)/s);
+        if (ticksEst>=3 && ticksEst<=9 && (min-a)<=span0*0.18 && (b-max)<=span0*0.18) {
+          step=s; tmin=a; tmax=b; break;
+        }
+      }
+    }
+    const ticks=[];
+    for(let v=tmin;v<=tmax+step*0.5;v=+(v+step).toFixed(8)) ticks.push(v);
+    return {min:tmin,max:tmax,ticks,step};
+  }
+  function dateIdx(dates,d){
+    const i=dates.indexOf(d);
+    if(i>=0) return i;
+    // nearest
+    let best=0,bd=1e15;
+    dates.forEach((x,k)=>{const a=Math.abs(Date.parse(x)-Date.parse(d)); if(a<bd){bd=a;best=k;}});
+    return best;
+  }
+
+  function drawDaily(container, id){
+    const ch=C.indices[id].chart_daily_1y;
+    const ix=A.indices[id];
+    const dates=ch.dates, N=dates.length;
+    const W=960, H=360, pl=58, pr=16, pt=28, pb=36;
+    const iw=W-pl-pr, ih=H-pt-pb;
+    let lo=Infinity, hi=-Infinity;
+    for(let i=0;i<N;i++){
+      lo=Math.min(lo,ch.low[i]); hi=Math.max(hi,ch.high[i]);
+      [ch.sma20[i],ch.sma50[i],ch.sma200[i]].forEach(v=>{if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
+    }
+    const pad=(hi-lo)*0.04||1;
+    const sc=niceTicks(lo-pad,hi+pad,5);
+    const x=i=>pl+(i+0.5)/N*iw;
+    const y=v=>pt+(sc.max-v)/(sc.max-sc.min)*ih;
+    const cw=Math.max(1.2, iw/N*0.62);
+
+    let grid="";
+    sc.ticks.forEach(v=>{
+      grid += `<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#2b3850" stroke-width="1"/>`+
+              `<text x="${pl-8}" y="${y(v)+4}" text-anchor="end" fill="#a3aec0" font-size="11">${esc(num(v,v>=1000?0:2))}</text>`;
+    });
+    // x labels: first, last, and a few months
+    const xlbl=[];
+    const want = new Set([0,N-1]);
+    dates.forEach((d,i)=>{ if(i>0 && d.slice(0,7)!==dates[i-1].slice(0,7) && (d.endsWith("-01")||dates[i-1].slice(8,10)>d.slice(8,10))) want.add(i); });
+    // thin if too many
+    let xs=[...want].sort((a,b)=>a-b);
+    if(xs.length>8){ xs = xs.filter((i,k)=>i===0||i===N-1||k%2===0); }
+    xs.forEach(i=>{
+      grid += `<text x="${x(i)}" y="${H-10}" text-anchor="middle" fill="#a3aec0" font-size="11">${esc(dates[i].slice(0,7))}</text>`;
+    });
+
+    let candles="";
+    for(let i=0;i<N;i++){
+      const up=ch.close[i]>=ch.open[i];
+      const col=up?"#3fd0a0":"#ff7482";
+      const y1=y(Math.max(ch.open[i],ch.close[i])), y2=y(Math.min(ch.open[i],ch.close[i]));
+      candles += `<line x1="${x(i)}" x2="${x(i)}" y1="${y(ch.high[i])}" y2="${y(ch.low[i])}" stroke="${col}" stroke-width="1"/>`;
+      candles += `<rect x="${x(i)-cw/2}" y="${y1}" width="${cw}" height="${Math.max(1,y2-y1)}" fill="${col}"/>`;
+    }
+    function lineOf(arr,color,dash){
+      let p=[], started=false;
+      arr.forEach((v,i)=>{
+        if(v==null){return;}
+        p.push((started?"L":"M")+x(i).toFixed(2)+" "+y(v).toFixed(2));
+        started=true;
+      });
+      return `<path d="${p.join(" ")}" fill="none" stroke="${color}" stroke-width="1.6" ${dash||""}/>`;
+    }
+    const mas = lineOf(ch.sma20,"#f2b552","") + lineOf(ch.sma50,"#8fa6d8","") + lineOf(ch.sma200,"#e8edf5",'stroke-dasharray="4 3"');
+
+    // trendlines
+    let tls="";
+    const tmap=[
+      [ix.trendlines.rising_support_major,"#3fd0a0"],
+      [ix.trendlines.falling_resistance_major,"#ff7482"]
+    ];
+    tmap.forEach(([ln,col])=>{
+      if(!ln) return;
+      const i1=dateIdx(dates,ln.p1.date), i2=dateIdx(dates,ln.p2.date);
+      if(i1===i2) return;
+      const slope=(ln.p2.price-ln.p1.price)/(i2-i1);
+      const yAt=i=>ln.p1.price+slope*(i-i1);
+      // clip to last
+      const x1=x(i1), y1=y(yAt(i1)), x2=x(N-1), y2c=y(yAt(N-1));
+      tls += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2c}" stroke="${col}" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9"/>`;
+    });
+
+    // annotations: 同一天的高點／低點合併，避免兩個標籤疊在一起
+    let marks="";
+    const raw = (C.indices[id].chart_annotations||[]).filter(a=>a.date && a.price);
+    const byDate={};
+    raw.forEach(a=>{
+      if(!byDate[a.date]) byDate[a.date]=[];
+      byDate[a.date].push(a);
+    });
+    const usedYs=[];
+    Object.keys(byDate).forEach(d=>{
+      const grp=byDate[d];
+      const labels=[...new Set(grp.map(a=>a.label))];
+      let label;
+      if(labels.length===1) label=labels[0];
+      else if(labels.every(x=>x.includes("52週") && x.includes("高點"))) label="52週高點（盤中／收盤）";
+      else if(labels.every(x=>x.includes("高點後") || (x.includes("低點") && !x.includes("52週")))) label="高點後低點（盤中／收盤）";
+      else label=labels.join("／");
+      const isLow = labels.every(x=>x.includes("低點") || x.includes("高點後"));
+      const markPrice = isLow ? Math.min(...grp.map(a=>a.price)) : Math.max(...grp.map(a=>a.price));
+      const i=dateIdx(dates,d);
+      const px=x(i), py=y(markPrice);
+      marks += `<circle cx="${px}" cy="${py}" r="3.5" fill="#f3ecdc" stroke="#0f1724" stroke-width="1"/>`;
+      let ly = isLow ? py+16 : py-10;
+      usedYs.forEach(u=>{ if(Math.abs(u.y-ly)<14 && Math.abs(u.x-px)<90) ly += isLow?14:-14; });
+      usedYs.push({x:px,y:ly});
+      const anchor = i>N*0.72?"end":"start";
+      const lx = anchor==="end"?px-6:px+6;
+      marks += `<text x="${lx}" y="${ly}" text-anchor="${anchor}" fill="#f3ecdc" font-size="11">${esc(label)}</text>`;
+    });
+
+    container.innerHTML =
+      `<p class="hint">日線近一年。綠漲紅跌；黃線 20 日均、藍線 50 日均、白虛線 200 日均。虛線斜線是用兩處明顯擺動點連成的趨勢線。</p>`+
+      `<div class="legend"><span><i style="background:#f2b552"></i>20 日均</span><span><i style="background:#8fa6d8"></i>50 日均</span><span><i style="background:#e8edf5"></i>200 日均</span><span><i style="background:#3fd0a0"></i>升勢支撐線</span><span><i style="background:#ff7482"></i>降勢壓力線</span></div>`+
+      `<div class="chart-wrap"><svg class="chart daily" viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(id)} 日線圖">`+
+      `<rect x="0" y="0" width="${W}" height="${H}" fill="#172135"/>`+
+      grid+candles+mas+tls+marks+
+      `</svg></div>`;
+  }
+
+  function drawWeekly(container, id){
+    const ch=C.indices[id].chart_weekly_2y;
+    const dates=ch.dates, N=dates.length;
+    const W=960, H=200, pl=58, pr=16, pt=16, pb=28;
+    const iw=W-pl-pr, ih=H-pt-pb;
+    let lo=Infinity, hi=-Infinity;
+    for(let i=0;i<N;i++){
+      lo=Math.min(lo,ch.low[i]); hi=Math.max(hi,ch.high[i]);
+      [ch.sma10[i],ch.sma40[i]].forEach(v=>{if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
+    }
+    const pad=(hi-lo)*0.05||1;
+    const sc=niceTicks(lo-pad,hi+pad,5);
+    const x=i=>pl+(i+0.5)/N*iw;
+    const y=v=>pt+(sc.max-v)/(sc.max-sc.min)*ih;
+    let grid="";
+    sc.ticks.forEach(v=>{
+      grid += `<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#2b3850" stroke-width="1"/>`+
+              `<text x="${pl-8}" y="${y(v)+4}" text-anchor="end" fill="#a3aec0" font-size="11">${esc(num(v,v>=1000?0:2))}</text>`;
+    });
+    [0, Math.floor(N/2), N-1].forEach(i=>{
+      grid += `<text x="${x(i)}" y="${H-8}" text-anchor="middle" fill="#a3aec0" font-size="11">${esc(dates[i].slice(0,7))}</text>`;
+    });
+    let area="M", line="M";
+    ch.close.forEach((v,i)=>{
+      const cmd=(i? "L":"")+x(i).toFixed(2)+" "+y(v).toFixed(2)+" ";
+      line+=cmd; area+=cmd;
+    });
+    area += `L${x(N-1).toFixed(2)} ${y(sc.min).toFixed(2)} L${x(0).toFixed(2)} ${y(sc.min).toFixed(2)} Z`;
+    function lineOf(arr,color,dash){
+      let p=[], started=false;
+      arr.forEach((v,i)=>{ if(v==null) return; p.push((started?"L":"M")+x(i).toFixed(2)+" "+y(v).toFixed(2)); started=true; });
+      return `<path d="${p.join(" ")}" fill="none" stroke="${color}" stroke-width="1.5" ${dash||""}/>`;
+    }
+    container.innerHTML =
+      `<p class="hint">週線近兩年（已去掉 Yahoo 重複的週五棒）。黃線 10 週均、白虛線 40 週均。</p>`+
+      `<div class="chart-wrap"><svg class="chart weekly" viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(id)} 週線圖">`+
+      `<rect x="0" y="0" width="${W}" height="${H}" fill="#172135"/>`+
+      grid+
+      `<path d="${area}" fill="#8fa6d8" opacity="0.12"/>`+
+      `<path d="${line}" fill="none" stroke="#e8edf5" stroke-width="1.8"/>`+
+      lineOf(ch.sma10,"#f2b552","")+lineOf(ch.sma40,"#e8edf5",'stroke-dasharray="4 3"')+
+      `</svg></div>`;
+  }
+
+  function factList(ix){
+    const last=ix.last, r=ix.range_52w, ma=ix.moving_averages, ret=ix.returns, since=ix.since_52w_close_high;
+    const items=[];
+    items.push(`最新收盤 ${num(last.close,2)}（${last.date}），當日 ${pct(last.day_change_pct)}（${last.day_change>0?"+":""}${num(last.day_change,2)}），前收 ${num(last.prev_close,2)}。連續 ${last.streak_closes} 根收盤${last.streak_dir}。`);
+    items.push(`漲跌：5 個交易日 ${pct(ret["5d"].pct)}（自 ${ret["5d"].from_date} 收盤 ${num(ret["5d"].from_close,2)}）；21 日 ${pct(ret["21d"].pct)}；63 日 ${pct(ret["63d"].pct)}；126 日 ${pct(ret["126d"].pct)}；252 日 ${pct(ret["252d"].pct)}（自 ${ret["252d"].from_date} 收盤 ${num(ret["252d"].from_close,2)}）。`);
+    items.push(`近 52 週（252 根日K）：盤中高 ${num(r.high,2)}（${r.high_date}），盤中低 ${num(r.low,2)}（${r.low_date}）；收盤高 ${num(r.close_high,2)}（${r.close_high_date}），收盤低 ${num(r.close_low,2)}（${r.close_low_date}）。最新收盤距收盤高點 ${pct(r.close_vs_close_high_pct)}，距盤中低點 ${pct(r.close_vs_low_pct)}。在 52 週高低區間約 ${num(r.position_in_52w_high_low,1)}%。`);
+    items.push(`自 52 週收盤高點至今 ${since.calendar_days} 日曆天、${since.trading_days} 個交易日。其後收盤低點 ${num(since.subsequent_close_low.close,2)}（${since.subsequent_close_low.date}，相對高點 ${pct(since.subsequent_close_low.pct_from_peak)}），盤中低點 ${num(since.subsequent_intraday_low.low,2)}（${since.subsequent_intraday_low.date}）。自收盤低點反彈 ${pct(since.bounce_from_close_low_pct)}，自盤中低點 ${pct(since.bounce_from_intraday_low_pct)}。收盤是否較盤中低點再跌破 3%：${since.broke_intraday_low_by_3pct?"是":"否"}。`);
+    items.push(`移動平均（日線收盤）：20 日 ${num(ma.sma20.value,2)}（${pct(ma.sma20.pct)}）；50 日 ${num(ma.sma50.value,2)}（${pct(ma.sma50.pct)}）；200 日 ${num(ma.sma200.value,2)}（${pct(ma.sma200.pct)}）。${ix.ma_alignment}。週線 10 週均 ${num(ma.wsma10.value,2)}（${pct(ma.wsma10.pct)}），40 週均 ${num(ma.wsma40.value,2)}（${pct(ma.wsma40.pct)}）。`);
+    if(ix.crosses_sma20_sma50 && ix.crosses_sma20_sma50.length){
+      const lastX=ix.crosses_sma20_sma50[ix.crosses_sma20_sma50.length-1];
+      let xtxt=`最近一次 20／50 日交叉：${lastX.date} ${lastX.kind==="death_cross"?"死亡交叉":"黃金交叉"}（當日收盤 ${num(lastX.price,2)}）。`;
+      if(!(ix.crosses_sma50_sma200 && ix.crosses_sma50_sma200.length)) xtxt += "近兩年沒有 50／200 日交叉。";
+      items.push(xtxt);
+    }
+    if(ix.crosses_sma50_sma200 && ix.crosses_sma50_sma200.length){
+      const xs=ix.crosses_sma50_sma200.map(x=>`${x.date} ${x.kind==="death_cross"?"死亡交叉":"黃金交叉"}（收盤 ${num(x.price,2)}）`).join("；");
+      items.push(`近兩年 50／200 日交叉：${xs}。`);
+    }
+    items.push(`14 日 ATR ${num(ix.atr14.value,2)}（約為收盤價的 ${num(ix.atr14.pct_of_close,2)}%）。近 20 個交易日高低 ${num(ix.recent_range.last_20_low,2)}（${ix.recent_range.last_20_low_date}）～${num(ix.recent_range.last_20_high,2)}（${ix.recent_range.last_20_high_date}），幅度約 ${num(ix.recent_range.last_20_sessions_range_pct,2)}%。`);
+    if(ix.big_daily_moves_ge_3pct_recent && ix.big_daily_moves_ge_3pct_recent.length){
+      const bm=ix.big_daily_moves_ge_3pct_recent.slice(-6).map(b=>`${b.date} ${pct(b.pct)}（收 ${num(b.close,2)}）`).join("；");
+      items.push(`近一年收盤漲跌幅 ≥3% 的日子（最近數筆）：${bm}。`);
+    }
+    const uf=ix.gaps_1y.unfilled||[];
+    if(uf.length){
+      items.push(`近一年尚未回補的缺口 ${ix.gaps_1y.unfilled_count} 個（共偵測 ${ix.gaps_1y.count} 個）：`+
+        uf.map(g=>`${g.date} ${g.kind==="up"?"向上":"向下"} ${num(g.gap_low,2)}–${num(g.gap_high,2)}（${num(g.size_pct,2)}%）`).join("；")+"。見 <a href='./ta-book/#gaps'>缺口說明</a>。");
+    }else{
+      items.push(`近一年偵測到 ${ix.gaps_1y.count} 個缺口，目前清單內沒有未回補的。`);
+    }
+    if(typeof ix.volume==="string"){
+      items.push(ix.volume);
+    }else if(ix.volume){
+      items.push(`成交量：最新一日 ${Number(ix.volume.last).toLocaleString("en-US")}，前 20 日均量 ${Number(ix.volume.avg20_prev).toLocaleString("en-US")}，相對均量 ${pct(ix.volume.last_vs_avg20_pct,1)}。最新一日量明顯偏低時，不要拿來下結論。`);
+    }
+    return "<ul class='facts'>"+items.map(t=>"<li>"+t+"</li>").join("")+"</ul>";
+  }
+
+  function pickRefs(refs, id){
+    // choose a few meaningful lows: last leg, ~1y earlier major, 2022 low if present
+    if(!refs||!refs.length) return refs||[];
+    const wantDates = {
+      SOX:["2026-03-23","2025-03-31","2022-10-10"],
+      NDX:["2026-07-20","2026-03-23","2022-10-10"],
+      SPX:["2026-03-23","2025-03-31","2022-10-10"]
+    }[id] || [];
+    const got=[];
+    wantDates.forEach(d=>{ const r=refs.find(x=>x.from_date===d); if(r) got.push(r); });
+    if(!got.length) return refs.slice(-3).reverse();
+    return got;
+  }
+
+  function obsList(ix,id){
+    const items=[];
+    const c=ix.dow_weekly_coarse_swings.structure, m=ix.dow_weekly_medium_swings.structure;
+    items.push(`偏主要趨勢的週線收盤擺動（左右各 8 根週K，有確認落差，見 <a href="./ta-book/#trend">道氏三層波動</a>）：${esc(c.label)}`+
+      (c.last_two_highs?` 最近兩個已確認高點：${c.last_two_highs[0].date} 的 ${num(c.last_two_highs[0].price,2)}、${c.last_two_highs[1].date} 的 ${num(c.last_two_highs[1].price,2)}；低點：${c.last_two_lows[0].date} 的 ${num(c.last_two_lows[0].price,2)}、${c.last_two_lows[1].date} 的 ${num(c.last_two_lows[1].price,2)}。`:""));
+    items.push(`偏次級的週線收盤擺動（左右各 3 根週K）：${esc(m.label)}`);
+    const pl=ix.prior_leg_and_retracement;
+    if(pl){
+      const refs=pickRefs(pl.all_coarse_lows_before_peak,id);
+      let t=`回吐用點數算＝（高點 − 後續低點或最新收盤）÷（高點 − 前低），同一個高點換前低，答案差很多（見 <a href="./ta-book/#trend">次級折返 1/3～2/3</a>）。只拿來對照，不宣判調整結束或主升結束。`;
+      refs.forEach(r=>{
+        t += ` 自 ${r.from_date} 收盤 ${num(r.from_price,2)} 起漲 ${pct(r.advance_pct)}：高點到後續收盤低點回吐 ${num(r.trough_retrace_pct,1)}%，到最新收盤回吐 ${num(r.last_retrace_pct,1)}%。`;
+      });
+      items.push(t);
+    }
+    const titles={
+      rising_support_major:"較長升勢支撐線",
+      falling_resistance_major:"較長降勢壓力線",
+      rising_support_since_peak:"高點之後的反彈支撐線",
+      falling_resistance_since_peak:"高點之後的下降壓力線"
+    };
+    Object.keys(titles).forEach(k=>{
+      const ln=ix.trendlines[k]; if(!ln) return;
+      items.push(`${titles[k]}（<a href="./ta-book/#sr">趨勢線</a>）：${ln.p1.date} 的 ${num(ln.p1.price,2)} 連 ${ln.p2.date} 的 ${num(ln.p2.price,2)}，延伸到最新交易日約 ${num(ln.value_at_last,2)}；收盤在線${ln.close_is==="above"?"上":"下"}，相對該線 ${pct(ln.close_vs_line_pct)}。是否達到 <a href="./ta-book/#breakout">3% 有效突破濾網</a>：${ln.broken_by_3pct_filter?"是":"否"}。`);
+    });
+    if(ix.support_resistance && ix.support_resistance.length){
+      items.push("靠近現價的擺動密集區（約 1.2% 容差歸類，不是保證守得住或過得了）："+
+        ix.support_resistance.slice(0,6).map(s=>`${s.role} ${num(s.price,2)}（距收盤 ${pct(s.close_vs_level_pct)}，觸及 ${s.touches} 次）`).join("；")+"。");
+    }
+    if(ix.pattern_checks && ix.pattern_checks.length){
+      ix.pattern_checks.forEach(p=>{
+        items.push(`形態檢查「${esc(p.name)}」：已確認＝${p.confirmed?"是":"否"}。${esc(p.opinion)}`);
+      });
+    }else{
+      items.push("形態檢查：依原書雙重頂／底的間隔、中間回檔 15%–20%、以及收盤突破 3% 濾網，目前沒有達到「已確認」的項目。未達標準的形狀不當成形態。");
+    }
+    return "<ul class='ops'>"+items.map(t=>"<li>"+t+"</li>").join("")+"</ul>";
+  }
+
+  function renderIndex(secId, id){
+    const ix=A.indices[id], last=ix.last;
+    const root=document.getElementById(secId);
+    root.innerHTML =
+      `<h2>${esc(ix.name)}</h2>`+
+      `<div class="price-row"><span class="big">${esc(num(last.close,2))}</span>`+
+      `<span class="${chgClass(last.day_change_pct)}">${esc(pct(last.day_change_pct))}</span>`+
+      `<span class="note">${esc(last.date)} 收盤　開 ${esc(num(last.open,2))}　高 ${esc(num(last.high,2))}　低 ${esc(num(last.low,2))}</span></div>`+
+      `<div class="card" style="padding:10px 10px 8px"><div id="dchart-${id}"></div><div id="wchart-${id}"></div></div>`+
+      `<div class="box-f"><h3>事實</h3>${factList(ix)}</div>`+
+      `<div class="box-o"><h3>觀察</h3><p class="note">以下是套用原書定義後的解讀，不是預測，更不是進出場建議。</p>${obsList(ix,id)}</div>`;
+    drawDaily(document.getElementById("dchart-"+id), id);
+    drawWeekly(document.getElementById("wchart-"+id), id);
+  }
+  renderIndex("sox","SOX");
+  renderIndex("ndx","NDX");
+  renderIndex("spx","SPX");
+})();
+</script>
+</body>
+</html>

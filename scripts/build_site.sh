@@ -22,4 +22,10 @@ rm -rf "$OUT/data/cache"
 mkdir -p "$OUT/reports"
 cp -r reports/. "$OUT/reports/"
 
+# 走勢觀察子站（不影響燈號資料或規則）
+if [ -d trend ]; then
+  mkdir -p "$OUT/trend"
+  cp -r trend/. "$OUT/trend/"
+fi
+
 echo "完成：$OUT"
