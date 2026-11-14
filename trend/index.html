@@ -101,7 +101,7 @@ a{color:var(--edge)}
 <header>
   <h1>慈善撲克王</h1>
   <p class="sub">SOX、NDX、SPX 走勢觀察，加上 COBB 我大哥燈號摘要</p>
-  <p class="lede">這頁把最近一年的指數走勢，對照<a href="./ta-book/">股市趨勢技術分析圖解</a>的觀念來標註，並把<a href="https://manolomoo.github.io/charity-poker-king/">COBB我大哥</a>的 11 盞燈號做成簡單圖示。數字都有來源、都寫截至日。這裡是觀察，不是進出場指令，也不保證會怎樣走。</p>
+  <p class="lede">這頁把最近一年的指數走勢，對照<a href="./ta-book/">股市趨勢技術分析圖解</a>的觀念來標註，並把<a href="../signals/">COBB我大哥</a>的 11 盞燈號做成簡單圖示。數字都有來源、都寫截至日。這裡是觀察，不是進出場指令，也不保證會怎樣走。</p>
   <p class="meta" id="src-line"></p>
 </header>
 
@@ -123,7 +123,7 @@ a{color:var(--edge)}
   <div id="cobb-groups"></div>
   <p class="note" id="cobb-episode"></p>
   <p>
-    <a class="btn" href="https://manolomoo.github.io/charity-poker-king/">看燈號詳細說明與規則</a>
+    <a class="btn" href="../signals/">看燈號詳細說明與規則</a>
     <a class="btn ghost" href="./ta-book/#trend">對照技術分析圖解</a>
   </p>
 </section>
@@ -155,7 +155,7 @@ a{color:var(--edge)}
 
 <footer id="disclaimer">
   <h2>免責聲明</h2>
-  <p>本頁只整理公開行情與既有燈號狀態，不是投資建議，也不保證任何報酬。技術形態與趨勢判斷可能失敗，市場有虧損本金的風險。數字會過時；燈號規則與維持天數以<a href="https://manolomoo.github.io/charity-poker-king/">燈號站首頁</a>為準。行情來自 Yahoo Finance 圖表 API，來源與截至日寫在本頁開頭。</p>
+  <p>本頁只整理公開行情與既有燈號狀態，不是投資建議，也不保證任何報酬。技術形態與趨勢判斷可能失敗，市場有虧損本金的風險。數字會過時；燈號規則與維持天數以<a href="../signals/">燈號站首頁</a>為準。行情來自 Yahoo Finance 圖表 API，來源與截至日寫在本頁開頭。</p>
 </footer>
 </div>
 
@@ -202,7 +202,7 @@ a{color:var(--edge)}
   });
   document.getElementById("cobb-meta").innerHTML =
     "規則 "+esc(cobb.rules_version)+"　查詢時間 "+esc(cobb.queried_at)+"　"+esc(cobb.changes_vs_previous)+
-    "　<a href=\""+esc(cobb.live_url)+"\">詳細說明在原站</a>";
+    "　<a href=\"../signals/\">燈號詳細說明</a>";
 
   const byId = {};
   cobb.signals.forEach(s=>byId[s.id]=s);
@@ -240,7 +240,7 @@ a{color:var(--edge)}
       const dateStr=[...new Set(rows.map(r=>r.data_date).filter(Boolean))].join("、");
       const a=document.createElement("a");
       a.className="sig";
-      a.href=cobb.live_url;
+      a.href="../signals/#signal-"+encodeURIComponent(s.id);
       a.innerHTML = "<div class='nm'><span class='dot "+cls+"'></span>"+esc(s.id)+". "+esc(s.name)+
         " <span class='badge "+bcls+"'>"+esc(s.status)+" "+esc(s.status_label||"")+"</span>"+market+"</div>"+
         (val?"<div class='val'>"+esc(val)+"</div>":"")+

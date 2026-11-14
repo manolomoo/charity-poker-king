@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>慈善撲克王</title>
+<meta name="description" content="慈善撲克王：抄底燈號與 SOX、NDX、SPX 走勢觀察。僅供參考，非投資建議。">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1724; --card:#172135; --text:#c6cfdc; --head:#f3ecdc; --mute:#a3aec0;
+  --line:#2b3850; --accent:#8fa6d8; --up:#3fd0a0; --warn:#ff7482; --near:#f2b552;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  font-size:16px; line-height:1.6; overflow-x:hidden;
+}
+a{color:inherit; text-decoration:none}
+a:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
+.wrap{max-width:760px; margin:0 auto; padding:36px 18px 44px}
+h1{
+  margin:0; color:var(--head); letter-spacing:.06em;
+  font-family:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  font-size:clamp(30px,8vw,42px); font-weight:700; line-height:1.25;
+}
+.asof{margin:6px 0 0; color:var(--mute); font-size:12px; line-height:1.5}
+section{margin-top:28px}
+
+/* 燈號：只列亮的，其餘一行帶過 */
+.chips{display:flex; flex-wrap:wrap; gap:6px 8px; margin:0 0 8px}
+.chip{
+  white-space:nowrap; font-size:15px; font-weight:500; line-height:1.4; color:var(--head);
+  background:var(--card); border:1px solid var(--line); border-radius:999px; padding:3px 10px 3px 8px;
+}
+.chip.red{color:var(--warn)}
+.chip.near{color:var(--near)}
+.chip:hover{border-color:var(--accent)}
+.rest{margin:0; font-size:13px; line-height:1.5}
+.rest a{color:var(--mute); text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px}
+.rest a:hover{color:var(--accent)}
+.msg{margin:0; color:var(--mute); font-size:14px}
+
+/* 指數圖 */
+.idx{display:grid; grid-template-columns:1fr; gap:14px}
+.iblk{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 10px 8px; min-width:0}
+.iblk .top{display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; padding:0 2px}
+.iblk .sym{color:var(--head); font-weight:700; font-size:18px; letter-spacing:.04em}
+.iblk .st{font-size:14px; color:var(--text)}
+.iblk .chart{margin-top:6px; min-height:60px}
+
+/* 型態小圖：畫法、配色跟 trend/ta-book/ 的型態卡一致（綠＝看跌、紅＝看漲） */
+.pat{
+  display:flex; align-items:center; gap:12px; margin:8px 0 2px; padding:6px 8px 6px 6px;
+  border:1px solid var(--line); border-radius:8px; background:rgba(15,23,36,.45); min-width:0;
+}
+.pat:hover,.pat:focus-visible{border-color:var(--accent); background:rgba(143,166,216,.10)}
+.pat:hover .pname,.pat:focus-visible .pname{text-decoration:underline; text-underline-offset:3px}
+.pat .pic{flex:0 0 156px; width:156px}
+.pat .ptxt{flex:1 1 0; min-width:0; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px}
+.pat .pname{color:var(--head); font-size:15px; font-weight:700; line-height:1.4}
+.pat svg .lb{fill:#b9c4d4; font-family:inherit; font-size:22px; paint-order:stroke; stroke:#172135; stroke-width:4px; stroke-linejoin:round}
+.pat svg .lb.b{fill:#f3ecdc; font-weight:700}
+.badge{
+  display:inline-block; padding:0 9px; border:1.5px solid; border-radius:999px;
+  font-size:12px; font-weight:700; line-height:1.7; white-space:nowrap; background:transparent;
+}
+.b-up{color:var(--warn); border-color:var(--warn)}
+.b-down{color:var(--up); border-color:var(--up)}
+.b-mid{color:var(--near); border-color:var(--near)}
+.iblk svg{display:block; width:100%; height:auto}
+.iblk .foot{display:flex; justify-content:space-between; align-items:baseline; gap:8px; padding:4px 2px 0; color:var(--mute); font-size:12px}
+.iblk .foot a{color:var(--accent); padding:2px 0}
+.iblk .foot a:hover{text-decoration:underline}
+.legend{display:flex; flex-wrap:wrap; gap:2px 12px; margin:0 0 8px; color:var(--mute); font-size:11px; line-height:1.5}
+.legend span{display:inline-flex; align-items:center; gap:4px; white-space:nowrap}
+.legend i{display:inline-block; width:14px; height:0; border-top:2px solid}
+.legend i.d{border-top-style:dashed}
+
+/* 入口 */
+.entry{
+  display:flex; justify-content:space-between; align-items:center;
+  border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+  color:var(--accent); font-weight:500;
+}
+.entry:hover{border-color:var(--accent)}
+footer{margin-top:28px; color:var(--mute); font-size:12px}
+
+@media (max-width:420px){
+  .wrap{padding:24px 16px 28px}
+  section{margin-top:20px}
+  .iblk{padding:8px 6px 6px}
+  .pat{gap:10px; padding:6px}
+  .pat .pic{flex-basis:136px; width:136px}
+  .pat .pname{font-size:14px}
+  footer{margin-top:20px}
+}
+@media (min-width:640px){
+  .wrap{padding:48px 24px 64px}
+  .pat .pic{flex-basis:200px; width:200px}
+  .pat svg .lb{font-size:18px}
+  .pat .pname{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>慈善撲克王</h1>
+    <p class="asof"><span id="asof-lights"></span>行情截至 <span id="asof-px">2026-11-13</span></p>
+  </header>
+
+  <section id="lights" aria-label="燈號">
+    <p class="msg">燈號載入中…</p>
+  </section>
+
+  <section aria-label="指數走勢">
+    <div class="legend" aria-hidden="true">
+      <span><i style="border-color:#f2b552"></i>20</span>
+      <span><i style="border-color:#8fa6d8"></i>50</span>
+      <span><i class="d" style="border-color:#e8edf5"></i>200</span>
+      <span><i class="d" style="border-color:#3fd0a0"></i>升勢支撐</span>
+      <span><i class="d" style="border-color:#ff7482"></i>降勢壓力</span>
+    </div>
+    <div class="idx" id="idx"></div>
+  </section>
+
+  <section>
+    <a class="entry" href="./trend/ta-book/"><span>技術分析教學</span><span aria-hidden="true">→</span></a>
+  </section>
+
+  <footer>僅供參考，非投資建議。</footer>
+</div>
+
+<script src="./trend/data.js"></script>
+<script>
+/* ---------- 燈號：只列 🔴 / 🟡，其餘一行帶過 ---------- */
+(function(){
+  "use strict";
+  // 首頁只放簡稱；正式名稱、數值、門檻都在 signals/。
+  var SHORT = {
+    "2":"CNN", "5":"VIX/VXN", "8":"週爆量",
+    "3":"週KDJ", "9":"底底高",
+    "4":"估值",
+    "6":"融資維持率", "7":"融資餘額",
+    "1":"資金外流", "10":"領先指標", "11":"景氣藍燈"
+  };
+  var LIT = { "🔴":"red", "🟡":"near" };
+  var LABEL = { "🔴":"已觸發", "🟡":"接近門檻" };
+
+  var box = document.getElementById("lights");
+
+  function getJson(path){
+    return fetch(path, { cache:"no-store" }).then(function(r){
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+
+  function fail(){
+    box.innerHTML = "";
+    var p = document.createElement("p");
+    p.className = "msg";
+    p.textContent = "燈號資料載不進來";
+    box.appendChild(p);
+  }
+
+  function render(latest, rules){
+    var summary = latest && latest.summary;
+    if(!summary) throw new Error("bad data");
+
+    // 順序照 rules 的分組；rules 沒列到的補在後面。只看 1–11。
+    var order = [];
+    var groups = rules && rules.presentation && rules.presentation.groups;
+    (Array.isArray(groups) ? groups : []).forEach(function(g){
+      (g.ids || []).forEach(function(id){ order.push(String(id)); });
+    });
+    for(var n=1; n<=11; n++){ if(order.indexOf(String(n)) < 0) order.push(String(n)); }
+    var seen = {};
+    var ids = order.filter(function(id){
+      var k = Number(id);
+      if(seen[id] || !(k >= 1 && k <= 11) || !summary[id]) return false;
+      seen[id] = true;
+      return true;
+    });
+    if(!ids.length) throw new Error("no signals");
+
+    var nOff = 0, nUnk = 0, lit = { "🔴":[], "🟡":[] };
+    ids.forEach(function(id){
+      var st = summary[id].status;
+      if(lit[st]) lit[st].push(id);
+      else if(st === "⚪") nOff++;
+      else nUnk++;           // ❔ 或任何不認得的狀態都算資料不足，不當成亮燈
+    });
+    var litIds = lit["🔴"].concat(lit["🟡"]);
+
+    var frag = document.createDocumentFragment();
+    if(litIds.length){
+      var chips = document.createElement("div");
+      chips.className = "chips";
+      litIds.forEach(function(id){
+        var item = summary[id];
+        var name = SHORT[id] || item.name;
+        var a = document.createElement("a");
+        a.className = "chip " + LIT[item.status];
+        a.href = "signals/#signal-" + encodeURIComponent(id);
+        a.setAttribute("aria-label", name + "：" + (item.status_label || LABEL[item.status]));
+        a.textContent = item.status + " " + name;
+        chips.appendChild(a);
+      });
+      frag.appendChild(chips);
+    }
+
+    var text;
+    if(litIds.length){
+      text = "其餘 " + nOff + " 個未亮" + (nUnk > 0 ? "、" + nUnk + " 個資料不足" : "");
+    } else if(nUnk === 0){
+      text = nOff + " 個均未亮";
+    } else {
+      text = nOff + " 個未亮、" + nUnk + " 個資料不足";
+    }
+    var p = document.createElement("p");
+    p.className = "rest";
+    var link = document.createElement("a");
+    link.href = "signals/";
+    link.textContent = text + " →";
+    p.appendChild(link);
+    frag.appendChild(p);
+
+    box.innerHTML = "";
+    box.appendChild(frag);
+    if(latest.queried_at){
+      document.getElementById("asof-lights").textContent = "燈號 " + latest.queried_at + "　";
+    }
+  }
+
+  Promise.all([getJson("data/latest.json"), getJson("rules.json")])
+    .then(function(res){ render(res[0], res[1]); })
+    .catch(fail);
+})();
+
+/* ---------- SOX / NDX / SPX：近六個月日線小圖＋一行型態 ---------- */
+(function(){
+  "use strict";
+  var D = window.SITE_DATA || {};
+  var A = D.analysis, C = D.charts;
+  var IDS = ["SOX","NDX","SPX"];
+  var host = document.getElementById("idx");
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function num(v,d){
+    return Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+  }
+
+  // 一行型態：只照 analysis 的欄位組句，不自己判讀型態。最多兩句。
+  function patternLabel(ix){
+    if(!ix) return null;
+    var out = [];
+    var tl = ix.trendlines && ix.trendlines.rising_support_major;
+    if(tl && tl.broken_by_3pct_filter === true) out.push("跌破升勢支撐線");
+
+    var m = ix.moving_averages && ix.moving_averages.sma200;
+    if(m && typeof m.above === "boolean"){
+      if(m.above === false && typeof m.pct === "number" && Math.abs(m.pct) < 1) out.push("略低於200日線");
+      else if(m.above === false) out.push("200日線下");
+      else out.push("200日線上");
+    }
+
+    var s = ix.dow_weekly_coarse_swings && ix.dow_weekly_coarse_swings.structure;
+    if(s && out.length < 2){
+      if(s.close_broke_last_swing_low_by_3pct === true) out.push("低點墊高已破壞");
+      else if(s.close_broke_last_swing_low === false &&
+              (s.bias === "bull" || String(s.base_label || s.label || "").indexOf("低點墊高") >= 0)){
+        out.push("粗週線低點墊高仍在");
+      }
+    }
+    return out.length ? out.join("・") : null;
+  }
+
+  /* ---------- 型態小圖 ----------
+     SVG 取自 trend/ta-book/ 的型態卡（同樣的線、同樣的顏色：白色價格線、橘色虛線、
+     綠＝往下、紅＝往上），只把字放大並挪位，縮到 ~160px 寬時還讀得到。 */
+  var ICON_OPEN = '<svg viewBox="0 0 320 180" role="img" xmlns="http://www.w3.org/2000/svg" aria-label="';
+  var ICONS = {
+    // ta-book「上升趨勢線（跌破）」
+    tlBreak:
+      '<line x1="14" y1="165.4" x2="296" y2="45.9" stroke="#f2ab3c" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round"/>'+
+      '<polyline points="14,164 50,116 74,140 116,84 142,111 184,58 206,84 232,50 248,66" fill="none" stroke="#dfe6f1" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<polyline points="248,66 262,104 276,84 300,134" fill="none" stroke="#3fd0a0" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<text x="152" y="170" text-anchor="middle" class="lb">連接墊高的低點</text>'+
+      '<text x="252" y="130" text-anchor="end" class="lb b">有效跌破</text>',
+    // 通用：升勢線上、沒有跌破（ta-book 沒有完全對應的卡）
+    rising:
+      '<line x1="14" y1="165.4" x2="306" y2="41.7" stroke="#f2ab3c" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round"/>'+
+      '<polyline points="14,164 50,116 74,140 116,84 142,111 184,58 206,84 232,50 248,66" fill="none" stroke="#dfe6f1" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<polyline points="248,66 276,30 290,48 306,20" fill="none" stroke="#ff7482" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<text x="170" y="170" text-anchor="middle" class="lb">低點一路墊高</text>',
+    // 通用：收在 200 日線下
+    below200:
+      '<path d="M14 92 C 90 70, 190 66, 306 84" fill="none" stroke="#f2ab3c" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round"/>'+
+      '<polyline points="14,70 44,36 66,56 100,24 126,52 150,40 172,74" fill="none" stroke="#dfe6f1" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<polyline points="172,74 198,116 220,96 252,142 272,124 304,160" fill="none" stroke="#3fd0a0" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<text x="304" y="62" text-anchor="end" class="lb">200日線</text>'+
+      '<text x="150" y="150" text-anchor="middle" class="lb b">收在線下</text>'
+  };
+  var BADGE = { down:["b-down","看跌"], up:["b-up","看漲"], mid:["b-mid","中性"] };
+
+  // 型態挑選：照順序 A → B → C，只看 analysis 的欄位。
+  // 三角形、頭肩、雙重頂、楔形這類有名字的型態沒有寫嚴格判定式，所以這裡一律不給。
+  function pickPattern(ix){
+    if(!ix) return null;
+    var tl = ix.trendlines && ix.trendlines.rising_support_major;
+    var below = !!tl && (tl.close_is === "below" ||
+                (tl.close_is == null && typeof tl.close_vs_line_pct === "number" && tl.close_vs_line_pct < 0));
+    // A. 收盤跌破升勢線且過 3% 濾網：書上的「有效跌破」
+    if(tl && tl.broken_by_3pct_filter === true){
+      return { name:"上升趨勢線（跌破）", badge:"down", icon:"tlBreak", slug:"rising-tl-break", confirmed:true };
+    }
+    // B. 收在線下但沒到 3%：只是候選，不算完成
+    if(tl && below && tl.broken_by_3pct_filter === false){
+      return { name:"可能跌破升勢線（未確認）", badge:"mid", icon:"tlBreak", slug:"rising-tl-break", confirmed:false };
+    }
+    // C. 通用示意
+    var m = ix.moving_averages && ix.moving_averages.sma200;
+    var s = ix.dow_weekly_coarse_swings && ix.dow_weekly_coarse_swings.structure;
+    if(m && m.above === true && s && s.close_broke_last_swing_low === false){
+      return { name:"上升趨勢中", badge:"up", icon:"rising", slug:"rising-tl-break", confirmed:false };
+    }
+    if(m && m.above === false){
+      if(tl && below) return { name:"跌破升勢線", badge:"down", icon:"tlBreak", slug:"rising-tl-break", confirmed:false };
+      return { name:"200日線下", badge:"down", icon:"below200", slug:"moving-avg", confirmed:false };
+    }
+    return null;
+  }
+  function patternRow(ix){
+    var p = pickPattern(ix);
+    if(!p) return "";
+    var b = BADGE[p.badge];
+    return '<a class="pat" href="./trend/ta-book/#'+esc(p.slug)+'" data-pattern="'+esc(p.slug)+'" data-confirmed="'+(p.confirmed?"1":"0")+'"'+
+      ' aria-label="'+esc(p.name)+'（'+b[1]+'）：看技術分析教學的型態卡">'+
+      '<span class="pic">'+ICON_OPEN+esc(p.name)+' 型態示意圖">'+ICONS[p.icon]+'</svg></span>'+
+      '<span class="ptxt"><span class="pname">'+esc(p.name).replace('（','<wbr>（')+'</span><span class="badge '+b[0]+'">'+b[1]+'</span></span>'+
+      '</a>';
+  }
+
+  /* 以下 niceTicks / dateIdx / drawDaily 改自 trend/index.html，畫法與配色相同，
+     只是視窗縮成近六個月、圖高縮短。 */
+  function niceTicks(min,max,n){
+    var span0=max-min||1;
+    var nn=n||5;
+    var step0=Math.pow(10,Math.floor(Math.log10(span0/nn)));
+    var err=(span0/nn)/step0;
+    var step = err>=7.5?step0*10:err>=3?step0*5:err>=1.5?step0*2:step0;
+    var tmin=Math.floor(min/step)*step, tmax=Math.ceil(max/step)*step;
+    if ((min-tmin) > span0*0.18 || (tmax-max) > span0*0.18) {
+      var cands=[step/2, step/5, step0, step0*2].filter(function(s){return s>0;});
+      for (var k=0;k<cands.length;k++) {
+        var s=cands[k];
+        var a=Math.floor(min/s)*s, b=Math.ceil(max/s)*s;
+        var ticksEst=Math.round((b-a)/s);
+        if (ticksEst>=3 && ticksEst<=9 && (min-a)<=span0*0.18 && (b-max)<=span0*0.18) {
+          step=s; tmin=a; tmax=b; break;
+        }
+      }
+    }
+    var ticks=[];
+    for(var v=tmin;v<=tmax+step*0.5;v=+(v+step).toFixed(8)) ticks.push(v);
+    return {min:tmin,max:tmax,ticks:ticks,step:step};
+  }
+  function dateIdx(dates,d){
+    var i=dates.indexOf(d);
+    if(i>=0) return i;
+    var best=0,bd=1e15;
+    dates.forEach(function(x,k){var a=Math.abs(Date.parse(x)-Date.parse(d)); if(a<bd){bd=a;best=k;}});
+    return best;
+  }
+
+  var WINDOW_DAYS = 183;
+  var uid = 0;
+
+  // narrow=true 時用較窄的 viewBox（480），手機上字和K棒才不會被縮到看不見。
+  function drawDaily(container, id, narrow){
+    var ch=C.indices[id].chart_daily_1y;
+    var ix=A.indices[id];
+    var all=ch.dates, NA=all.length;
+    // 視窗：最後一天往回約 183 個日曆天
+    var cut=Date.parse(all[NA-1]) - WINDOW_DAYS*86400000;
+    var s0=0;
+    while(s0<NA-1 && Date.parse(all[s0])<cut) s0++;
+    var N=NA-s0;
+    var dates=all.slice(s0);
+    var W=narrow?480:960, H=narrow?250:250;
+    var fs=narrow?12:13;
+    var pl=narrow?48:60, pr=narrow?8:16, pt=22, pb=narrow?24:26;
+    var iw=W-pl-pr, ih=H-pt-pb;
+    var lo=Infinity, hi=-Infinity;
+    for(var i=s0;i<NA;i++){
+      lo=Math.min(lo,ch.low[i]); hi=Math.max(hi,ch.high[i]);
+      [ch.sma20[i],ch.sma50[i],ch.sma200[i]].forEach(function(v){if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
+    }
+    var pad=(hi-lo)*0.04||1;
+    var sc=niceTicks(lo-pad,hi+pad,narrow?4:5);
+    // x 用「視窗內的位置」；k 可以是小數或負數（趨勢線用）
+    var x=function(k){return pl+(k+0.5)/N*iw;};
+    var y=function(v){return pt+(sc.max-v)/(sc.max-sc.min)*ih;};
+    var cw=Math.max(1.6, iw/N*0.62);
+
+    var grid="";
+    sc.ticks.forEach(function(v){
+      grid += '<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#2b3850" stroke-width="1"/>'+
+              '<text x="'+(pl-6)+'" y="'+(y(v)+4)+'" text-anchor="end" fill="#a3aec0" font-size="'+fs+'">'+esc(num(v,v>=1000?0:2))+'</text>';
+    });
+    // x 軸：每個月第一個交易日
+    dates.forEach(function(d,k){
+      if(k===0 || d.slice(0,7)===dates[k-1].slice(0,7)) return;
+      var lab = narrow ? (Number(d.slice(5,7))+"月") : d.slice(0,7);
+      grid += '<line x1="'+x(k)+'" x2="'+x(k)+'" y1="'+(H-pb)+'" y2="'+(H-pb+4)+'" stroke="#2b3850" stroke-width="1"/>'+
+              '<text x="'+x(k)+'" y="'+(H-6)+'" text-anchor="middle" fill="#a3aec0" font-size="'+fs+'">'+esc(lab)+'</text>';
+    });
+
+    var candles="";
+    for(var j=s0;j<NA;j++){
+      var k=j-s0;
+      var up=ch.close[j]>=ch.open[j];
+      var col=up?"#3fd0a0":"#ff7482";
+      var y1=y(Math.max(ch.open[j],ch.close[j])), y2=y(Math.min(ch.open[j],ch.close[j]));
+      candles += '<line x1="'+x(k)+'" x2="'+x(k)+'" y1="'+y(ch.high[j])+'" y2="'+y(ch.low[j])+'" stroke="'+col+'" stroke-width="1"/>';
+      candles += '<rect x="'+(x(k)-cw/2)+'" y="'+y1+'" width="'+cw+'" height="'+Math.max(1,y2-y1)+'" fill="'+col+'"/>';
+    }
+    function lineOf(arr,color,dash){
+      var p=[], started=false;
+      for(var q=s0;q<NA;q++){
+        var v=arr[q];
+        if(v==null) continue;
+        p.push((started?"L":"M")+x(q-s0).toFixed(2)+" "+y(v).toFixed(2));
+        started=true;
+      }
+      return '<path d="'+p.join(" ")+'" fill="none" stroke="'+color+'" stroke-width="1.6" '+(dash||"")+'/>';
+    }
+    var mas = lineOf(ch.sma20,"#f2b552","") + lineOf(ch.sma50,"#8fa6d8","") + lineOf(ch.sma200,"#e8edf5",'stroke-dasharray="4 3"');
+
+    // 趨勢線：斜率照整年資料的索引算（跟 trend 頁一樣），p1 在視窗左邊時從左緣沿同斜率畫起
+    var tls="";
+    var tl = ix.trendlines || {};
+    [[tl.rising_support_major,"#3fd0a0"],[tl.falling_resistance_major,"#ff7482"]].forEach(function(t){
+      var ln=t[0], col=t[1];
+      if(!ln || !ln.p1 || !ln.p2) return;
+      var i1=dateIdx(all,ln.p1.date), i2=dateIdx(all,ln.p2.date);
+      if(i1===i2) return;
+      var slope=(ln.p2.price-ln.p1.price)/(i2-i1);
+      var yAt=function(i){return ln.p1.price+slope*(i-i1);};
+      var a=Math.max(i1,s0), b=NA-1;
+      if(a>=b) return;
+      tls += '<line x1="'+x(a-s0)+'" y1="'+y(yAt(a))+'" x2="'+x(b-s0)+'" y2="'+y(yAt(b))+'" stroke="'+col+'" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9"/>';
+    });
+
+    // 標註：同一天的高點／低點合併；視窗外的不畫
+    var marks="";
+    var first=dates[0], last=dates[N-1];
+    var raw = ((C.indices[id].chart_annotations)||[]).filter(function(a){
+      return a.date && a.price && a.date>=first && a.date<=last;
+    });
+    var byDate={};
+    raw.forEach(function(a){ (byDate[a.date]=byDate[a.date]||[]).push(a); });
+    var usedYs=[];
+    Object.keys(byDate).forEach(function(d){
+      var grp=byDate[d];
+      var labels=grp.map(function(a){return a.label;}).filter(function(v,i2,arr){return arr.indexOf(v)===i2;});
+      var label;
+      if(labels.length===1) label=labels[0];
+      else if(labels.every(function(t){return t.indexOf("52週")>=0 && t.indexOf("高點")>=0;})) label="52週高點（盤中／收盤）";
+      else if(labels.every(function(t){return t.indexOf("高點後")>=0 || (t.indexOf("低點")>=0 && t.indexOf("52週")<0);})) label="高點後低點（盤中／收盤）";
+      else label=labels.join("／");
+      var isLow = labels.every(function(t){return t.indexOf("低點")>=0 || t.indexOf("高點後")>=0;});
+      var prices=grp.map(function(a){return a.price;});
+      var markPrice = isLow ? Math.min.apply(null,prices) : Math.max.apply(null,prices);
+      var k=dateIdx(dates,d);
+      var px=x(k), py=y(markPrice);
+      marks += '<circle cx="'+px+'" cy="'+py+'" r="3.5" fill="#f3ecdc" stroke="#0f1724" stroke-width="1"/>';
+      var ly = isLow ? py+fs+5 : py-9;
+      var dy = fs+3;
+      usedYs.forEach(function(u){ if(Math.abs(u.y-ly)<dy && Math.abs(u.x-px)<(narrow?150:110)) ly += isLow?dy:-dy; });
+      ly = Math.min(H-pb-3, Math.max(fs, ly));
+      usedYs.push({x:px,y:ly});
+      var anchor = k>N*(narrow?0.5:0.72)?"end":"start";
+      var lx = anchor==="end"?px-6:px+6;
+      marks += '<text x="'+lx+'" y="'+ly+'" text-anchor="'+anchor+'" fill="#f3ecdc" font-size="'+(fs-1)+'" paint-order="stroke" stroke="#172135" stroke-width="3">'+esc(label)+'</text>';
+    });
+
+    var cid="hc"+(++uid);
+    container.innerHTML =
+      '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="'+esc(id)+' 近六個月日線圖">'+
+      '<defs><clipPath id="'+cid+'"><rect x="'+pl+'" y="'+pt+'" width="'+iw+'" height="'+ih+'"/></clipPath></defs>'+
+      '<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="#172135"/>'+
+      grid+candles+'<g clip-path="url(#'+cid+')">'+mas+tls+'</g>'+marks+
+      '</svg>';
+  }
+
+  var charts = [];   // {el,id}
+  var NARROW_AT = 560;
+  var mode = null;
+  function isNarrow(){ return (host.clientWidth || window.innerWidth) < NARROW_AT; }
+  function drawAll(force){
+    var nw = isNarrow();
+    if(!force && nw === mode) return;
+    mode = nw;
+    charts.forEach(function(c){
+      try { drawDaily(c.el, c.id, nw); }
+      catch(e){ c.el.innerHTML = '<p class="msg">圖表資料載不進來</p>'; }
+    });
+  }
+
+  IDS.forEach(function(id){
+    var ix = A && A.indices && A.indices[id];
+    var hasChart = !!(ix && C && C.indices && C.indices[id] && C.indices[id].chart_daily_1y &&
+                      (C.indices[id].chart_daily_1y.dates||[]).length);
+    var label = patternLabel(ix) || "資料載不進來";
+    var lastDate = hasChart ? C.indices[id].chart_daily_1y.dates.slice(-1)[0] : null;
+    var asof = (ix && ix.last && ix.last.date) || lastDate || (A && A.meta && A.meta.price_asof) || "";
+
+    var blk = document.createElement("article");
+    blk.className = "iblk";
+    blk.id = id.toLowerCase();
+    blk.innerHTML =
+      '<div class="top"><span class="sym">'+esc(id)+'</span><span class="st">'+esc(label)+'</span></div>'+
+      patternRow(ix)+
+      '<div class="chart"></div>'+
+      '<div class="foot"><span>'+(asof ? "截至 "+esc(asof) : "")+'</span>'+
+      '<a href="./trend/#'+esc(id.toLowerCase())+'">詳情 →</a></div>';
+    host.appendChild(blk);
+    var el = blk.querySelector(".chart");
+    if(hasChart) charts.push({el:el,id:id});
+    else el.innerHTML = '<p class="msg">圖表資料載不進來</p>';
+  });
+
+  if(A && A.meta && A.meta.price_asof){
+    document.getElementById("asof-px").textContent = A.meta.price_asof;
+  }
+  drawAll(true);
+  window.addEventListener("resize", function(){ drawAll(false); });
+})();
+</script>
+</body>
+</html>

@@ -38,7 +38,8 @@
 
   function renderNav(activePage) {
     var pages = [
-      { href: "index.html", label: "首頁", key: "index" },
+      { href: "../", label: "首頁", key: "home" },
+      { href: "index.html", label: "燈號", key: "index" },
       { href: "rules.html", label: "規則", key: "rules" },
       { href: "history.html", label: "歷史", key: "history" },
     ];
@@ -46,7 +47,7 @@
     if (!nav) return;
     var topnav = el("div", { class: "topnav" }, [
       el("div", { class: "wrap" }, [
-        el("a", { class: "brand", href: "index.html" }, [
+        el("a", { class: "brand", href: "../" }, [
           el("img", { src: "assets/favicon.svg", alt: "", width: "24", height: "24" }),
           "COBB我大哥",
         ]),

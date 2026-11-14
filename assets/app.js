@@ -298,7 +298,7 @@
 
   function buildSignalCard(id, summaryItem, rulesSignal, rows) {
     var cls = S.statusClass(summaryItem.status);
-    var details = S.el("details", { class: "signal-card " + cls });
+    var details = S.el("details", { class: "signal-card " + cls, id: "signal-" + id });
 
     var summaryEl = S.el("summary");
     summaryEl.appendChild(S.el("span", { class: "num", text: id + "." }));
@@ -501,6 +501,16 @@
     box.appendChild(sec);
   }
 
+  // 卡片是抓完資料才產生的，網址帶 #signal-N 時要自己捲過去並展開。
+  function scrollToHashSignal() {
+    var m = /^#signal-(\d+)$/.exec(location.hash || "");
+    if (!m) return;
+    var target = document.getElementById("signal-" + m[1]);
+    if (!target) return;
+    target.open = true;
+    target.scrollIntoView();
+  }
+
   function init() {
     Promise.all([S.fetchJson("data/latest.json"), S.fetchJson("rules.json"), S.fetchJson("data/manifest.json")])
       .then(function (results) {
@@ -521,6 +531,7 @@
         renderSignalGroups(latest, rules);
         renderEpisode(latest);
         renderReport(latest, manifest);
+        scrollToHashSignal();
       })
       .catch(function (err) {
         S.showError(document.getElementById("summary-card"), err);
@@ -529,4 +540,5 @@
   }
 
   init();
+  window.addEventListener("hashchange", scrollToHashSignal);
 })();
