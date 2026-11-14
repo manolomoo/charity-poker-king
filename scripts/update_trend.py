@@ -199,7 +199,7 @@ def fetch_all() -> dict:
 
 
 def fetch_optional_proxies(price_asof: str | None = None):
-    """選用代理資料：SOXX 成交量給 SOX 用。失敗只記錄，不讓整次更新失敗。"""
+    """選用代理資料：SOXX 成交量給 SOX 用；HOM Forward P/E 給估值位置頁。失敗只記錄，不讓整次更新失敗。"""
     CACHE.mkdir(parents=True, exist_ok=True)
     notes = []
     try:
@@ -216,6 +216,11 @@ def fetch_optional_proxies(price_asof: str | None = None):
             notes.append(f"SOXX 筆數不足（{len(df)}），略過")
     except Exception as e:
         notes.append(f"SOXX 抓取失敗（{type(e).__name__}: {e}），SOX 未驗量")
+    try:
+        import valuation_pe as VP
+        notes.extend(VP.fetch_hom(CACHE))
+    except Exception as e:
+        notes.append(f"HOM Forward P/E 抓取失敗（{type(e).__name__}: {e}），估值位置未更新")
     return notes
 
 def load_cached_meta() -> dict:
@@ -320,6 +325,9 @@ def main() -> int:
               f"sma20 below_streak={m20.get('below_streak')}")
         st = ix.get("market_stage") or {}
         print(f"      階段={st.get('headline')}  code={st.get('stage_code')}")
+    import valuation_pe as VP
+    for line in VP.summarize(analysis.get("valuation") or {}):
+        print(f"  估值 {line}")
     print(f"[trend] 已寫 trend/data.json、trend/data.js、trend/status.json")
     return 0
 

@@ -21,6 +21,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 import market_stage as MS  # noqa: E402
+import valuation_pe as VP  # noqa: E402
 
 IDS = ["SOX", "NDX", "SPX"]
 SOURCE = "Yahoo Finance 圖表 API（query1.finance.yahoo.com/v8/finance/chart）"
@@ -1571,6 +1572,11 @@ def build(data_dir: Path, latest_path: Path, rules_path: Path, fetched_at_taipei
         )
     stages = MS.summarize_stages({k: ix["market_stage"] for k, ix in indices.items()})
 
+    try:
+        valuation = VP.build_valuation(data_dir, latest_path)
+    except Exception as e:
+        valuation = {"available": False, "reason": f"估值位置計算失敗（{type(e).__name__}: {e}）", "version": "v1-2026-11-15"}
+
     confirmation = build_confirmation(indices)
     cobb = cobb_snapshot(latest_path, rules_path, price_asof)
 
@@ -1610,12 +1616,13 @@ def build(data_dir: Path, latest_path: Path, rules_path: Path, fetched_at_taipei
             "swings_daily_major": "日線明顯擺動：左右各 10 根 K 的局部高低。",
             "descending_right_triangle": "下降直角三角形（v2／COBB 主高點讀法，2026-11-14）：10／10 主高點連成降勢上界，中間高點不向上刺破該線超過 1% 即不算破壞；水平支撐取 H1 之後最低的 10／10 主低點，且之後至少再有一次日低點落入 2% 內的測試；收盤跌破支撐 3% 為確認；最小目標為 S−(H1−S)。已確認或形成中的下降直角三角形在首頁優先於「升勢線跌破」標籤。20 日均連續未站回只當附註，不參與命名。",
             "market_stage": "牛熊三階段參考指標（v1／2026-11-14，COBB Telegram 筆記＋Claude 規格）：以第3章精神做成價量代理，不是真正的道氏階段。空頭須同時滿足回撤≥20%、收盤低於200日線3%或連續10日在其下、週線擺動低點被收盤跌破≥3%；多頭須回撤<10%、收盤大於仍上揚的200日線、週線結構未被有效跌破。站回200日線則先降為無法判定。恐慌為10日收盤跌幅達 NDX／SPX 12%、SOX 18%。SOX 量用 SOXX 近似，沒有則未驗量。不影響燈號 v3.0。",
+            "valuation": "Forward P/E 估值位置（v1／2026-11-15，COBB MEMO 2026-11 快照＋History of Market 重算）：本站用 HOM 已完成月份的月最後一筆計算 2020／2016／2011 起的四分位與 μ±0.5／1／1.5σ，現值用 forwardOwn 日線。首頁小標看 2016 年起。SOX 截至 2026-11-05 的月統計可重現 MEMO 數字；NDX 對不上，不把 HOM 現值拿去比 MEMO 帶。不影響燈號 v3.0 第 4 項。",
             "swings_weekly_medium": "週線收盤、左右各 3 根。",
             "swings_weekly_coarse": "週線收盤、左右各 8 根，用來觀察較長的主要結構。",
             "gaps": "當日低點高於前一日高點＝向上缺口；當日高點低於前一日低點＝向下缺口。後續曾交易進缺口區間視為已回補。",
         },
     }
-    payload = {"meta": meta, "indices": indices, "confirmation": confirmation, "cobb": cobb, "stages": stages}
+    payload = {"meta": meta, "indices": indices, "confirmation": confirmation, "cobb": cobb, "stages": stages, "valuation": valuation}
 
     # 圖表序列另外放（跟原本 analysis.json／chart_data.json 的切法相同）
     chart = {

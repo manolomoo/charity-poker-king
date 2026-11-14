@@ -33,16 +33,25 @@ def test_homepage_uses_same_nav_source():
     assert "./trend/ta-book/" in home
 
 
+def test_homepage_has_valuation_entry():
+    home = HOME.read_text(encoding="utf-8")
+    assert "./trend/valuation/" in home
+    assert "pe-tag" in home
+    val = ROOT / "trend" / "valuation" / "index.html"
+    assert val.exists(), "缺少 /trend/valuation/ 頁面"
+
+
 def test_expected_labels_in_order():
     labels = [label for _, label in load_nav_items()]
     assert labels == [
         "核心觀念", "趨勢", "牛熊階段", "反轉形態", "整固形態",
-        "突破與目標", "缺口", "支撐與趨勢線", "交易戰術", "期望值",
+        "突破與目標", "缺口", "支撐與趨勢線", "交易戰術", "期望值", "估值",
     ]
 
 
 if __name__ == "__main__":
     test_nav_js_matches_ta_book_sections()
     test_homepage_uses_same_nav_source()
+    test_homepage_has_valuation_entry()
     test_expected_labels_in_order()
     print("ok", " / ".join(label for _, label in load_nav_items()))

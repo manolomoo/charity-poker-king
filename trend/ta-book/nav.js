@@ -9,7 +9,8 @@ window.TA_BOOK_NAV = [
   { id: "gaps", label: "缺口" },
   { id: "sr", label: "支撐與趨勢線" },
   { id: "tactics", label: "交易戰術" },
-  { id: "expectancy", label: "期望值" }
+  { id: "expectancy", label: "期望值" },
+  { id: "valuation", label: "估值" }
 ];
 window.renderTaBookNav = function(el, prefix){
   if(!el || !window.TA_BOOK_NAV) return;

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>慈善撲克王｜Forward P/E 估值位置</title>
+<meta name="description" content="依 COBB MEMO 的 Forward P/E 視窗與 History of Market 序列，看 SOX、NDX 目前落在哪個 σ 帶與百分位。僅供參考，非投資建議。不改變燈號 v3.0。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#f3ecdc; --ink:#e8edf5; --text:#c6cfdc; --muted:#a3aec0;
+  --red:#ff7482; --green:#3fd0a0; --amber:#f2b552;
+  --line:#2b3850; --bg:#0f1724; --surface:#172135; --edge:#8fa6d8;
+  --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.75;background:var(--bg)}
+.wrap{max-width:920px;margin:0 auto;padding:22px 18px 80px}
+h1{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(28px,6vw,46px);line-height:1.2;margin:0 0 6px}
+.sub{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(16px,3vw,20px);margin:0 0 12px}
+.lede,.sec-lead{margin:0 0 12px;max-width:50em}
+.meta{color:var(--muted);font-size:13px}
+nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 14px;margin:8px 0 18px;border-bottom:3px double var(--edge);position:sticky;top:0;z-index:5;background:rgba(15,23,36,.95)}
+nav a{display:inline-block;padding:5px 13px;border:1px solid #3a4864;border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:14px}
+nav a:hover{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+h2{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(22px,4vw,28px);line-height:1.3;margin:0 0 8px}
+h3{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:18px;margin:0 0 8px}
+section{margin:36px 0 44px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 16px 18px;margin:0 0 12px}
+.k{color:var(--muted);font-size:12px;letter-spacing:.04em}
+.big{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(22px,3.4vw,32px);line-height:1.25;margin:4px 0 8px}
+.box-o{background:#2a2414;border:1px solid #5c4b1f;border-radius:12px;padding:14px 16px;margin:12px 0}
+.box-f{background:#141e30;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{color:var(--navy);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+a{color:var(--edge)}
+footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);font-size:13px}
+.note{color:var(--muted);font-size:13px}
+.win-btns{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.win-btns button{
+  font:inherit;font-size:13px;color:var(--ink);background:var(--surface);
+  border:1px solid #3a4864;border-radius:999px;padding:4px 12px;cursor:pointer;
+}
+.win-btns button.on{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+svg.chart{display:block;width:100%;height:auto;background:#121a29;border:1px solid var(--line);border-radius:10px}
+.legend{display:flex;flex-wrap:wrap;gap:2px 12px;margin:8px 0 0;color:var(--muted);font-size:11px}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.legend i{display:inline-block;width:14px;height:0;border-top:2px solid}
+.legend i.d{border-top-style:dashed}
+.facts{margin:0;padding:0 0 0 1.15em}
+.facts li{margin:0 0 6px}
+.tag{display:inline-block;margin:0 6px 0 0;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>估值位置</h1>
+  <p class="sub">Forward P/E 視窗、σ 帶與事件底，只供參考</p>
+  <p class="lede">這頁把 COBB MEMO（2026-11）的前瞻本益比看法做成可對照的位置讀數：每個視窗並列百分位、四分位與 σ 帶。現值與 σ 帶來自 History of Market 的 NTM 12 個月 blended-forward 序列；MEMO 的數字當凍結快照，不自動更新。<strong>11 項燈號 v3.0 第 4 項規則沒有改</strong>，首頁小標也不是第二顆燈。</p>
+  <p class="meta" id="asof"></p>
+</header>
+<nav>
+  <a href="../../">首頁</a>
+  <a href="../">走勢觀察</a>
+  <a href="#now">現況</a>
+  <a href="#sox">SOX</a>
+  <a href="#ndx">NDX</a>
+  <a href="#events">事件底</a>
+  <a href="#memo">COBB MEMO</a>
+  <a href="#caveat">限制</a>
+  <a href="../ta-book/#valuation">教學</a>
+</nav>
+
+<section id="now">
+  <h2>現況與燈號時間差</h2>
+  <div class="card" id="now-cards"></div>
+  <p class="note" id="signal4-note"></p>
+</section>
+
+<section id="sox">
+  <h2>SOX</h2>
+  <p class="sec-lead" id="sox-lead"></p>
+  <div class="win-btns" id="sox-btns"></div>
+  <div id="sox-chart"></div>
+  <p class="legend" id="sox-legend"></p>
+  <div id="sox-boxes"></div>
+  <div id="sox-table"></div>
+</section>
+
+<section id="ndx">
+  <h2>NDX</h2>
+  <p class="sec-lead">NDX 分成兩塊：上面是 COBB MEMO 的引用表（資料商未確認，靜態快照）；下面是本站用 History of Market 自算的圖與帶。<strong>不要把 HOM 現值拿去比 MEMO 的 σ 帶</strong>，mean 差約 0.7–1.1，且隨視窗拉長而變大，不是固定位移，不能加減常數對齊。2006 起與 2001 起只引用 MEMO，本站不重算（HOM 在 2005-01 至 2006-07 有缺口）。</p>
+  <div class="box-o" id="ndx-memo"></div>
+  <div class="win-btns" id="ndx-btns"></div>
+  <div id="ndx-chart"></div>
+  <p class="legend" id="ndx-legend"></p>
+  <div id="ndx-boxes"></div>
+  <div id="ndx-table"></div>
+</section>
+
+<section id="events">
+  <h2>事件底對照</h2>
+  <p class="sec-lead">事件名稱來自 COBB MEMO 圖上標註的「股價觸底月份」。P/E 由本站用 History of Market 同口徑計算：該月最低與月底。較早的月份落在週頻段（多為該週最後一個讀數），2026-11 的 12.72 則是日線低點，頻率不同，不能直接當成同一種「底部 P/E」。歷次事件月的最低 P/E 從十倍出頭到二十多倍都有，沒有固定地板；估值說明位置，不說明時點。</p>
+  <div id="event-tables"></div>
+  <div class="box-f">
+    <p>例如 SOX 在 2022-06-17 的週頻讀數已約 12.86 倍，接近同年 10 月最低 12.84（10/14），之後指數又再跌一段才在 10 月見底。2024-08 那次價格修正時，SOX 該月最低仍約 23.90 倍，比較像價格修正而不是估值修正。P/E 已經偏低，不代表當日就是股價低點；也不要寫成「已低於 2022 底，所以見底」。</p>
+  </div>
+</section>
+
+<section id="memo">
+  <h2>COBB MEMO 快照（2026-11）</h2>
+  <p class="sec-lead" id="memo-lead"></p>
+  <div id="memo-tables"></div>
+  <p class="note" id="memo-month-note"></p>
+  <p class="note" id="crash-note"></p>
+</section>
+
+<section id="caveat">
+  <h2>怎麼讀、有哪些限制</h2>
+  <ul class="facts" id="caveats"></ul>
+  <p class="note">這頁不是《股市趨勢技術分析》裡的章節，而是 COBB 估值備忘加上本站既有的 History of Market 資料。教學短文在 <a href="../ta-book/#valuation">技術分析教學・估值</a>。</p>
+</section>
+
+<footer>
+  <p>僅供參考，非投資建議。不構成任何進出場或目標價建議。來源標示為「COBB MEMO」（2026-11）與 History of Market；未轉貼 MEMO 原圖。</p>
+  <p><a href="../../">首頁</a>｜<a href="../">走勢觀察</a>｜<a href="../stage/">階段現況</a>｜<a href="../expectancy/">期望值表</a></p>
+</footer>
+</div>
+<script src="../data.js"></script>
+<script>
+(function(){
+  "use strict";
+  var D = window.SITE_DATA || {};
+  var V = (D.analysis && D.analysis.valuation) || {};
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function num(v, d){
+    if(typeof v !== "number" || !isFinite(v)) return "—";
+    return v.toLocaleString("en-US",{minimumFractionDigits:d, maximumFractionDigits:d});
+  }
+  if(!V.available){
+    document.getElementById("asof").textContent = V.reason || "這次沒有估值資料。";
+    return;
+  }
+  var meta = (D.analysis && D.analysis.meta) || {};
+  document.getElementById("asof").textContent =
+    "現值截至 " + ((V.indices.SOX && V.indices.SOX.latest && V.indices.SOX.latest.date) || "—") +
+    "（History of Market forwardOwn）。σ 帶與四分位用已完成月份，目前算到 " + V.completed_month_end +
+    "。行情圖截至 " + (meta.price_asof || "—") + "。";
+
+  /* ---- 現況 ---- */
+  var now = document.getElementById("now-cards");
+  var html = "";
+  ["SOX","NDX"].forEach(function(id){
+    var ix = V.indices[id];
+    var w = ix.windows[V.home_window] || {};
+    var vs = w.current_vs || {};
+    var rows = "";
+    ["2020","2016","2011"].forEach(function(key){
+      var ww = ix.windows[key];
+      if(!ww) return;
+      var c = ww.current_vs || {};
+      rows += "<tr><td>"+esc(key)+" 起</td><td>"+esc(c.band||"—")+"</td><td class='num'>"+
+        (c.percentile != null ? num(c.percentile,1)+"%" : "—")+"</td><td>"+esc(c.vs_quartile||"—")+
+        "</td><td class='num'>"+(c.z != null ? num(c.z,2) : "—")+"</td></tr>";
+    });
+    html += '<article class="card"><p class="k">'+esc(id)+'　History of Market 日線現值</p>'+
+      '<div class="big">'+num(ix.latest.value,2)+'×　<span class="tag">'+esc(vs.band||"")+'（'+esc(V.home_window)+'起）</span></div>'+
+      '<p>日期 '+esc(ix.latest.date)+'。下表是同一個現值，分別放進三個視窗；視窗之間的差異本身就是要看的訊息。</p>'+
+      "<table><thead><tr><th>視窗</th><th>σ 帶</th><th class='num'>百分位</th><th>相對四分位</th><th class='num'>z</th></tr></thead><tbody>"+
+      rows+"</tbody></table></article>";
+  });
+  now.innerHTML = html;
+
+  var s4 = V.signal4 || {};
+  var s4n = document.getElementById("signal4-note");
+  var s4h = esc(V.signal4_unchanged || "");
+  if(s4.rows){
+    s4h += " 最近一次燈號計算（"+esc(s4.queried_at || s4.run_date || "")+"）：";
+    ["NDX","SOX"].forEach(function(id){
+      var r = s4.rows[id]; if(!r) return;
+      s4h += " "+esc(id)+" "+esc(r.status||"")+"，讀數 "+esc(String(r.pe))+"×（"+esc(r.pe_date||"—")+"），10 年分位約 "+
+        (r.pct10 != null ? num(r.pct10,0)+"%" : "—")+"，判定日為已完成週五 "+esc(r.obs_date||"—")+"。";
+    });
+    s4h += " 燈看已完成週K，這頁小標看日線現值，日期與規則都不同。";
+  }
+  s4n.textContent = s4h;
+
+  document.getElementById("sox-lead").textContent =
+    "本站以 History of Market 每月最後一筆（已完成月份）自算 σ 帶。截至 2026-11-05 的月統計，可重現 COBB MEMO 的 SOX 數字到小數點後兩位；這是核對結果，不是說已向對方確認資料來源。當月未完成的點在圖上用空心圓標出，不進入帶的計算。";
+
+  function legendHtml(){
+    return '<span><i style="border-color:#e8edf5"></i>μ</span>'+
+      '<span><i style="border-color:#8fa6d8"></i>μ±0.5σ</span>'+
+      '<span><i style="border-color:#f2b552"></i>μ±1σ</span>'+
+      '<span><i style="border-color:#ff7482"></i>μ±1.5σ</span>'+
+      '<span><i class="d" style="border-color:#c6cfdc"></i>現值</span>'+
+      '<span>直虛線＝事件月</span>'+
+      '<span>空心圓＝當月未完成</span>';
+  }
+  document.getElementById("sox-legend").innerHTML = legendHtml();
+  document.getElementById("ndx-legend").innerHTML = legendHtml();
+
+  function statTable(ix){
+    var head = "<table><thead><tr><th>視窗</th><th class='num'>n</th><th class='num'>平均</th><th class='num'>中位</th><th class='num'>Q1</th><th class='num'>Q3</th>"+
+      "<th class='num'>μ−1.5σ</th><th class='num'>μ−1σ</th><th class='num'>μ−0.5σ</th><th class='num'>μ+0.5σ</th><th class='num'>μ+1σ</th><th class='num'>μ+1.5σ</th></tr></thead><tbody>";
+    var body = "";
+    ["2020","2016","2011"].forEach(function(key){
+      var w = ix.windows[key]; if(!w) return;
+      body += "<tr><td>"+esc(key)+" 起（至 "+esc(w.end)+"）</td><td class='num'>"+esc(w.n)+"</td>"+
+        ["mean","median","q1","q3","dn15","dn10","dn05","up05","up10","up15"].map(function(k){
+          return "<td class='num'>"+num(w[k],2)+"</td>";
+        }).join("")+"</tr>";
+    });
+    return head+body+"</tbody></table><p class='note'>來源：History of Market，已完成月份的月最後一筆。現值不計入這些統計。</p>";
+  }
+
+  function boxSvg(ix){
+    var keys = ["2020","2016","2011"];
+    var W=900, rowH=46, pt=16, pb=28, pl=86, pr=24;
+    var H=pt+keys.length*rowH+pb;
+    var all=[];
+    keys.forEach(function(k){ var w=ix.windows[k]; if(!w) return; all.push(w.dn15,w.up15,w.q1,w.q3,ix.latest.value); });
+    var mn=Math.min.apply(null,all.filter(isFinite))-1, mx=Math.max.apply(null,all.filter(isFinite))+1;
+    function x(v){ return pl+(v-mn)/(mx-mn)*(W-pl-pr); }
+    var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="各視窗四分位與現值">';
+    keys.forEach(function(k,i){
+      var w=ix.windows[k]; if(!w) return;
+      var y=pt+i*rowH+18;
+      s+='<text x="8" y="'+y+'" fill="#f3ecdc" font-size="14">'+(k)+"起</text>";
+      s+='<line x1="'+x(w.dn15)+'" x2="'+x(w.up15)+'" y1="'+y+'" y2="'+y+'" stroke="#3a4864" stroke-width="2"/>';
+      var x1=x(w.q1), x2=x(w.q3);
+      s+='<rect x="'+Math.min(x1,x2)+'" y="'+(y-10)+'" width="'+Math.abs(x2-x1)+'" height="20" fill="#24344f" stroke="#8fa6d8"/>';
+      s+='<line x1="'+x(w.median)+'" x2="'+x(w.median)+'" y1="'+(y-10)+'" y2="'+(y+10)+'" stroke="#f3ecdc" stroke-width="2"/>';
+      s+='<circle cx="'+x(ix.latest.value)+'" cy="'+y+'" r="5" fill="#f2b552" stroke="#0f1724" stroke-width="1.5"/>';
+    });
+    s+='<text x="'+pl+'" y="'+(H-8)+'" fill="#a3aec0" font-size="12">箱型＝Q1 至 Q3，白線＝中位數，橫線端點＝μ±1.5σ，黃點＝現值 '+num(ix.latest.value,2)+'×</text>';
+    s+='</svg>';
+    return s;
+  }
+
+  function parseYM(s){ var p=String(s).split("-"); return Date.UTC(+p[0], (+p[1]||1)-1, 1); }
+
+  function lineChart(ix, events, winKey){
+    var w = ix.windows[winKey]; if(!w) return "";
+    var pts = (ix.monthly||[]).filter(function(p){ return p.date >= w.start; });
+    if(!pts.length) return "";
+    var W=900, H=340, pl=48, pr=16, pt=18, pb=36;
+    var ys=[w.up15,w.dn15,ix.latest.value];
+    pts.forEach(function(p){ if(typeof p.value==="number") ys.push(p.value); });
+    var ymin=Math.min.apply(null,ys)-1, ymax=Math.max.apply(null,ys)+1;
+    var t0=parseYM(pts[0].date), t1=parseYM(pts[pts.length-1].date);
+    function x(date){ var t=parseYM(date); return pl+(t-t0)/Math.max(t1-t0,1)*(W-pl-pr); }
+    function y(v){ return pt+(ymax-v)/(ymax-ymin)*(H-pt-pb); }
+    var bands=[
+      [w.up15,"#ff7482",true],[w.up10,"#f2b552",true],[w.up05,"#8fa6d8",true],
+      [w.mean,"#e8edf5",false],
+      [w.dn05,"#8fa6d8",true],[w.dn10,"#f2b552",true],[w.dn15,"#ff7482",true]
+    ];
+    var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+winKey+' 起月線 Forward P/E">';
+    bands.forEach(function(b){
+      if(typeof b[0]!=="number") return;
+      s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(b[0])+'" y2="'+y(b[0])+'" stroke="'+b[1]+'" stroke-width="'+(b[2]?1:1.4)+'" stroke-dasharray="'+(b[2]?"4 4":"0")+'" opacity="0.9"/>';
+    });
+    if(typeof ix.latest.value==="number"){
+      s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(ix.latest.value)+'" y2="'+y(ix.latest.value)+'" stroke="#c6cfdc" stroke-width="1.2" stroke-dasharray="6 4"/>';
+    }
+    (events||[]).forEach(function(ev){
+      if(!ev.available) return;
+      if(ev.ym < w.start) return;
+      var xx=x(ev.ym);
+      s+='<line x1="'+xx+'" x2="'+xx+'" y1="'+pt+'" y2="'+(H-pb)+'" stroke="#3a4864" stroke-width="1" stroke-dasharray="3 4"/>';
+    });
+    var d="";
+    pts.forEach(function(p,i){
+      if(typeof p.value!=="number") return;
+      d+=(i?"L":"M")+x(p.date)+","+y(p.value)+" ";
+    });
+    s+='<path d="'+d+'" fill="none" stroke="#8fa6d8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    pts.forEach(function(p){
+      if(typeof p.value!=="number") return;
+      if(p.complete===false){
+        s+='<circle cx="'+x(p.date)+'" cy="'+y(p.value)+'" r="4.5" fill="none" stroke="#f2b552" stroke-width="2"/>';
+      }
+    });
+    // y labels
+    [w.up15,w.mean,w.dn15,ix.latest.value].forEach(function(v){
+      if(typeof v!=="number") return;
+      s+='<text x="'+(pl-6)+'" y="'+(y(v)+4)+'" text-anchor="end" fill="#a3aec0" font-size="11">'+num(v,1)+'</text>';
+    });
+    s+='<text x="'+pl+'" y="'+(H-10)+'" fill="#a3aec0" font-size="12">'+esc(w.start)+" → "+esc(pts[pts.length-1].date)+"　μ="+num(w.mean,2)+"　現值 "+num(ix.latest.value,2)+"×（"+esc(ix.latest.date)+"）</text>";
+    s+='</svg>';
+    return s;
+  }
+
+  function bindChart(prefix, ix, events){
+    var host=document.getElementById(prefix+"-chart");
+    var btns=document.getElementById(prefix+"-btns");
+    var keys=["2016","2020","2011"];
+    var cur=V.home_window || "2016";
+    function draw(k){
+      cur=k;
+      Array.prototype.forEach.call(btns.querySelectorAll("button"), function(b){
+        b.className = b.getAttribute("data-k")===k ? "on" : "";
+      });
+      host.innerHTML = lineChart(ix, events, k);
+    }
+    btns.innerHTML = keys.filter(function(k){return ix.windows[k];}).map(function(k){
+      return '<button type="button" data-k="'+k+'">自 '+k+'</button>';
+    }).join("");
+    btns.addEventListener("click", function(e){
+      var b=e.target.closest("button"); if(!b) return;
+      draw(b.getAttribute("data-k"));
+    });
+    draw(cur);
+  }
+
+  bindChart("sox", V.indices.SOX, V.events.SOX);
+  document.getElementById("sox-boxes").innerHTML = boxSvg(V.indices.SOX);
+  document.getElementById("sox-table").innerHTML = statTable(V.indices.SOX);
+  bindChart("ndx", V.indices.NDX, V.events.NDX);
+  document.getElementById("ndx-boxes").innerHTML = boxSvg(V.indices.NDX);
+  document.getElementById("ndx-table").innerHTML = statTable(V.indices.NDX);
+
+  /* NDX MEMO 引用表 */
+  var memoN = (V.cobb_memo.indices && V.cobb_memo.indices.NDX) || {};
+  var mh = "<p class='k'>COBB MEMO　2026-11 快照　資料商未確認</p><p>圖上最新月值 <strong>"+esc(memoN.latest)+"</strong>×。下表只引用，不拿來對 HOM 現值定位。</p>";
+  mh += "<table><thead><tr><th>視窗</th><th class='num'>平均</th><th class='num'>中位</th><th class='num'>Q1</th><th class='num'>Q3</th><th class='num'>μ−1.5σ</th><th class='num'>μ−1σ</th></tr></thead><tbody>";
+  ["2020","2016","2011","2006","2001"].forEach(function(k){
+    var w=(memoN.windows||{})[k]; if(!w) return;
+    mh += "<tr><td>"+k+" 起</td><td class='num'>"+num(w.mean,2)+"</td><td class='num'>"+num(w.median,2)+"</td>"+
+      "<td class='num'>"+num(w.q1,2)+"</td><td class='num'>"+num(w.q3,2)+"</td>"+
+      "<td class='num'>"+(w.dn15!=null?num(w.dn15,2):"—")+"</td><td class='num'>"+(w.dn10!=null?num(w.dn10,2):"—")+"</td></tr>";
+  });
+  mh += "</tbody></table>";
+  var dlt = V.indices.NDX.memo_repro && V.indices.NDX.memo_repro.windows && V.indices.NDX.memo_repro.windows["2020"];
+  if(dlt && dlt.delta){
+    mh += "<p class='note'>若用 HOM 月最後一筆重算 2020 起（截至 MEMO 日 2026-11-05），平均差 "+num(dlt.delta.mean,2)+"，不是同一條序列。</p>";
+  }
+  document.getElementById("ndx-memo").innerHTML = mh;
+
+  /* events */
+  function eventTable(name, rows){
+    var h = "<h3>"+esc(name)+"</h3><table><thead><tr><th>月份</th><th>事件</th><th class='num'>該月最低 P/E</th><th>最低日</th><th class='num'>月底 P/E</th><th>指數低點（若有日線）</th></tr></thead><tbody>";
+    (rows||[]).forEach(function(e){
+      var px = e.price_low_date ? (esc(e.price_low_date)+"　收盤 "+num(e.price_low_close,0)+"　當日近 P/E "+num(e.price_low_pe,2)+"×") : "2 年日線快取以外，未列";
+      h += "<tr><td>"+esc(e.ym)+"</td><td>"+esc(e.label)+"</td><td class='num'>"+num(e.month_min_pe,2)+"</td><td>"+esc(e.month_min_date||"—")+
+        "</td><td class='num'>"+num(e.month_last_pe,2)+"</td><td>"+px+"</td></tr>";
+    });
+    return h+"</tbody></table>";
+  }
+  document.getElementById("event-tables").innerHTML = eventTable("SOX", V.events.SOX)+eventTable("NDX", V.events.NDX);
+
+  document.getElementById("memo-lead").textContent = V.cobb_memo.note || "";
+  var mt = "";
+  ["SOX","NDX"].forEach(function(id){
+    var c = V.cobb_memo.indices[id];
+    mt += "<h3>"+id+"　MEMO 最新月值 "+esc(c.latest)+"×</h3>";
+    mt += "<table><thead><tr><th>視窗</th><th class='num'>平均</th><th class='num'>中位</th><th class='num'>Q1</th><th class='num'>Q3</th><th class='num'>μ−1.5σ</th><th class='num'>μ−1σ</th><th class='num'>μ−0.5σ</th><th class='num'>μ+0.5σ</th><th class='num'>μ+1σ</th><th class='num'>μ+1.5σ</th></tr></thead><tbody>";
+    Object.keys(c.windows).forEach(function(k){
+      var w=c.windows[k];
+      mt += "<tr><td>"+k+" 起</td>"+["mean","median","q1","q3","dn15","dn10","dn05","up05","up10","up15"].map(function(key){
+        return "<td class='num'>"+(w[key]!=null?num(w[key],2):"—")+"</td>";
+      }).join("")+"</tr>";
+    });
+    mt += "</tbody></table>";
+    if(id==="SOX" && V.indices.SOX.memo_repro && V.indices.SOX.memo_repro.exact_match){
+      mt += "<p class='note'>SOX：本站以 HOM 月最後一筆截至 2026-11-05，三個視窗的平均、中位、四分位與全部 σ 帶與上表小數點後兩位相同。</p>";
+    }
+  });
+  document.getElementById("memo-tables").innerHTML = mt;
+  document.getElementById("memo-month-note").textContent = V.memo_month_note || "";
+  var ck = V.crash_check && V.crash_check.SOX;
+  if(ck){
+    document.getElementById("crash-note").textContent =
+      "核對 12.72 是否像資料異常：SOX 2026-11-04 收盤 "+num(ck.close_prev,2)+"、P/E "+num(ck.pe_prev,2)+"×，11-05 收盤 "+num(ck.close,2)+"、P/E "+num(ck.pe,2)+"×；指數 "+num(ck.price_chg_pct,2)+"%，本益比 "+num(ck.pe_chg_pct,2)+"%，隱含 EPS "+num(ck.implied_eps_chg_pct,2)+"%。"+ (ck.conclusion||"");
+  }
+  document.getElementById("caveats").innerHTML = (V.caveats||[]).map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
+})();
+</script>
+</body>
+</html>
