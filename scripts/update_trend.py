@@ -197,6 +197,27 @@ def fetch_all() -> dict:
     return fetch_meta
 
 
+
+def fetch_optional_proxies(price_asof: str | None = None):
+    """選用代理資料：SOXX 成交量給 SOX 用。失敗只記錄，不讓整次更新失敗。"""
+    CACHE.mkdir(parents=True, exist_ok=True)
+    notes = []
+    try:
+        df = fetch_one("SOXX", "2y", "1d")
+        frames = {"daily_2y": df}
+        drop_unfinished_session(frames)
+        df = frames["daily_2y"]
+        if price_asof:
+            df = df[df["date"] <= price_asof].reset_index(drop=True)
+        if len(df) >= 200:
+            df[COLS].to_csv(CACHE / "SOXX_daily_2y.csv", index=False)
+            notes.append(f"SOXX 日線 {len(df)} 筆，截至 {df['date'].iloc[-1]}")
+        else:
+            notes.append(f"SOXX 筆數不足（{len(df)}），略過")
+    except Exception as e:
+        notes.append(f"SOXX 抓取失敗（{type(e).__name__}: {e}），SOX 未驗量")
+    return notes
+
 def load_cached_meta() -> dict:
     p = CACHE / "fetch_meta.json"
     missing = [f"{n}_{k}.csv" for n in T.IDS for k, _, _ in DATASETS if not (CACHE / f"{n}_{k}.csv").exists()]
@@ -248,6 +269,9 @@ def main() -> int:
 
     try:
         fetch_meta = load_cached_meta() if args.offline else fetch_all()
+        if not args.offline:
+            for note in fetch_optional_proxies():
+                print(f"[trend] 選用資料：{note}")
         try:
             analysis, charts = T.build(CACHE, LATEST, RULES, fetch_meta["fetched_at_taipei"], fetch_meta.get("market_times"))
             site = {"analysis": analysis, "charts": charts}
@@ -294,6 +318,8 @@ def main() -> int:
         print(f"      升勢線 close_vs_line_pct={tl.get('close_vs_line_pct')} close_is={tl.get('close_is')} "
               f"broken_by_3pct_filter={tl.get('broken_by_3pct_filter')}；sma200 pct={m200['pct']} above={m200['above']}；"
               f"sma20 below_streak={m20.get('below_streak')}")
+        st = ix.get("market_stage") or {}
+        print(f"      階段={st.get('headline')}  code={st.get('stage_code')}")
     print(f"[trend] 已寫 trend/data.json、trend/data.js、trend/status.json")
     return 0
 

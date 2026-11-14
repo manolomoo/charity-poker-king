@@ -93,6 +93,11 @@ section{margin-top:28px}
   color:var(--accent); font-weight:500;
 }
 .entry:hover{border-color:var(--accent)}
+
+.stage-line{margin:0;font-size:14px;line-height:1.55}
+.stage-line a{color:var(--head);text-decoration:none}
+.stage-line a:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.entries{display:flex;flex-direction:column;gap:8px}
 footer{margin-top:28px; color:var(--mute); font-size:12px}
 
 @media (max-width:420px){
@@ -124,6 +129,10 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
     <p class="msg">燈號載入中…</p>
   </section>
 
+  <section id="stage" aria-label="牛熊階段">
+    <p class="stage-line" id="stage-line"><a href="./trend/stage/">牛熊階段（參考）載入中…</a></p>
+  </section>
+
   <section aria-label="指數走勢">
     <div class="legend" aria-hidden="true">
       <span><i style="border-color:#f2b552"></i>20</span>
@@ -136,8 +145,9 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
     <div class="idx" id="idx"></div>
   </section>
 
-  <section>
+  <section class="entries">
     <a class="entry" href="./trend/ta-book/"><span>技術分析教學</span><span aria-hidden="true">→</span></a>
+    <a class="entry" href="./trend/expectancy/"><span>期望值與盈虧比</span><span aria-hidden="true">→</span></a>
   </section>
 
   <footer>僅供參考，非投資建議。</footer>
@@ -248,6 +258,25 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
   Promise.all([getJson("data/latest.json"), getJson("rules.json")])
     .then(function(res){ render(res[0], res[1]); })
     .catch(fail);
+})();
+
+
+/* ---------- 牛熊階段：一行，點進去看條件 ---------- */
+(function(){
+  "use strict";
+  var el=document.getElementById("stage-line");
+  if(!el) return;
+  var a=el.querySelector("a")||el;
+  var D=window.SITE_DATA||{};
+  var S=(D.analysis&&D.analysis.stages)||{};
+  var line=S.home_line;
+  if(!line){
+    a.textContent="牛熊階段（參考）暫時沒有資料 →";
+    a.href="./trend/stage/";
+    return;
+  }
+  a.textContent="階段（參考）："+line+" →";
+  a.href="./trend/stage/";
 })();
 
 /* ---------- SOX / NDX / SPX：近六個月日線小圖＋一行型態 ---------- */

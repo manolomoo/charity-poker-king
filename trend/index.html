@@ -94,6 +94,14 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted)}
 a{color:var(--edge)}
 .price-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin:0 0 8px}
 .hint{font-size:12px;color:var(--muted);margin:0 0 8px}
+
+.vbp{display:flex;gap:10px;align-items:stretch;min-height:160px;margin:8px 0}
+.vbp-bars{flex:1;display:flex;align-items:flex-end;gap:2px;height:160px}
+.vbp-bars b{flex:1;background:#3a4d72;border-radius:3px 3px 0 0;display:block;min-height:2px;position:relative}
+.vbp-bars b.poc{background:var(--amber)}
+.vbp-bars b.last{outline:1px solid var(--navy)}
+.vbp-scale{flex:0 0 64px;display:flex;flex-direction:column;justify-content:space-between;font-size:11px;color:var(--muted);text-align:right}
+
 </style>
 </head>
 <body>
@@ -108,6 +116,7 @@ a{color:var(--edge)}
 
 <nav>
   <a href="#lights">燈號</a>
+  <a href="#stage">牛熊階段</a>
   <a href="#compare">三指數對照</a>
   <a href="#sox">SOX</a>
   <a href="#ndx">NDX</a>
@@ -126,6 +135,18 @@ a{color:var(--edge)}
   <p>
     <a class="btn" href="../signals/">看燈號詳細說明與規則</a>
     <a class="btn ghost" href="./ta-book/#trend">對照技術分析圖解</a>
+  </p>
+</section>
+
+<section id="stage">
+  <h2>牛熊三階段（參考）</h2>
+  <p class="sec-lead">這是依原書第3章精神做成的<strong>價量代理</strong>，不是用情緒和財報還原出來的真正道氏階段。條件不夠就標「無法判定」。詳細條件、COBB 的看法與回測備註在說明頁。</p>
+  <div class="grid3" id="stage-cards"></div>
+  <p class="note" id="stage-confirm"></p>
+  <p>
+    <a class="btn" href="./stage/">看判定規則與現況證據</a>
+    <a class="btn ghost" href="./ta-book/#dow-stages">教學：牛熊三階段</a>
+    <a class="btn ghost" href="./expectancy/">期望值表</a>
   </p>
 </section>
 
@@ -151,6 +172,8 @@ a{color:var(--edge)}
     <a class="btn ghost" href="./ta-book/#breakout">3% 突破濾網</a>
     <a class="btn ghost" href="./ta-book/#sr">支撐與趨勢線</a>
     <a class="btn ghost" href="./ta-book/#gaps">缺口</a>
+    <a class="btn ghost" href="./ta-book/#dow-stages">牛熊三階段</a>
+    <a class="btn ghost" href="./expectancy/">期望值表</a>
   </p>
 </section>
 
@@ -630,6 +653,63 @@ a{color:var(--edge)}
     return "<ul class='ops'>"+items.map(t=>"<li>"+t+"</li>").join("")+"</ul>";
   }
 
+
+  /* 牛熊階段摘要 */
+  (function(){
+    const S=A.stages||{};
+    const host=document.getElementById("stage-cards");
+    if(!host) return;
+    ["SOX","NDX","SPX"].forEach(function(id){
+      const rec=(A.indices[id]||{}).market_stage; if(!rec) return;
+      const ev=rec.evidence||{};
+      const badge=rec.regime==="空頭"?"b-red":rec.regime==="多頭"?"b-green":"b-amber";
+      const a=document.createElement("a");
+      a.className="card"; a.href="./stage/"; a.style.display="block"; a.style.color="inherit"; a.style.textDecoration="none";
+      a.innerHTML=`<p class="k">${esc(id)}</p><p class="big" style="font-size:22px"><span class="badge ${badge}">${esc(rec.regime)}</span></p><p>${esc(rec.headline)}</p><p class="note">回撤 ${esc(ev.drawdown_pct)}%，相對 200 日線 ${esc(ev.vs_sma200_pct)}%</p>`;
+      host.appendChild(a);
+    });
+    const cn=document.getElementById("stage-confirm");
+    if(cn){
+      const bits=[];
+      if(S.confirmation_note) bits.push(S.confirmation_note);
+      bits.push("COBB 看法與規則若不一致，以說明頁並列為準，沒有為了對齊去改門檻。");
+      cn.textContent=bits.join(" ");
+    }
+  })();
+
+
+  function drawVbp(id, vbp){
+    const note=document.getElementById("vbp-note-"+id);
+    const box=document.getElementById("vbp-"+id);
+    if(!note||!box) return;
+    if(!vbp||!vbp.available){
+      note.textContent=(vbp&&vbp.reason)||"沒有可用的成交量，無法畫近似分布。";
+      box.innerHTML="";
+      return;
+    }
+    note.textContent=(vbp.note||"")+ " 來源："+(vbp.source_label||"")+"，區間 "+(vbp.from_date||"")+"～"+(vbp.to_date||"")+"。橘色是成交量最多的一檔（近似的籌碼堆積區），白框是最新收盤所在檔。這不是盤中真實的 volume profile。";
+    const mx=Math.max.apply(null, vbp.bins.map(function(b){return b.volume;}))||1;
+    const bars=document.createElement("div"); bars.className="vbp-bars";
+    vbp.bins.forEach(function(b){
+      const el=document.createElement("b");
+      el.style.height=Math.max(2, Math.round(100*b.volume/mx))+"%";
+      el.title=(b.low+"–"+b.high)+"　佔比 "+((b.share||0)*100).toFixed(1)+"%";
+      if(b.is_poc) el.classList.add("poc");
+      if(b.contains_last) el.classList.add("last");
+      bars.appendChild(el);
+    });
+    const scale=document.createElement("div"); scale.className="vbp-scale";
+    const last=vbp.bins[vbp.bins.length-1], first=vbp.bins[0];
+    scale.innerHTML=`<span>${esc(num(last.high,0))}</span><span>POC ${esc(num(vbp.poc.low,0))}</span><span>${esc(num(first.low,0))}</span>`;
+    // 上面這個尺標是高在上，但 bars 是從左到右低→高，不是上下。改成橫向價格由左（低）到右（高）。
+    box.innerHTML="";
+    box.appendChild(bars);
+    const cap=document.createElement("div");
+    cap.className="hint";
+    cap.textContent="左低右高　"+num(first.low,0)+" → "+num(last.high,0);
+    box.parentNode.insertBefore(cap, box.nextSibling);
+  }
+
   function renderIndex(secId, id){
     const ix=A.indices[id], last=ix.last;
     const root=document.getElementById(secId);
@@ -640,9 +720,11 @@ a{color:var(--edge)}
       `<span class="note">${esc(last.date)} 收盤　開 ${esc(num(last.open,2))}　高 ${esc(num(last.high,2))}　低 ${esc(num(last.low,2))}</span></div>`+
       `<div class="card" style="padding:10px 10px 8px"><div id="dchart-${id}"></div><div id="wchart-${id}"></div></div>`+
       `<div class="box-f"><h3>事實</h3>${factList(ix)}</div>`+
+      `<div class="card" id="vbp-wrap-${id}"><h3>成交量按價格分布（近似）</h3><p class="hint" id="vbp-note-${id}"></p><div class="vbp" id="vbp-${id}"></div></div>`+
       `<div class="box-o"><h3>觀察</h3><p class="note">以下是套用原書定義後的解讀，不是預測，更不是進出場建議。</p>${obsList(ix,id)}</div>`;
     drawDaily(document.getElementById("dchart-"+id), id);
     drawWeekly(document.getElementById("wchart-"+id), id);
+    drawVbp(id, ix.volume_by_price);
   }
   renderIndex("sox","SOX");
   renderIndex("ndx","NDX");

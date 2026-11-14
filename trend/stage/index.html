@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>慈善撲克王｜牛熊三階段（參考）</title>
+<meta name="description" content="依《股市趨勢技術分析》第3章精神做成的價量代理指標。僅供參考，非投資建議。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#f3ecdc; --ink:#e8edf5; --text:#c6cfdc; --muted:#a3aec0;
+  --red:#ff7482; --green:#3fd0a0; --amber:#f2b552;
+  --line:#2b3850; --bg:#0f1724; --surface:#172135; --edge:#8fa6d8;
+  --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.75;background:var(--bg)}
+.wrap{max-width:860px;margin:0 auto;padding:22px 18px 80px}
+h1{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(28px,6vw,46px);line-height:1.2;margin:0 0 6px}
+.sub{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(16px,3vw,20px);margin:0 0 12px}
+.lede,.sec-lead{margin:0 0 12px;max-width:48em}
+.meta{color:var(--muted);font-size:13px}
+nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 14px;margin:8px 0 18px;border-bottom:3px double var(--edge);position:sticky;top:0;z-index:5;background:rgba(15,23,36,.95)}
+nav a{display:inline-block;padding:5px 13px;border:1px solid #3a4864;border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:14px}
+nav a:hover{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+h2{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(22px,4vw,28px);line-height:1.3;margin:0 0 8px}
+h3{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:18px;margin:0 0 8px}
+section{margin:36px 0 44px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 16px 18px;margin:0 0 12px}
+.badge{display:inline-block;margin:0 4px 0 0;padding:0 9px;border:1.5px solid;border-radius:999px;font-size:12px;font-weight:700;line-height:1.7}
+.b-red{color:var(--red);border-color:var(--red)}
+.b-green{color:var(--green);border-color:var(--green)}
+.b-amber{color:var(--amber);border-color:var(--amber)}
+.b-mute{color:var(--muted);border-color:#4a5870}
+.k{color:var(--muted);font-size:12px;letter-spacing:.04em}
+.big{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(22px,3.4vw,30px);line-height:1.2;margin:4px 0 8px}
+.facts{margin:0;padding:0 0 0 1.15em}
+.facts li{margin:0 0 6px}
+.ok{color:var(--green)} .no{color:var(--muted)}
+.box-o{background:#2a2414;border:1px solid #5c4b1f;border-radius:12px;padding:14px 16px;margin:12px 0}
+.box-f{background:#141e30;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
+th{color:var(--navy)}
+a{color:var(--edge)}
+footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);font-size:13px}
+.note{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>牛熊三階段</h1>
+  <p class="sub">價量代理，只供參考，不是進出場指令</p>
+  <p class="lede">書裡的牛市、熊市三階段，講的是情緒、財報、媒體和誰在買賣，不是單看均線就能下的結論。這裡只用本站既有的價格、均線、週線結構與成交量，做成可重複計算的<strong>參考指標</strong>。條件不夠就標「無法判定」。11 項燈號規則（v3.0）沒有改。</p>
+  <p class="meta" id="asof"></p>
+</header>
+<nav>
+  <a href="../">走勢觀察</a>
+  <a href="#now">現況</a>
+  <a href="#cobb">COBB 看法</a>
+  <a href="#book">書怎麼寫</a>
+  <a href="#rule">判定規則</a>
+  <a href="#backtest">回測備註</a>
+  <a href="../../">首頁</a>
+</nav>
+
+<section id="now">
+  <h2>現況</h2>
+  <p class="sec-lead" id="home-line"></p>
+  <p class="note" id="confirm-note" hidden></p>
+  <div id="cards"></div>
+</section>
+
+<section id="cobb">
+  <h2>COBB 的看法（不是規則本身）</h2>
+  <div class="box-o">
+    <p>COBB 在 2026-11-14 的 Telegram 筆記裡寫：第三階段大概就是遞延砍單，下跌沒這麼猛烈但還是在下跌，垃圾股泡沫破裂，績優股緩跌；現在巨頭、台積這種確實緩跌，垃圾早就都死了；當代最有意義的指數是 NDX 與 SOX；現在應該就是要進入第三階段。</p>
+    <p id="cobb-vs-rule"></p>
+  </div>
+  <p class="note">「將進入第三階段」是他的觀點。規則沒有為了對齊這句去調整門檻；兩邊不一致時並列寫出來。</p>
+</section>
+
+<section id="book">
+  <h2>書怎麼寫（第3章　道氏理論）</h2>
+  <p class="sec-lead">以下整理自《股市趨勢技術分析》第3章「長線趨勢的幾個階段」。原文強調：主升、主跌「通常（但並不一定）」分成三個階段，沒有兩次牛市或熊市完全一樣，也可能跳過某段。</p>
+  <div class="card">
+    <h3>牛市三階段</h3>
+    <ol class="facts">
+      <li><strong>建倉期</strong>：有遠見的投資者嗅到經濟向好，逐步建倉。此時公司財報毫無亮點甚至很差，普通民眾對股市沒興趣，交投清淡；隨著市場轉暖，成交量開始增加。</li>
+      <li><strong>穩步向上</strong>：公司業績改善、營收增長，民眾開始關注股市。市場穩步上漲、交投增加，技術派投資者看到獲利機會。</li>
+      <li><strong>末端</strong>：民眾大批湧進，財報積極，股價飆升，媒體唱多，公司紛紛上市。朋友開始互相問該買什麼。投機猖獗，成交量持續放大，但股價跳水頻繁；垃圾股被炒上了天，績優股則大多落後大盤。</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h3>熊市三階段</h3>
+    <ol class="facts">
+      <li><strong>出貨期</strong>：出現於上一輪牛市末尾。聰明的投資者察覺營收高得不正常，加快出貨。交易量仍然很高，但隨著每一輪價格上漲，交易量逐漸減少。民眾仍然熱情，可是獲利越來越難，開始感到沮喪。</li>
+      <li><strong>恐慌期</strong>：買盤越來越少，賣盤越來越急，股價幾乎垂直下跌，成交放出天量（結合企業情況，股價通常超跌）。恐慌過後，市場常會長時間修復或橫盤，然後才進入第三階段。</li>
+      <li><strong>灰心期</strong>：灰心的投資者開始拋售。訊息面開始惡化。這一階段的下跌沒有之前猛烈，但因有人割肉，市場會持續下跌。垃圾股泡沫徹底破滅，績優股跌得相對較慢。熊市往往在利空「出盡」之前就結束了。</li>
+    </ol>
+  </div>
+  <p class="note">同一章還有「成交量驗證趨勢」：牛市裡上漲放量、回檔縮量；熊市相反。量是佐證，決定性訊號仍來自價格。完整圖解見<a href="../ta-book/#dow-stages">技術分析教學</a>。</p>
+</section>
+
+<section id="rule">
+  <h2>本站怎麼判定（自訂規則，2026-11-14）</h2>
+  <div class="box-f">
+    <p>和 Claude 討論後採用的規格。書的精神是高低點結構與量價配合；20%／10% 回撤、200 日線、恐慌幅度與日數都是為了可計算而自訂的，書裡沒有寫死這些數字。3% 是書中常用的有效穿越濾網。</p>
+    <table>
+      <thead><tr><th>判定</th><th>須全部成立</th></tr></thead>
+      <tbody>
+        <tr><td>空頭</td><td>距 52 週收盤高回撤 ≥ 20%；收盤低於 200 日線 ≥ 3%，或連續 ≥ 10 日在其下；週線擺動低點被收盤跌破 ≥ 3%。</td></tr>
+        <tr><td>多頭</td><td>回撤 &lt; 10%；收盤大於仍上揚的 200 日線；週線高低點墊高未被有效跌破。</td></tr>
+        <tr><td>無法判定</td><td>其餘全部。空頭之後若收盤站回 200 日線，先降為無法判定，不直接翻多。</td></tr>
+        <tr><td>空頭第二階段（恐慌）</td><td>近 15 日內，10 日收盤跌幅達 NDX／SPX ≥ 12%、SOX ≥ 18%（SOX 波動較大，門檻較高）。</td></tr>
+        <tr><td>第二→第三階段？</td><td>恐慌低點後第 15–40 個交易日，尚未站回 50 日線，近 20 日振幅 ≤ 恐慌段跌幅的一半。</td></tr>
+        <tr><td>空頭第三階段（灰心）</td><td>恐慌低點後 ≥ 40 日，或全程無恐慌但峰值後 ≥ 120 日；且收盤 &lt; 50 日線 &lt; 200 日線，近 20 日緩跌（跌幅 0 到 −10%），振幅相對收斂。</td></tr>
+        <tr><td>出貨、建倉</td><td>無法即時確認，最多做附註。書裡這兩段靠情緒與基本面，這裡沒有那些資料。</td></tr>
+        <tr><td>成交量</td><td>NDX、SPX 用指數量；SOX 的 Yahoo 成交量是 0，改用 SOXX ETF 當近似並註明。抓不到就標「未驗量」，不讓更新失敗。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="backtest">
+  <h2>回測備註（粗略 sanity，不是完整驗證）</h2>
+  <p class="sec-lead">用 Yahoo 日線從 2021-11-15 起重算（200 日線要滿 200 根，所以 2022 年中以前無法評級）。數字是規則在當時會輸出的標籤，不是事後解說。</p>
+  <div class="card">
+    <h3>2022 熊市（有 200 日線之後）</h3>
+    <ul class="facts">
+      <li>2022-10-14：NDX 回撤約 −35%，SOX 約 −46%，兩者都已是空頭，但當日沒有落在「近 15 日恐慌窗口」裡，階段先標無法判定。SOX 到 2022-12-30 符合緩跌條件，標成第三階段（灰心）。</li>
+      <li>2023-01-31：NDX 收盤站回 200 日線，SOX 也離開空頭三條件，兩者都降為「無法判定」，沒有直接翻成多頭。</li>
+    </ul>
+    <h3>2025-04 急跌後的 V 型</h3>
+    <ul class="facts">
+      <li>2025-04-08：NDX 收盤相對 2/19 高點約 −22.9%，SOX 約 −39.7%，兩者都標成空頭第二階段（恐慌）。SPX 收盤回撤約 −18.9%，未滿 20%，全程維持無法判定（或之後回到多頭）。</li>
+      <li>NDX 在 4/22 已因回撤收復、不再滿 20% 而離開空頭；SOX 在 5/01 離開恐慌窗口、5/15 站回 200 日線附近後改為無法判定。這段 V 型期間<strong>沒有</strong>標出第三階段。</li>
+      <li>到 2025-06-24，NDX 回到多頭第二階段。低點後約 23–34 個日曆日就完成 50% 回撤，約 77–80 日收盤回到急跌前的峰值。</li>
+    </ul>
+  </div>
+  <p class="note">這套規則偏保守：NDX 現在從 10/6 高點只回撤約 10%，不會被標成空頭。第三階段不會被寫成「接近底部」的訊號。</p>
+</section>
+
+<footer id="disclaimer">
+  <p>本頁是觀察用的參考指標，不是投資建議，也不保證任何報酬。書中的階段無法用價格完全還原。行情來自 Yahoo Finance，截至日寫在頁首。燈號規則以<a href="../../signals/">燈號站</a>為準。</p>
+  <p><a href="../">← 走勢觀察</a>　<a href="../expectancy/">期望值表</a>　<a href="../ta-book/#dow-stages">教學：牛熊三階段</a></p>
+</footer>
+</div>
+<script src="../data.js"></script>
+<script>
+(function(){
+  var D=window.SITE_DATA||{};
+  var A=D.analysis||{};
+  var S=A.stages||{};
+  var ix=A.indices||{};
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  document.getElementById("asof").textContent = "行情截至 "+(S.asof|| (A.meta&&A.meta.price_asof) || "—")+" 收盤。規則版本 "+(S.version||"—")+"。";
+  document.getElementById("home-line").textContent = "規則輸出："+(S.home_line||"資料載不進來");
+  if(S.confirmation_note){
+    var cn=document.getElementById("confirm-note");
+    cn.hidden=false;
+    cn.textContent=S.confirmation_note;
+  }
+  var vs=document.getElementById("cobb-vs-rule");
+  vs.innerHTML="依目前規則：<strong>"+esc(S.home_line||"")+"</strong>。SOX 若是恐慌期，距離規則裡的「第二→第三階段？」至少還要再過一段橫盤；NDX 連空頭三條件都還沒滿。所以規則與 COBB「要進入第三階段」的判斷並不一致。";
+
+  var host=document.getElementById("cards");
+  ["SOX","NDX","SPX"].forEach(function(id){
+    var rec=ix[id]&&ix[id].market_stage;
+    if(!rec){return;}
+    var ev=rec.evidence||{};
+    var badge=rec.regime==="空頭"?"b-red":rec.regime==="多頭"?"b-green":"b-amber";
+    var met=(rec.conditions_met||[]).map(function(c){return "<li class='ok'>已符合（"+esc(c.group)+"）"+esc(c.label)+"</li>";}).join("");
+    var unmet=(rec.conditions_unmet||[]).map(function(c){return "<li class='no'>未符合（"+esc(c.group)+"）"+esc(c.label)+"</li>";}).join("");
+    var panic=ev.panic?("最近一次 10 日跌幅 "+ev.panic.drop+"%（"+esc(ev.panic.peak_date)+"→"+esc(ev.panic.low_date)+"）"+(ev.panic_in_lookback?"，落在近 15 日窗口內":"，已不在近 15 日窗口")+(ev.panic.climax?"，期間有天量":"")):"近窗沒有達到恐慌門檻";
+    var vol="未驗量";
+    if(ev.volume_available&&ev.volume){
+      vol="近 20 日跌日均量／漲日均量＝"+ev.volume.ratio_down_up+"（來源："+esc(ev.volume_source||"")+"）";
+    }else if(ev.volume_source){
+      vol=ev.volume_source;
+    }
+    var details=(rec.detail||[]).map(function(t){return "<li>"+esc(t)+"</li>";}).join("");
+    var ann=(rec.annotations||[]).length?"附註："+rec.annotations.map(esc).join("、"):"";
+    var role=id==="SPX"?"對照":"主要觀察";
+    host.innerHTML += '<article class="card"><p class="k">'+esc(id)+"　"+role+'</p>'+
+      '<div class="big"><span class="badge '+badge+'">'+esc(rec.regime)+'</span> '+esc(rec.headline)+'</div>'+
+      '<p>收盤 '+esc(ev.close)+"，距 "+esc(ev.peak_date)+" 收盤高 "+esc(ev.peak_close)+" 為 "+esc(ev.drawdown_pct)+"%，已 "+esc(ev.days_from_peak)+" 個交易日。相對 200 日線 "+esc(ev.vs_sma200_pct)+"%，連續 "+esc(ev.below_sma200_streak)+" 日在其下。</p>"+
+      "<p>"+esc(panic)+"。"+esc(vol)+"</p>"+
+      (details?"<ul class='facts'>"+details+"</ul>":"")+
+      (ann?"<p class='note'>"+ann+"</p>":"")+
+      "<ul class='facts'>"+met+unmet+"</ul></article>";
+  });
+})();
+</script>
+</body>
+</html>

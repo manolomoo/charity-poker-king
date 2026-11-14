@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>慈善撲克王｜期望值與盈虧比</title>
+<meta name="description" content="盈虧比與勝率的期望值表與計算器。僅供學習，非投資建議。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#f3ecdc; --ink:#e8edf5; --text:#c6cfdc; --muted:#a3aec0;
+  --red:#ff7482; --green:#3fd0a0; --amber:#f2b552;
+  --line:#2b3850; --bg:#0f1724; --surface:#172135; --edge:#8fa6d8;
+  --pink:#5a2430; --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.75;background:var(--bg)}
+.wrap{max-width:1100px;margin:0 auto;padding:22px 16px 80px}
+h1{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(28px,6vw,46px);line-height:1.2;margin:0 0 6px}
+.sub{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(16px,3vw,20px);margin:0 0 12px}
+.lede{margin:0 0 12px;max-width:50em}
+nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 14px;margin:8px 0 18px;border-bottom:3px double var(--edge);position:sticky;top:0;z-index:5;background:rgba(15,23,36,.95)}
+nav a{display:inline-block;padding:5px 13px;border:1px solid #3a4864;border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:14px}
+nav a:hover{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+h2{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(22px,4vw,28px);margin:0 0 8px}
+h3{font-family:var(--serif);color:var(--navy);font-size:18px;margin:0 0 8px}
+section{margin:32px 0 40px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 12px}
+.box-o{background:#2a2414;border:1px solid #5c4b1f;border-radius:12px;padding:14px 16px;margin:12px 0}
+.calc{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end;margin:8px 0 12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+input{background:#141e30;border:1px solid var(--line);border-radius:8px;color:var(--navy);font-size:16px;padding:8px 10px;width:140px}
+.big{font-family:var(--serif);font-weight:900;font-size:clamp(28px,5vw,40px);line-height:1.1}
+.pos{color:var(--green)} .neg{color:var(--red)} .zero{color:var(--amber)}
+.scroll{overflow:auto;-webkit-overflow-scrolling:touch;margin:8px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;font-size:12px;min-width:640px;width:100%}
+th,td{border:1px solid var(--line);padding:5px 6px;text-align:right;white-space:nowrap}
+th{background:#141e30;color:var(--navy);font-weight:700;position:sticky;top:0}
+th.rowh,td.rowh{text-align:left;position:sticky;left:0;background:#141e30;color:var(--navy)}
+td.neg{background:var(--pink);color:#ffd0d6}
+td.zero{background:#2b2412;color:var(--amber)}
+.legend{color:var(--muted);font-size:13px}
+a{color:var(--edge)}
+footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);font-size:13px}
+.note{color:var(--muted);font-size:13px}
+ul.facts{margin:0;padding:0 0 0 1.15em}
+ul.facts li{margin:0 0 8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>期望值與盈虧比</h1>
+  <p class="sub">勝率不到五成，也不表示不能做</p>
+  <p class="lede">這張表依 COBB 提供的算法做成：每冒 100 單位的風險，期望值＝勝率 × 報酬 −（1−勝率）× 100。粉紅色是期望值為負。公式是確定的；表上的勝率與形態成功率，書裡並沒有給「技術分析型態勝率 &lt; 50%」這種統計，那句話是 COBB 的看法。</p>
+</header>
+<nav>
+  <a href="../">走勢觀察</a>
+  <a href="#calc">計算器</a>
+  <a href="#table">對照表</a>
+  <a href="#book">書怎麼寫</a>
+  <a href="#cobb">COBB 看法</a>
+  <a href="../ta-book/#expectancy">教學頁</a>
+  <a href="../../">首頁</a>
+</nav>
+
+<section id="calc">
+  <h2>計算器</h2>
+  <div class="card">
+    <div class="calc">
+      <label>勝率（%）<input id="win" type="number" min="0" max="100" step="1" value="35"></label>
+      <label>贏的時候拿到（相對每 100 風險）<input id="reward" type="number" min="1" step="10" value="200"></label>
+      <label>虧的時候輸掉<input id="risk" type="number" min="1" step="10" value="100"></label>
+    </div>
+    <p class="legend">盈虧比 <span id="ratio">200:100</span>。公式：<span id="formula"></span></p>
+    <p>每冒 <span id="risk-l">100</span> 的期望值</p>
+    <p class="big" id="ev">—</p>
+    <p class="note" id="ev-note"></p>
+  </div>
+</section>
+
+<section id="table">
+  <h2>對照表（風險固定為 100）</h2>
+  <p class="legend">列是盈虧比（100:100 到 1000:100，每隔 50），欄是勝率 20% 到 60%（每隔 5%）。與 COBB 的表同一套公式，例如 100:100 在 50% 為 0、200:100 在 35% 為 +5、400:100 在 20% 為 0。</p>
+  <div class="scroll" id="tbl-wrap"></div>
+</section>
+
+<section id="book">
+  <h2>書裡面有的（不是這張表）</h2>
+  <div class="card">
+    <ul class="facts">
+      <li><strong>第8章</strong>：沒有哪種技術形態百分之百可靠；對稱三角形是最不可靠的一種。直角三角形「失敗的機率都較小」，但書沒有給全體形態的勝率百分比。</li>
+      <li><strong>第27章、交易戰術</strong>：每一筆都要設停損，先算風險再算部位（書中舉例每筆風險約為資金的 3%）。測算目標（第32章）用來估計形態突破後至少可能走多遠，也就是報酬那一側。</li>
+      <li><strong>第42章　組合風險管理</strong>：要定期看「平均盈利除以平均虧損」、獲利與虧損交易的比數和百分比。這就是期望值思維，但書沒有印出下面這張表。</li>
+      <li><strong>第43章</strong>：沒有任何技術形態或訊號是絕對確定、絕對可靠的。所以才需要停損與分散（第31、40章）。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="cobb">
+  <h2>COBB 的補充（標成他的看法）</h2>
+  <div class="box-o">
+    <p>COBB 在 2026-11-14 說：那本書不僅講型態，技術分析的重點還是在底層邏輯——成交量的分布、籌碼堆積的情況。有人統計過技術分析型態的勝率是 &lt; 50%，很扯，但卻可以用來獲利，因為要用對時機、要抓對盈虧比。</p>
+    <p>「勝率 &lt; 50%」這句，本站只歸給 COBB 轉述的看法，沒有去查或宣稱那份統計的出處。這張表要說明的是：在 35% 勝率、盈虧比 200:100 時，期望值已經是 +5；勝率低，只要報酬相對風險夠大，長期期望值仍可能為正。反過來看，1:1 卻只有 40% 勝率，期望值是負的。</p>
+  </div>
+  <p class="note">時機與籌碼，書在第3章（量價驗證趨勢）與第13章（支撐來自曾經大量換手、投資者的成本區）有寫。現在的「成交量分布圖」是後人常用的畫法，原書沒有這種直方圖；本站走勢頁若有圖，會註明只是用每日收盤價×成交量做的近似。</p>
+</section>
+
+<footer>
+  <p>僅供學習，不是投資建議。實際交易還有滑價、手續費與連續虧損，表上的期望值不是保證獲利。</p>
+  <p><a href="../">← 走勢觀察</a>　<a href="../stage/">牛熊三階段</a>　<a href="../ta-book/#expectancy">教學頁對應段落</a></p>
+</footer>
+</div>
+<script>
+(function(){
+  function ev(win, reward, risk){
+    win=win/100;
+    return win*reward - (1-win)*risk;
+  }
+  function paint(){
+    var w=parseFloat(document.getElementById("win").value);
+    var r=parseFloat(document.getElementById("reward").value);
+    var k=parseFloat(document.getElementById("risk").value);
+    if(!(w>=0) || !(r>0) || !(k>0)) return;
+    var v=ev(w,r,k);
+    var el=document.getElementById("ev");
+    el.textContent=(v>0?"+":"")+ (Math.abs(v)<1e-9?"0":v.toFixed(2));
+    el.className="big "+(Math.abs(v)<1e-9?"zero":v<0?"neg":"pos");
+    document.getElementById("ratio").textContent=r+":"+k;
+    document.getElementById("risk-l").textContent=String(k);
+    document.getElementById("formula").textContent=
+      (w/100).toFixed(2)+" × "+r+" − "+((100-w)/100).toFixed(2)+" × "+k;
+    var note="";
+    if(v<0) note="這個組合的期望值是負的：長期下來，同樣的勝率與盈虧比會把本金磨掉。";
+    else if(Math.abs(v)<1e-9) note="期望值為 0，只是打平，還沒算手續費。";
+    else note="期望值為正，只是數學上的長期平均，不保證下一筆會贏，也不保證不會先碰到連虧。";
+    document.getElementById("ev-note").textContent=note;
+  }
+  ["win","reward","risk"].forEach(function(id){
+    document.getElementById(id).addEventListener("input", paint);
+  });
+  paint();
+
+  var rewards=[]; for(var r=100;r<=1000;r+=50) rewards.push(r);
+  var wins=[]; for(var w=20;w<=60;w+=5) wins.push(w);
+  var html="<table><thead><tr><th class='rowh'>盈虧比</th>";
+  wins.forEach(function(w){ html+="<th>"+w+"%</th>"; });
+  html+="</tr></thead><tbody>";
+  rewards.forEach(function(r){
+    html+="<tr><th class='rowh'>"+r+":100</th>";
+    wins.forEach(function(w){
+      var v=ev(w,r,100);
+      var cls=Math.abs(v)<1e-9?"zero":v<0?"neg":"";
+      var t=(Math.abs(v)<1e-9)?"0":(v>0?"+"+String(+v.toFixed(1)):String(+v.toFixed(1)));
+      html+="<td class='"+cls+"'>"+t+"</td>";
+    });
+    html+="</tr>";
+  });
+  html+="</tbody></table>";
+  document.getElementById("tbl-wrap").innerHTML=html;
+})();
+</script>
+</body>
+</html>

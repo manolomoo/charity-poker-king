@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
+import market_stage as MS  # noqa: E402
 
 IDS = ["SOX", "NDX", "SPX"]
 SOURCE = "Yahoo Finance 圖表 API（query1.finance.yahoo.com/v8/finance/chart）"
@@ -1540,6 +1541,36 @@ def build(data_dir: Path, latest_path: Path, rules_path: Path, fetched_at_taipei
     for k, ix in indices.items():
         ix["home_pattern"] = home_pattern(ix)
 
+    # 牛熊三階段（價量代理，不影響燈號）。SOX 若有 SOXX 日線快取，用它的成交量當近似。
+    soxx_path = data_dir / "SOXX_daily_2y.csv"
+    soxx_vol = None
+    if soxx_path.exists():
+        soxx_df = load_csv(soxx_path)
+        soxx_vol = soxx_df.set_index(soxx_df["date"].dt.strftime("%Y-%m-%d"))["volume"]
+    for k, ix in indices.items():
+        daily = load_csv(data_dir / f"{k}_daily_2y.csv")
+        vol = None
+        vol_src = None
+        if k == "SOX":
+            if soxx_vol is not None:
+                vol = daily["date"].dt.strftime("%Y-%m-%d").map(soxx_vol)
+                vol.index = daily.index
+                vol_src = "SOXX ETF 日線成交量（近似；Yahoo ^SOX 成交量為 0）"
+            else:
+                vol_src = "Yahoo ^SOX 成交量為 0，且沒有 SOXX 快取，未驗量"
+        else:
+            vol = daily["volume"]
+            vol_src = "指數日線成交量（Yahoo）"
+        med = (ix.get("dow_weekly_medium_swings") or {}).get("structure")
+        coarse = (ix.get("dow_weekly_coarse_swings") or {}).get("structure")
+        ix["market_stage"] = MS.detect_market_stage(daily, k, med, coarse, volume=vol, volume_source=vol_src)
+        vbp_vol = vol if vol is not None else daily["volume"]
+        ix["volume_by_price"] = MS.volume_by_price(
+            daily, volume=vbp_vol,
+            source_label=vol_src or "每日收盤價×成交量",
+        )
+    stages = MS.summarize_stages({k: ix["market_stage"] for k, ix in indices.items()})
+
     confirmation = build_confirmation(indices)
     cobb = cobb_snapshot(latest_path, rules_path, price_asof)
 
@@ -1578,12 +1609,13 @@ def build(data_dir: Path, latest_path: Path, rules_path: Path, fetched_at_taipei
             "sma": "日線 SMA 20／50／200；週線 SMA 10／40（約對應兩個月與一年）。",
             "swings_daily_major": "日線明顯擺動：左右各 10 根 K 的局部高低。",
             "descending_right_triangle": "下降直角三角形（v2／COBB 主高點讀法，2026-11-14）：10／10 主高點連成降勢上界，中間高點不向上刺破該線超過 1% 即不算破壞；水平支撐取 H1 之後最低的 10／10 主低點，且之後至少再有一次日低點落入 2% 內的測試；收盤跌破支撐 3% 為確認；最小目標為 S−(H1−S)。已確認或形成中的下降直角三角形在首頁優先於「升勢線跌破」標籤。20 日均連續未站回只當附註，不參與命名。",
+            "market_stage": "牛熊三階段參考指標（v1／2026-11-14，COBB Telegram 筆記＋Claude 規格）：以第3章精神做成價量代理，不是真正的道氏階段。空頭須同時滿足回撤≥20%、收盤低於200日線3%或連續10日在其下、週線擺動低點被收盤跌破≥3%；多頭須回撤<10%、收盤大於仍上揚的200日線、週線結構未被有效跌破。站回200日線則先降為無法判定。恐慌為10日收盤跌幅達 NDX／SPX 12%、SOX 18%。SOX 量用 SOXX 近似，沒有則未驗量。不影響燈號 v3.0。",
             "swings_weekly_medium": "週線收盤、左右各 3 根。",
             "swings_weekly_coarse": "週線收盤、左右各 8 根，用來觀察較長的主要結構。",
             "gaps": "當日低點高於前一日高點＝向上缺口；當日高點低於前一日低點＝向下缺口。後續曾交易進缺口區間視為已回補。",
         },
     }
-    payload = {"meta": meta, "indices": indices, "confirmation": confirmation, "cobb": cobb}
+    payload = {"meta": meta, "indices": indices, "confirmation": confirmation, "cobb": cobb, "stages": stages}
 
     # 圖表序列另外放（跟原本 analysis.json／chart_data.json 的切法相同）
     chart = {
