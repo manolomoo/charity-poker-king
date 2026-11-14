@@ -284,10 +284,16 @@ def main() -> int:
         hp = ix.get("home_pattern")
         tl = ix["trendlines"].get("rising_support_major") or {}
         m200 = ix["moving_averages"]["sma200"]
+        m20 = ix["moving_averages"]["sma20"]
+        tri = ix.get("descending_right_triangle")
         label = f"{hp['rule']} {hp['name']} {hp['badge_label']}" if hp else "（無）"
         print(f"  {name} close={ix['last']['close']}　home_pattern={label}")
+        if tri:
+            print(f"      下降直角三角 status={tri['status']} 頸線={tri['support']} "
+                  f"vs={tri['close_vs_support_pct']}% confirmed={tri['confirmed']} target={tri.get('target')}")
         print(f"      升勢線 close_vs_line_pct={tl.get('close_vs_line_pct')} close_is={tl.get('close_is')} "
-              f"broken_by_3pct_filter={tl.get('broken_by_3pct_filter')}；sma200 pct={m200['pct']} above={m200['above']}")
+              f"broken_by_3pct_filter={tl.get('broken_by_3pct_filter')}；sma200 pct={m200['pct']} above={m200['above']}；"
+              f"sma20 below_streak={m20.get('below_streak')}")
     print(f"[trend] 已寫 trend/data.json、trend/data.js、trend/status.json")
     return 0
 

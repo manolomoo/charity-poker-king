@@ -6,7 +6,7 @@
   1. 行情檔位置改成呼叫端傳入的資料夾（data/cache/trend/，不進版控）。
   2. 抓資料時間、價格截至日、時差說明都由資料算出，不再寫死。
   3. 燈號摘要改讀本 repo 的 data/latest.json 與 rules.json。
-另外補上 home_pattern（首頁型態挑選，規則同 home/index.html 的 pickPattern）。
+另外補上 home_pattern（首頁型態挑選）與下降直角三角形（v2／COBB 主高點讀法）。
 
 與 11 項燈號規則無關，不會改動燈號或門檻。由 scripts/update_trend.py 呼叫。
 """
@@ -261,6 +261,179 @@ def retrace_fraction(peak, trough, now):
     return (now - trough) / move
 
 
+
+# 下降直角三角形（v2，依 COBB 主高點讀法；2026-11-14）
+# 主波段用已確認的 10／10 擺動高／低；中間高點只要不向上刺破降勢線超過 1% 就不作廢。
+# 水平支撐 S＝H1 之後、H2 附近之前最低的 10／10 主低點，且之後至少再有一次測試（日低點落入 S 的 2% 內）。
+# 確認：單一交易日收盤跌破 S 達 3%（原書）。測算目標：S−(H1−S)。
+# 狀態：形成中／可能跌破（未確認）／已確認跌破／已確認跌破（反抽中）／失效。
+# 20 日均連續未站回只當附註，不參與命名或確認。
+TRI_STATUS_ACTIVE = ("形成中", "可能跌破（未確認）", "已確認跌破", "已確認跌破（反抽中）")
+
+
+def _line_at(i1, p1, i2, p2, i):
+    return p1 + (p2 - p1) * (i - i1) / (i2 - i1)
+
+
+def detect_descending_right_triangle(
+    daily: pd.DataFrame,
+    highs10: list,
+    lows10: list,
+    *,
+    flat_tol: float = 0.02,
+    lower_high_min: float = 0.01,
+    pierce_tol: float = 0.01,
+    break_pct: float = 0.03,
+    min_span: int = 20,
+    min_height: float = 0.08,
+    min_touch_gap: int = 8,
+):
+    """在日線上找目前仍適用的下降直角三角形；沒有則回 None。"""
+    if daily is None or len(daily) < 80 or not highs10:
+        return None
+    end = len(daily) - 1
+    close = float(daily["close"].iloc[end])
+    hits = []
+    for a, h1 in enumerate(highs10):
+        i1, p1 = int(h1["i"]), float(h1["price"])
+        for h2 in highs10[a + 1 :]:
+            i2, p2 = int(h2["i"]), float(h2["price"])
+            if p2 >= p1 * (1 - lower_high_min) or i2 - i1 < min_span:
+                continue
+            pierced = False
+            inter = []
+            post = []
+            for hk in highs10:
+                ik = int(hk["i"])
+                if ik <= i1:
+                    continue
+                lv = _line_at(i1, p1, i2, p2, ik)
+                pk = float(hk["price"])
+                if pk > lv * (1 + pierce_tol):
+                    pierced = True
+                    break
+                rec = {"date": hk["date"], "high": r2(pk), "line": r2(lv)}
+                if ik < i2:
+                    inter.append(rec)
+                elif ik > i2:
+                    post.append(rec)
+            if pierced:
+                continue
+            invalid_close = False
+            for i in range(i2 + 1, end + 1):
+                lv = _line_at(i1, p1, i2, p2, i)
+                if float(daily["close"].iloc[i]) > lv * (1 + break_pct):
+                    invalid_close = True
+                    break
+            if invalid_close:
+                continue
+            cands = [lw for lw in lows10 if i1 + 3 < int(lw["i"]) <= i2 + 5]
+            if not cands:
+                continue
+            low1 = min(cands, key=lambda x: float(x["price"]))
+            iL, pL = int(low1["i"]), float(low1["price"])
+            S = pL
+            if (p1 - S) / S < min_height or p2 <= S * 1.05:
+                continue
+            first_break_i = None
+            first_unconf_i = None
+            for i in range(iL + 1, end + 1):
+                c = float(daily["close"].iloc[i])
+                if first_unconf_i is None and c < S:
+                    first_unconf_i = i
+                if c <= S * (1 - break_pct):
+                    first_break_i = i
+                    break
+            scan_to = first_break_i if first_break_i is not None else end
+            tests = []
+            for i in range(iL + min_touch_gap, scan_to + 1):
+                lo = float(daily["low"].iloc[i])
+                if abs(lo - S) / S <= flat_tol:
+                    tests.append({
+                        "date": str(daily["date"].iloc[i].date()),
+                        "low": r2(lo),
+                        "pct": r2((lo / S - 1) * 100, 2),
+                    })
+            if not tests:
+                continue
+            slope = (p2 - p1) / (i2 - i1)
+            if slope >= 0:
+                continue
+            i_apex = i1 + (S - p1) / slope
+            if i_apex <= i2:
+                continue
+            ref_i = first_break_i if first_break_i is not None else end
+            frac = (ref_i - i1) / (i_apex - i1)
+            recaptured = False
+            recapture_date = None
+            if first_break_i is not None:
+                for i in range(first_break_i + 1, end + 1):
+                    if float(daily["close"].iloc[i]) >= S * (1 + break_pct):
+                        recaptured = True
+                        recapture_date = str(daily["date"].iloc[i].date())
+                        break
+            if recaptured:
+                status = "失效"
+            elif first_break_i is not None:
+                status = "已確認跌破（反抽中）" if close >= S else "已確認跌破"
+            elif close < S:
+                status = "可能跌破（未確認）"
+            else:
+                status = "形成中"
+            target = 2 * S - p1
+            vs = (close / S - 1.0) * 100
+            hits.append({
+                "status": status,
+                "active": status in TRI_STATUS_ACTIVE,
+                "h1": {"date": h1["date"], "price": r2(p1)},
+                "h2": {"date": h2["date"], "price": r2(p2)},
+                "support": r2(S),
+                "support_first": {"date": low1["date"], "low": r2(pL)},
+                "support_tests": tests[:6],
+                "n_tests": len(tests),
+                "close": r2(close),
+                "close_vs_support_pct": r2(vs, 2),
+                "confirmed": first_break_i is not None and not recaptured,
+                "first_unconf_date": (str(daily["date"].iloc[first_unconf_i].date()) if first_unconf_i is not None else None),
+                "first_3pct_date": (str(daily["date"].iloc[first_break_i].date()) if first_break_i is not None else None),
+                "first_3pct_close": (r2(float(daily["close"].iloc[first_break_i])) if first_break_i is not None else None),
+                "recapture_date": recapture_date,
+                "target": r2(target),
+                "height_pct": r2((p1 - S) / S * 100, 2),
+                "apex_frac_at_ref": r2(frac, 2),
+                "intermediate_highs": inter,
+                "later_highs_below_line": post,
+                "rule": "v2-cobb",
+            })
+    if not hits:
+        return None
+    # 同一組 H1+S 取最晚的 H2（較完整的降勢線）；再取仍有效、高度較大者
+    best = {}
+    for h in hits:
+        k = (h["h1"]["date"], round(h["support"]))
+        if k not in best or h["h2"]["date"] > best[k]["h2"]["date"]:
+            best[k] = h
+    cands = list(best.values())
+    active = [h for h in cands if h["active"]]
+    pool = active or cands
+    pool.sort(key=lambda h: (h["active"], h["height_pct"], h["h2"]["date"]), reverse=True)
+    return pool[0]
+
+
+def sma20_below_streak(close: pd.Series) -> int:
+    """最新收盤起算，連續多少根收在 20 日均之下。"""
+    ma = sma(close, 20)
+    streak = 0
+    for c, m in zip(close.iloc[::-1], ma.iloc[::-1]):
+        if pd.isna(m):
+            break
+        if float(c) < float(m):
+            streak += 1
+        else:
+            break
+    return int(streak)
+
+
 def analyze_one(name: str, data_dir: Path) -> dict:
     data_dir = Path(data_dir)
     daily = load_csv(data_dir / f"{name}_daily_2y.csv")
@@ -309,13 +482,19 @@ def analyze_one(name: str, data_dir: Path) -> dict:
     sma20 = float(sma(daily["close"], 20).iloc[-1])
     sma50 = float(sma(daily["close"], 50).iloc[-1])
     sma200 = float(sma(daily["close"], 200).iloc[-1])
+    sma20_streak = sma20_below_streak(daily["close"])
     # weekly SMAs
     wsma10 = float(sma(weekly["close"], 10).iloc[-1]) if len(weekly) >= 10 else None
     wsma40 = float(sma(weekly["close"], 40).iloc[-1]) if len(weekly) >= 40 else None
 
     # price vs MA
     vs_ma = {
-        "sma20": {"value": r2(sma20), "pct": r2(pct(last_close, sma20), 2), "above": last_close > sma20},
+        "sma20": {
+            "value": r2(sma20),
+            "pct": r2(pct(last_close, sma20), 2),
+            "above": last_close > sma20,
+            "below_streak": sma20_streak,
+        },
         "sma50": {"value": r2(sma50), "pct": r2(pct(last_close, sma50), 2), "above": last_close > sma50},
         "sma200": {"value": r2(sma200), "pct": r2(pct(last_close, sma200), 2), "above": last_close > sma200},
         "wsma10": {"value": r2(wsma10) if wsma10 else None, "pct": r2(pct(last_close, wsma10), 2) if wsma10 else None, "above": (last_close > wsma10) if wsma10 else None},
@@ -717,6 +896,8 @@ def analyze_one(name: str, data_dir: Path) -> dict:
             )
             break
 
+    descending_tri = detect_descending_right_triangle(daily, d_highs_m, d_lows_m)
+
     # Rectangle / range since peak: if last ~15-40 sessions are range-bound
     # Check last 20 trading days high-low range vs prior
     recent20 = daily.tail(20)
@@ -902,6 +1083,7 @@ def analyze_one(name: str, data_dir: Path) -> dict:
             "large_or_recent": (large_gaps[-6:] + [g for g in recent_gaps if g not in large_gaps[-6:]])[:8],
         },
         "pattern_checks": patterns,
+        "descending_right_triangle": descending_tri,
         "recent_range": {
             "last_20_sessions_range_pct": r2(range20, 2),
             "last_20_high": r2(float(recent20["high"].max())),
@@ -1196,10 +1378,28 @@ def write_markdown(payload: dict, path: Path):
             for s in ix["support_resistance"][:6]:
                 bits.append(f"{s['role']} {s['price']}（距收盤 {s['close_vs_level_pct']:+}%，觸及 {s['touches']} 次）")
             lines.append("- 靠近現價的擺動密集區（約 1.2% 容差歸類）：" + "；".join(bits) + "。這是價位觀察，不是保證守得住或過得了。")
+        tri = ix.get("descending_right_triangle")
+        if tri:
+            bits = (
+                f"- 下降直角三角形（v2／COBB 主高點讀法）：狀態「{tri['status']}」；"
+                f"降勢線 {tri['h1']['date']} 的 {tri['h1']['price']} 連 {tri['h2']['date']} 的 {tri['h2']['price']}；"
+                f"頸線（水平支撐）{tri['support']}（首觸 {tri['support_first']['date']}，其後測試 {tri['n_tests']} 次）；"
+                f"收盤相對頸線 {tri['close_vs_support_pct']:+}%。"
+            )
+            if tri.get("first_3pct_date"):
+                bits += f"3% 確認日 {tri['first_3pct_date']} 收盤 {tri['first_3pct_close']}。"
+            if tri.get("target") is not None:
+                bits += f"最小測算目標 {tri['target']}。"
+            if tri.get("apex_frac_at_ref") is not None:
+                bits += f"確認或截至日時約在起點至頂點路程的 {tri['apex_frac_at_ref']}。"
+            lines.append(bits)
+        m20 = (ix.get("moving_averages") or {}).get("sma20") or {}
+        if isinstance(m20.get("below_streak"), int) and m20["below_streak"] >= 1:
+            lines.append(f"- 附註：連續 {m20['below_streak']} 日未站回 20 日線（不作為型態命名或確認條件）。")
         if ix["pattern_checks"]:
             for p in ix["pattern_checks"]:
                 lines.append(f"- 形態檢查「{p['name']}」：已確認={p['confirmed']}。{p['opinion']} 要點：{json.dumps(p['facts'], ensure_ascii=False)}。")
-        else:
+        elif not (tri and tri.get("active")):
             lines.append("- 形態檢查：依原書雙重頂／底的間隔、中間回檔 15%–20%、以及收盤突破 3% 濾網，目前沒有達到「已確認」的項目。未達標準的形狀不當成形態。")
         lines.append("")
     conf = payload["confirmation"]
@@ -1238,20 +1438,32 @@ def write_markdown(payload: dict, path: Path):
 
 
 def home_pattern(ix: dict):
-    """首頁型態挑選。規則與順序同 home/index.html 的 pickPattern（A → B → C），只看 analysis 欄位。
+    """首頁型態挑選。已確認或形成中的下降直角三角形優先；否則仍是 A → B → C（升勢線）。
 
-    三角形、頭肩、雙重頂、楔形這類有名字的型態沒有嚴格判定式，一律不給。
+    頭肩、雙重頂、楔形沒有嚴格判定式，一律不給。
     """
     labels = {"down": "看跌", "up": "看漲", "mid": "中性"}
     tl = (ix.get("trendlines") or {}).get("rising_support_major")
     m = (ix.get("moving_averages") or {}).get("sma200")
+    m20 = (ix.get("moving_averages") or {}).get("sma20")
     s = (ix.get("dow_weekly_coarse_swings") or {}).get("structure")
+    tri = ix.get("descending_right_triangle")
     below = bool(tl) and (
         tl.get("close_is") == "below"
         or (tl.get("close_is") is None and isinstance(tl.get("close_vs_line_pct"), (int, float)) and tl["close_vs_line_pct"] < 0)
     )
 
     ev = []
+    if tri and tri.get("active"):
+        ev.append(
+            f"下降直角三角形，狀態「{tri['status']}」；降勢線 {tri['h1']['date']} 的 {tri['h1']['price']} 連 "
+            f"{tri['h2']['date']} 的 {tri['h2']['price']}；頸線（水平支撐）{tri['support']}，"
+            f"收盤相對頸線 {tri['close_vs_support_pct']:+}%"
+        )
+        if tri.get("first_3pct_date"):
+            ev.append(f"3% 確認日 {tri['first_3pct_date']} 收盤 {tri['first_3pct_close']}")
+        if tri.get("target") is not None:
+            ev.append(f"最小測算目標 {tri['target']}")
     if tl:
         side = "下" if below else "上"
         flt = "已達 3% 濾網" if tl.get("broken_by_3pct_filter") is True else "未達 3% 濾網"
@@ -1261,9 +1473,12 @@ def home_pattern(ix: dict):
     if m and isinstance(m.get("above"), bool):
         ev.append(f"相對 200 日線 {m.get('pct'):+}%（線{'上' if m['above'] else '下'}）")
     evidence = "；".join(ev) + f"。資料截至 {ix['last']['date']}。"
+    sma20_note = None
+    if m20 and isinstance(m20.get("below_streak"), int) and m20["below_streak"] >= 1:
+        sma20_note = f"連續 {m20['below_streak']} 日未站回 20 日線"
 
-    def out(rule, name, badge, icon, slug, confirmed, confidence):
-        return {
+    def out(rule, name, badge, icon, slug, confirmed, confidence, **extra):
+        rec = {
             "rule": rule,
             "name": name,
             "badge": badge,
@@ -1274,6 +1489,28 @@ def home_pattern(ix: dict):
             "confidence": confidence,
             "evidence": evidence,
         }
+        if sma20_note:
+            rec["sma20_note"] = sma20_note
+        rec.update(extra)
+        return rec
+
+    # T. 已確認或形成中的下降直角三角形，優先於升勢線跌破標籤（2026-11-14，依 COBB 主高點讀法）
+    if tri and tri.get("active"):
+        st = tri["status"]
+        confirmed = st in ("已確認跌破", "已確認跌破（反抽中）")
+        return out(
+            "T",
+            f"下降直角三角形（{st}）",
+            "down",
+            "descTri",
+            "desc-triangle",
+            confirmed,
+            "high" if confirmed else "medium",
+            neckline=tri["support"],
+            close_vs_neckline_pct=tri["close_vs_support_pct"],
+            target=tri.get("target"),
+            status=st,
+        )
 
     # A. 收盤跌破升勢線且過 3% 濾網：書上的「有效跌破」
     if tl and tl.get("broken_by_3pct_filter") is True:
@@ -1340,6 +1577,7 @@ def build(data_dir: Path, latest_path: Path, rules_path: Path, fetched_at_taipei
             "breakout_filter": "有效突破採用原書常見的收盤價超出界線約 3%。",
             "sma": "日線 SMA 20／50／200；週線 SMA 10／40（約對應兩個月與一年）。",
             "swings_daily_major": "日線明顯擺動：左右各 10 根 K 的局部高低。",
+            "descending_right_triangle": "下降直角三角形（v2／COBB 主高點讀法，2026-11-14）：10／10 主高點連成降勢上界，中間高點不向上刺破該線超過 1% 即不算破壞；水平支撐取 H1 之後最低的 10／10 主低點，且之後至少再有一次日低點落入 2% 內的測試；收盤跌破支撐 3% 為確認；最小目標為 S−(H1−S)。已確認或形成中的下降直角三角形在首頁優先於「升勢線跌破」標籤。20 日均連續未站回只當附註，不參與命名。",
             "swings_weekly_medium": "週線收盤、左右各 3 根。",
             "swings_weekly_coarse": "週線收盤、左右各 8 根，用來觀察較長的主要結構。",
             "gaps": "當日低點高於前一日高點＝向上缺口；當日高點低於前一日低點＝向下缺口。後續曾交易進缺口區間視為已回補。",
@@ -1363,6 +1601,7 @@ def build(data_dir: Path, latest_path: Path, rules_path: Path, fetched_at_taipei
             "last": ix["last"],
             "moving_averages": ix["moving_averages"],
             "range_52w": ix["range_52w"],
+            "descending_right_triangle": ix.get("descending_right_triangle"),
         }
         slim_indices[k] = ix
     payload["indices"] = slim_indices

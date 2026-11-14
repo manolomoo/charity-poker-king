@@ -66,6 +66,8 @@ section{margin-top:28px}
 .pat .pic{flex:0 0 156px; width:156px}
 .pat .ptxt{flex:1 1 0; min-width:0; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px}
 .pat .pname{color:var(--head); font-size:15px; font-weight:700; line-height:1.4}
+.pat .pmeta{flex:1 1 100%; color:var(--mute); font-size:12px; font-weight:400; line-height:1.45}
+.iblk .anno{margin:2px 0 0; padding:0 2px; color:var(--mute); font-size:12px; line-height:1.45}
 .pat svg .lb{fill:#b9c4d4; font-family:inherit; font-size:22px; paint-order:stroke; stroke:#172135; stroke-width:4px; stroke-linejoin:round}
 .pat svg .lb.b{fill:#f3ecdc; font-weight:700}
 .badge{
@@ -129,6 +131,7 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
       <span><i class="d" style="border-color:#e8edf5"></i>200</span>
       <span><i class="d" style="border-color:#3fd0a0"></i>升勢支撐</span>
       <span><i class="d" style="border-color:#ff7482"></i>降勢壓力</span>
+      <span><i class="d" style="border-color:#f2ab3c"></i>下降直角三角</span>
     </div>
     <div class="idx" id="idx"></div>
   </section>
@@ -263,13 +266,32 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
   function num(v,d){
     return Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
   }
+  function fmtPct(v){
+    if(typeof v !== "number" || !isFinite(v)) return "";
+    return (v>=0?"+":"")+v.toFixed(2)+"%";
+  }
+  function sma20Note(ix){
+    var n = ix && ix.moving_averages && ix.moving_averages.sma20 && ix.moving_averages.sma20.below_streak;
+    if(typeof n === "number" && n >= 1) return "連續 "+n+" 日未站回 20 日線";
+    return "";
+  }
+  function activeTri(ix){
+    var t = ix && ix.descending_right_triangle;
+    if(t && t.active && t.h1 && t.h2 && typeof t.support === "number") return t;
+    return null;
+  }
 
   // 一行型態：只照 analysis 的欄位組句，不自己判讀型態。最多兩句。
   function patternLabel(ix){
     if(!ix) return null;
     var out = [];
-    var tl = ix.trendlines && ix.trendlines.rising_support_major;
-    if(tl && tl.broken_by_3pct_filter === true) out.push("跌破升勢支撐線");
+    var hp = ix.home_pattern;
+    if(hp && hp.slug === "desc-triangle" && typeof hp.neckline === "number"){
+      out.push("頸線 "+num(hp.neckline,0)+(typeof hp.close_vs_neckline_pct==="number" ? "（"+fmtPct(hp.close_vs_neckline_pct)+"）" : ""));
+    } else {
+      var tl = ix.trendlines && ix.trendlines.rising_support_major;
+      if(tl && tl.broken_by_3pct_filter === true) out.push("跌破升勢支撐線");
+    }
 
     var m = ix.moving_averages && ix.moving_averages.sma200;
     if(m && typeof m.above === "boolean"){
@@ -307,6 +329,14 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
       '<polyline points="14,164 50,116 74,140 116,84 142,111 184,58 206,84 232,50 248,66" fill="none" stroke="#dfe6f1" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
       '<polyline points="248,66 276,30 290,48 306,20" fill="none" stroke="#ff7482" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
       '<text x="170" y="170" text-anchor="middle" class="lb">低點一路墊高</text>',
+    // ta-book「下降三角形」
+    descTri:
+      '<line x1="50" y1="124" x2="304" y2="124" stroke="#f2ab3c" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round"/>'+
+      '<line x1="84" y1="45.5" x2="232" y2="101" stroke="#f2ab3c" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round"/>'+
+      '<polyline points="14,20 64,124 96,50 134,124 160,74 192,124 210,93" fill="none" stroke="#dfe6f1" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<polyline points="210,93 240,148 254,128 300,168" fill="none" stroke="#3fd0a0" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<text x="99" y="144" text-anchor="middle" class="lb">水平支撐</text>'+
+      '<text x="160" y="40" text-anchor="middle" class="lb">高點降低</text>',
     // 通用：收在 200 日線下
     below200:
       '<path d="M14 92 C 90 70, 190 66, 306 84" fill="none" stroke="#f2ab3c" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round"/>'+
@@ -317,17 +347,16 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
   };
   var BADGE = { down:["b-down","看跌"], up:["b-up","看漲"], mid:["b-mid","中性"] };
 
-  // 型態挑選：照順序 A → B → C，只看 analysis 的欄位。
-  // 三角形、頭肩、雙重頂、楔形這類有名字的型態沒有寫嚴格判定式，所以這裡一律不給。
-  // 優先用 scripts/update_trend.py 算好的 ix.home_pattern（同一套規則）；
-  // 舊資料沒有這個欄位時才退回下面的 pickPatternFallback。
+  // 型態挑選：優先用 scripts/update_trend.py 算好的 ix.home_pattern
+  // （下降直角三角形優先，否則 A → B → C）。舊資料沒有這個欄位時才退回 pickPatternFallback。
   function pickPattern(ix){
     var hp = ix && ix.home_pattern;
     if(hp && typeof hp.name === "string" && hp.name && BADGE[hp.badge] && typeof hp.slug === "string" && hp.slug){
       return {
         name: hp.name, badge: hp.badge, badgeLabel: hp.badge_label || BADGE[hp.badge][1],
-        icon: ICONS[hp.icon] ? hp.icon : (hp.slug === "moving-avg" ? "below200" : "tlBreak"),
-        slug: hp.slug, confirmed: hp.confirmed === true, evidence: hp.evidence || ""
+        icon: ICONS[hp.icon] ? hp.icon : (hp.slug === "desc-triangle" ? "descTri" : (hp.slug === "moving-avg" ? "below200" : "tlBreak")),
+        slug: hp.slug, confirmed: hp.confirmed === true, evidence: hp.evidence || "",
+        neckline: hp.neckline, close_vs_neckline_pct: hp.close_vs_neckline_pct
       };
     }
     return pickPatternFallback(ix);
@@ -361,11 +390,16 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
     var p = pickPattern(ix);
     if(!p) return "";
     var b = [BADGE[p.badge][0], p.badgeLabel || BADGE[p.badge][1]];
+    var meta = "";
+    if(typeof p.neckline === "number"){
+      var vs = typeof p.close_vs_neckline_pct === "number" ? "（"+fmtPct(p.close_vs_neckline_pct)+"）" : "";
+      meta = '<span class="pmeta">頸線 '+esc(num(p.neckline,0))+esc(vs)+'</span>';
+    }
     return '<a class="pat" href="./trend/ta-book/#'+esc(p.slug)+'" data-pattern="'+esc(p.slug)+'" data-confirmed="'+(p.confirmed?"1":"0")+'"'+
       (p.evidence ? ' title="'+esc(p.evidence)+'"' : '')+
       ' aria-label="'+esc(p.name)+'（'+esc(b[1])+'）：看技術分析教學的型態卡">'+
       '<span class="pic">'+ICON_OPEN+esc(p.name)+' 型態示意圖">'+ICONS[p.icon]+'</svg></span>'+
-      '<span class="ptxt"><span class="pname">'+esc(p.name).replace('（','<wbr>（')+'</span><span class="badge '+b[0]+'">'+esc(b[1])+'</span></span>'+
+      '<span class="ptxt"><span class="pname">'+esc(p.name).replace('（','<wbr>（')+'</span><span class="badge '+b[0]+'">'+esc(b[1])+'</span>'+meta+'</span>'+
       '</a>';
   }
 
@@ -419,11 +453,13 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
     var fs=narrow?12:13;
     var pl=narrow?48:60, pr=narrow?8:16, pt=22, pb=narrow?24:26;
     var iw=W-pl-pr, ih=H-pt-pb;
+    var tri=activeTri(ix);
     var lo=Infinity, hi=-Infinity;
     for(var i=s0;i<NA;i++){
       lo=Math.min(lo,ch.low[i]); hi=Math.max(hi,ch.high[i]);
       [ch.sma20[i],ch.sma50[i],ch.sma200[i]].forEach(function(v){if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
     }
+    if(tri){ lo=Math.min(lo,tri.support); hi=Math.max(hi,tri.support); }
     var pad=(hi-lo)*0.04||1;
     var sc=niceTicks(lo-pad,hi+pad,narrow?4:5);
     // x 用「視窗內的位置」；k 可以是小數或負數（趨勢線用）
@@ -479,6 +515,22 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
       if(a>=b) return;
       tls += '<line x1="'+x(a-s0)+'" y1="'+y(yAt(a))+'" x2="'+x(b-s0)+'" y2="'+y(yAt(b))+'" stroke="'+col+'" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9"/>';
     });
+    // 下降直角三角形：降勢上界＋水平頸線（橘色虛線，與型態卡同色）
+    if(tri){
+      var ti1=dateIdx(all,tri.h1.date), ti2=dateIdx(all,tri.h2.date);
+      if(ti1!==ti2){
+        var tslope=(tri.h2.price-tri.h1.price)/(ti2-ti1);
+        var tyAt=function(i){return tri.h1.price+tslope*(i-ti1);};
+        var ta=Math.max(ti1,s0), tb=NA-1;
+        if(ta<tb){
+          tls += '<line x1="'+x(ta-s0)+'" y1="'+y(tyAt(ta))+'" x2="'+x(tb-s0)+'" y2="'+y(tyAt(tb))+'" stroke="#f2ab3c" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.95"/>';
+        }
+      }
+      var tsd=(tri.support_first && tri.support_first.date) || tri.h1.date;
+      var tsi=dateIdx(all,tsd);
+      var tsa=Math.max(tsi,s0), tsb=NA-1;
+      tls += '<line x1="'+x(tsa-s0)+'" y1="'+y(tri.support)+'" x2="'+x(tsb-s0)+'" y2="'+y(tri.support)+'" stroke="#f2ab3c" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.95"/>';
+    }
 
     // 標註：同一天的高點／低點合併；視窗外的不畫
     var marks="";
@@ -512,6 +564,11 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
       var lx = anchor==="end"?px-6:px+6;
       marks += '<text x="'+lx+'" y="'+ly+'" text-anchor="'+anchor+'" fill="#f3ecdc" font-size="'+(fs-1)+'" paint-order="stroke" stroke="#172135" stroke-width="3">'+esc(label)+'</text>';
     });
+
+    if(tri){
+      var tsb=NA-1;
+      marks += '<text x="'+x(tsb-s0)+'" y="'+(y(tri.support)-5)+'" text-anchor="end" fill="#f2ab3c" font-size="'+fs+'" paint-order="stroke" stroke="#172135" stroke-width="3">頸線 '+esc(num(tri.support,0))+'</text>';
+    }
 
     var cid="hc"+(++uid);
     container.innerHTML =
@@ -550,6 +607,7 @@ footer{margin-top:28px; color:var(--mute); font-size:12px}
     blk.innerHTML =
       '<div class="top"><span class="sym">'+esc(id)+'</span><span class="st">'+esc(label)+'</span></div>'+
       patternRow(ix)+
+      (sma20Note(ix) ? '<p class="anno">'+esc(sma20Note(ix))+'</p>' : '')+
       '<div class="chart"></div>'+
       '<div class="foot"><span>'+(asof ? "截至 "+esc(asof) : "")+'</span>'+
       '<a href="./trend/#'+esc(id.toLowerCase())+'">詳情 →</a></div>';
