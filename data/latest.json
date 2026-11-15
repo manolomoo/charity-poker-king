@@ -2,12 +2,10 @@
   "schema": "bottom-signals/v1",
   "site": "COBB我大哥",
   "rules_version": "v3.0",
-  "run_date": "2026-11-14",
-  "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
-  "previous_run": "2026-11-13 22:50 (台北時間 UTC+8)",
-  "changes_vs_previous": [
-    "第3項 週線 KDJ 的 J 值 ≤ 0：🔴 → 🟡"
-  ],
+  "run_date": "2026-11-16",
+  "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
+  "previous_run": "2026-11-14 14:20 (台北時間 UTC+8)",
+  "changes_vs_previous": "與上次相比，整項燈號沒有變化",
   "stale_rows": [],
   "summary": {
     "1": {
@@ -126,7 +124,7 @@
         "signal": "4",
         "name": "估值進入便宜區間",
         "first": "2026-10-30",
-        "latest": "2026-11-06",
+        "latest": "2026-11-13",
         "ndx_dd": -9.1
       },
       {
@@ -192,7 +190,7 @@
       "sources": [
         "https://www.ssga.com/library-content/products/fund-data/etfs/us/navhist-us-en-spy.xlsx"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "以官方每日流通股數變動×NAV 推算；SSGA 檔案約延遲 1 個交易日。",
       "asof": "2026-11-12",
       "extra": {
@@ -2351,7 +2349,7 @@
       "sources": [
         "https://www.ishares.com/us/products/239705/ishares-semiconductor-etf"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "iShares 官網只公開當日流通股數，歷史下載檔以程式讀取失敗；已開始每日存快照（data/etf_shares_snapshots.csv），累積 22 個交易日後即可依規則計算。",
       "asof": "Nov 13, 2026",
       "extra": {
@@ -2376,7 +2374,7 @@
       "sources": [
         "https://www.invesco.com/qqq-etf/en/about.html"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "Invesco 資料 API 拒絕程式存取（HTTP 406），未取得每日流通股數；不以資產規模縮水代替資金外流。",
       "asof": null,
       "extra": {
@@ -2401,7 +2399,7 @@
       "sources": [
         "https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "VanEck 官網需 Cookie／瀏覽器，程式讀取被導向錯誤頁；未取得每日流通股數。",
       "asof": null,
       "extra": {
@@ -2425,9 +2423,9 @@
       "data_date": "2026-11-13",
       "sources": [
         "https://edition.cnn.com/markets/fear-and-greed",
-        "https://production.dataviz.cnn.io/index/fearandgreed/graphdata/2025-10-10"
+        "https://production.dataviz.cnn.io/index/fearandgreed/graphdata/2025-10-12"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "v2.2：當天在對的位置且 <25 才算觸發；不再維持到 NDX 創新高。CNN 未公開 API，結構可能變動；日值取每日最後一筆，已收盤日才計入。",
       "asof": "2026-11-13",
       "extra": {
@@ -2472,7 +2470,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ETWII/history"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "週K由 Yahoo 日線重組，KDJ(9,3,3)。觸發日＝該週週五。",
       "asof": "週線截至 2026-11-13（已完成週）",
       "extra": {
@@ -2564,7 +2562,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ENDX/history"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "週K由 Yahoo 日線重組，KDJ(9,3,3)。觸發日＝該週週五。",
       "asof": "週線截至 2026-11-13（已完成週）",
       "extra": {
@@ -2652,7 +2650,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ESOX/history"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "週K由 Yahoo 日線重組，KDJ(9,3,3)。觸發日＝該週週五。",
       "asof": "週線截至 2026-11-13（已完成週）",
       "extra": {
@@ -2744,45 +2742,46 @@
     {
       "signal": "4",
       "target": "NDX",
-      "value": "依最新已完成週K（2026-11-06）判定，維持到下一根週K｜目前數值：NTM P/E 19.46×（2026-11-12）；10年分位 14%（5年 2%）；最近週五分位 3%；隱含 NTM EPS 約1個月 +2.3%、自 08/05 起 +10.5%",
+      "value": "依最新已完成週K（2026-11-13）判定，維持到下一根週K｜目前數值：NTM P/E 18.86×（2026-11-13）；10年分位 8%（5年 0%）；最近週五分位 8%；隱含 NTM EPS 約1個月 +4.1%、自 08/05 起 +12.6%",
       "threshold": "10 年分位 ≤ 20%",
       "status": "🔴",
       "status_label": "已觸發",
-      "data_date": "2026-11-06",
+      "data_date": "2026-11-13",
       "sources": [
         "https://historyofmarket.com/nasdaq/ndx-forward-pe/",
         "https://historyofmarket.com/api/ndx/forward-pe.json"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "單一資料商 History of Market；歷史分位以終端機週頻序列（2016-11–2026-08-05，508 筆）計算，最新值為同口徑自算日線 forwardOwn（官方說明與終端機序列差距 <3%）。EPS 由指數收盤÷本益比推得，非資料商直接公布。 維持規則為使用者指定（2026-11-11），不是 COBB 的規則。",
-      "asof": "2026-11-06",
+      "asof": "2026-11-13",
       "extra": {
-        "pe": 19.46,
-        "pct10": 13.779527559055119,
-        "pct5": 1.6129032258064515,
-        "eps_chg_1m": 2.269957057822114,
-        "eps_chg_since": 10.478384122525108,
+        "pe": 18.86,
+        "pct10": 7.677165354330709,
+        "pct5": 0.4048582995951417,
+        "eps_chg_1m": 4.063650003308883,
+        "eps_chg_since": 12.60106349484007,
         "eps_since": "2026-08-05",
         "terminal_last": "2026-08-05",
-        "obs_date": "2026-11-06",
+        "obs_date": "2026-11-13",
         "red_dates": [
-          "2026-11-06"
+          "2026-11-13"
         ],
-        "friday_pct10": 2.9469548133595285,
+        "friday_pct10": 7.677165354330709,
         "trigger_dates": [
           "2026-10-30",
-          "2026-11-06"
+          "2026-11-06",
+          "2026-11-13"
         ],
         "last_trigger_info": {
-          "date": "2026-11-06",
+          "date": "2026-11-13",
           "within_hold": true,
           "phrase": "仍在維持內，到下一根週K",
           "mode": "weekly"
         },
         "hold": {
           "mode": "weekly",
-          "last_trigger": "2026-11-06",
-          "text": "依最新已完成週K（2026-11-06）判定，維持到下一根週K",
+          "last_trigger": "2026-11-13",
+          "text": "依最新已完成週K（2026-11-13）判定，維持到下一根週K",
           "current": true,
           "held": true,
           "label": "使用者指定（2026-11-11）"
@@ -2792,44 +2791,45 @@
     {
       "signal": "4",
       "target": "SOX",
-      "value": "依最新已完成週K（2026-11-06）判定，維持到下一根週K｜目前數值：NTM P/E 15.06×（2026-11-12）；10年分位 20%（5年 7%）；最近週五分位 4%；隱含 NTM EPS 約1個月 +6.4%、自 08/05 起 +28.2%",
+      "value": "依最新已完成週K（2026-11-13）判定，維持到下一根週K｜目前數值：NTM P/E 14.40×（2026-11-13）；10年分位 12%（5年 4%）；最近週五分位 12%；隱含 NTM EPS 約1個月 +6.9%、自 08/05 起 +29.4%",
       "threshold": "10 年分位 ≤ 20%",
       "status": "🔴",
       "status_label": "已觸發",
-      "data_date": "2026-11-06",
+      "data_date": "2026-11-13",
       "sources": [
         "https://historyofmarket.com/zh-tw/semi/semi-fwdpe/",
         "https://historyofmarket.com/api/sectors/forward-pe.json"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "單一資料商 History of Market；歷史分位以終端機週頻序列（2016-11–2026-08-05，508 筆）計算，最新值為同口徑自算日線 forwardOwn（官方說明與終端機序列差距 <3%）。EPS 由指數收盤÷本益比推得，非資料商直接公布。 維持規則為使用者指定（2026-11-11），不是 COBB 的規則。",
-      "asof": "2026-11-06",
+      "asof": "2026-11-13",
       "extra": {
-        "pe": 15.06,
-        "pct10": 19.68503937007874,
-        "pct5": 7.258064516129033,
-        "eps_chg_1m": 6.44437862389502,
-        "eps_chg_since": 28.157233555500838,
+        "pe": 14.4,
+        "pct10": 11.811023622047244,
+        "pct5": 4.4534412955465585,
+        "eps_chg_1m": 6.91859701846036,
+        "eps_chg_since": 29.43421189960189,
         "eps_since": "2026-08-05",
         "terminal_last": "2026-08-05",
-        "obs_date": "2026-11-06",
+        "obs_date": "2026-11-13",
         "red_dates": [
-          "2026-11-06"
+          "2026-11-13"
         ],
-        "friday_pct10": 4.12573673870334,
+        "friday_pct10": 11.811023622047244,
         "trigger_dates": [
-          "2026-11-06"
+          "2026-11-06",
+          "2026-11-13"
         ],
         "last_trigger_info": {
-          "date": "2026-11-06",
+          "date": "2026-11-13",
           "within_hold": true,
           "phrase": "仍在維持內，到下一根週K",
           "mode": "weekly"
         },
         "hold": {
           "mode": "weekly",
-          "last_trigger": "2026-11-06",
-          "text": "依最新已完成週K（2026-11-06）判定，維持到下一根週K",
+          "last_trigger": "2026-11-13",
+          "text": "依最新已完成週K（2026-11-13）判定，維持到下一根週K",
           "current": true,
           "held": true,
           "label": "使用者指定（2026-11-11）"
@@ -2848,7 +2848,7 @@
         "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
         "https://fred.stlouisfed.org/series/VIXCLS"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "門檻為 COBB 標準（VIX >30 恐慌、>40 極度恐慌；VXN >35 恐慌、>45 極度恐慌）。當天要在對的位置，盤中最高才算觸發。v2.2 起不再維持到 NDX 創新高。COBB 提醒：恐慌指數低不代表高點；高檔只是抄底分批布局的訊號之一。",
       "asof": "2026-11-13",
       "extra": {
@@ -2883,7 +2883,7 @@
         "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXN_History.csv",
         "https://fred.stlouisfed.org/series/VXNCLS"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "門檻為 COBB 標準（VIX >30 恐慌、>40 極度恐慌；VXN >35 恐慌、>45 極度恐慌）。當天要在對的位置，盤中最高才算觸發。v2.2 起不再維持到 NDX 創新高。COBB 提醒：恐慌指數低不代表高點；高檔只是抄底分批布局的訊號之一。",
       "asof": "2026-11-13",
       "extra": {
@@ -2928,7 +2928,7 @@
         "https://www.twse.com.tw/zh/trading/historical/mi-index.html",
         "https://www.tpex.org.tw/zh-tw/mainboard/trading/margin-trading/transactions.html"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "自算對照值，標準以玩股網「扣除ETF資券進出行情」為準（玩股網頁面有 Cloudflare 驗證，程式無法讀取）。口徑＝窄口徑：分子只計上市本國普通股（排除 ETF／ETN／受益憑證／特別股、-KY／DR、當日停資 X）；公式 Σ(融資餘額張數×1000×收盤價) ÷ 證交所公布上市融資金額 ×100%；分母為官方總額（含 ETF 借款，官方不公布個別證券融資金額），所以比『含ETF』版本低。窄口徑與論壇流傳的『扣除ETF 融資維持率』（10/30–11/06）相差約 0.5–3.3 個百分點，是目前最接近玩股網數字的版本（通常略高於玩股網 0.5–3.3 個百分點），但算法屬第三方逆向推估、未經官方證實。",
       "asof": "2026-11-13",
       "extra": {
@@ -3045,7 +3045,7 @@
         "https://www.twse.com.tw/zh/trading/historical/mi-index.html",
         "https://www.tpex.org.tw/zh-tw/mainboard/trading/margin-trading/transactions.html"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "上市＋上櫃分子、分母各自加總後相除。",
       "asof": "2026-11-13"
     },
@@ -3065,7 +3065,7 @@
         "https://www.istock.tw/post/twmarginrequirement",
         "https://www.macromicro.me/charts/53117/taiwan-taiex-maintenance-margin"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "市場常見口徑（愛玩股、財經M平方現行版）；本表計算值已與兩者 2026-11-06／11-09 公布值逐位核對一致。",
       "asof": "2026-11-13"
     },
@@ -3080,7 +3080,7 @@
       "sources": [
         "https://www.twse.com.tw/dashboard/zh/credit/margin.html"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "v1 判定依據；v2 依 COBB 指正改為不含 ETF 的融資維持率，此列僅作背景。",
       "asof": "2026-11-13"
     },
@@ -3098,7 +3098,7 @@
         "https://www.tpex.org.tw/zh-tw/mainboard/trading/margin-trading/transactions.html",
         "https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN_HISTORY?response=json"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "上櫃日資料涵蓋 120/120 日；比重僅計上市（櫃買總市值未納入）。 維持規則為使用者指定（2026-11-11），不是 COBB 的規則。",
       "asof": "2026-11-13",
       "extra": {
@@ -3146,7 +3146,7 @@
         "https://www.twse.com.tw/zh/trading/margin/mi-margn.html",
         "https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN_TREND?response=json&days=60"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "分項燈號僅供參考，不參與彙總。",
       "asof": "2026-11-13"
     },
@@ -3161,7 +3161,7 @@
       "sources": [
         "https://www.tpex.org.tw/zh-tw/mainboard/trading/margin-trading/transactions.html"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "分項燈號僅供參考，不參與彙總。",
       "asof": "2026-11-13"
     },
@@ -3176,7 +3176,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/QLD/history"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "量為 Yahoo 拆股調整後股數（拆股前的量已按比例換算）。⚠️200 週視窗內有拆／合股：{'2025-11-20': 2.0}，調整後股數可比，但拆股前後流動性結構可能不同。共 933 根已完成週。",
       "asof": "週線截至 2026-11-13（已完成週）",
       "extra": {
@@ -3232,7 +3232,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/TQQQ/history"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "量為 Yahoo 拆股調整後股數（拆股前的量已按比例換算）。⚠️200 週視窗內有拆／合股：{'2025-11-20': 2.0}，調整後股數可比，但拆股前後流動性結構可能不同。共 875 根已完成週。",
       "asof": "週線截至 2026-11-13（已完成週）",
       "extra": {
@@ -3294,7 +3294,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/SOXL/history"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "量為 Yahoo 拆股調整後股數（拆股前的量已按比例換算）。200 週視窗內無拆／合股。共 871 根已完成週。",
       "asof": "週線截至 2026-11-13（已完成週）",
       "extra": {
@@ -3367,7 +3367,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ETWII/history"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "COBB：看 4小時／日K／週K 哪個高低點軌跡最清楚（例如 2022 明顯看週K）；本站預設用日K，週K 僅供參考。4 小時K 暫無穩定免費資料，未納入。v3 起是轉折燈（使用者同意（2026-11-11），自訂）：🔴＝日K 第一次變成『底底高＋頭頭高確認』之後的 10 個交易日；🟡＝第一次變成『底底高（頭頭高待確認）』之後的 10 個交易日；否則⚪，型態文字仍照現況顯示。不另疊 7 日維持。只用收盤；波段點要反向達門檻才確認，確認前不使用（無前視）。",
       "asof": "日K 2026-11-13；週K截至 2026-11-13（已完成週，參考）",
       "extra": {
@@ -4589,7 +4589,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ENDX/history"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "COBB：看 4小時／日K／週K 哪個高低點軌跡最清楚（例如 2022 明顯看週K）；本站預設用日K，週K 僅供參考。4 小時K 暫無穩定免費資料，未納入。v3 起是轉折燈（使用者同意（2026-11-11），自訂）：🔴＝日K 第一次變成『底底高＋頭頭高確認』之後的 10 個交易日；🟡＝第一次變成『底底高（頭頭高待確認）』之後的 10 個交易日；否則⚪，型態文字仍照現況顯示。不另疊 7 日維持。只用收盤；波段點要反向達門檻才確認，確認前不使用（無前視）。",
       "asof": "日K 2026-11-13；週K截至 2026-11-13（已完成週，參考）",
       "extra": {
@@ -5814,7 +5814,7 @@
       "sources": [
         "https://finance.yahoo.com/quote/%5ESOX/history"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "COBB：看 4小時／日K／週K 哪個高低點軌跡最清楚（例如 2022 明顯看週K）；本站預設用日K，週K 僅供參考。4 小時K 暫無穩定免費資料，未納入。v3 起是轉折燈（使用者同意（2026-11-11），自訂）：🔴＝日K 第一次變成『底底高＋頭頭高確認』之後的 10 個交易日；🟡＝第一次變成『底底高（頭頭高待確認）』之後的 10 個交易日；否則⚪，型態文字仍照現況顯示。不另疊 7 日維持。只用收盤；波段點要反向達門檻才確認，確認前不使用（無前視）。",
       "asof": "日K 2026-11-13；週K截至 2026-11-13（已完成週，參考）",
       "extra": {
@@ -7051,7 +7051,7 @@
         "https://index.ndc.gov.tw/n/zh_tw/data/eco",
         "https://ws.ndc.gov.tw/Download.ashx?u=LzAwMS9hZG1pbmlzdHJhdG9yLzEwL3JlbGZpbGUvNTc4MS82MzkyL2VhMjM1YmQ5LWQwNTItNGE2OS1hYmZjLWQ1Yzc4NWQzZDBlMi56aXA%3d&n=5pmv5rCj5oyH5qiZ5Y%2bK54eI6JmfLnppcA%3d%3d&icon=.zip"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "資料檔更新時間 2026-10-29 11:06；首次建立，尚無前一版本可比對修正（每月發布會回溯修正歷史值）",
       "asof": "2026/09（資料月份 2026/09，國發會 2026-10-29 16:00 發布（備援設定檔，來源 https://www.ndc.gov.tw/nc_332_40618）；下次 2026-11-27 16:00）",
       "extra": {
@@ -7107,7 +7107,7 @@
         "https://www.ndc.gov.tw/nc_332_40618",
         "https://ws.ndc.gov.tw/Download.ashx?u=LzAwMS9hZG1pbmlzdHJhdG9yLzEwL3JlbGZpbGUvNTc4MS82MzkyL2VhMjM1YmQ5LWQwNTItNGE2OS1hYmZjLWQ1Yzc4NWQzZDBlMi56aXA%3d&n=5pmv5rCj5oyH5qiZ5Y%2bK54eI6JmfLnppcA%3d%3d&icon=.zip"
       ],
-      "queried_at": "2026-11-14 14:20 (台北時間 UTC+8)",
+      "queried_at": "2026-11-16 07:02 (台北時間 UTC+8)",
       "note": "歷史修正：國發會每月回溯修正；本表以最新一版資料檔為準",
       "asof": "2026/09（資料月份 2026/09，國發會 2026-10-29 16:00 發布（備援設定檔，來源 https://www.ndc.gov.tw/nc_332_40618）；下次 2026-11-27 16:00）",
       "extra": {
