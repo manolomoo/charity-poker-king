@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""更新 SOX／NDX／SPX 走勢資料（首頁與 /trend/ 用）。與 11 項燈號規則無關。
+"""更新 SOX／NDX／SPX 與台指（^TWII）走勢資料（首頁與 /trend/ 用）。與 11 項燈號規則無關。
 
 用法（repo 根目錄）：
     TZ=Asia/Taipei python scripts/update_trend.py            # 從 Yahoo 抓，再計算
@@ -14,6 +14,10 @@
 抓不到或算不出來：status.json 標 ok=false／stale=true，data.json／data.js 保留上次成功的版本，
 結束碼 0（讓燈號更新與 Pages 部署照常進行）。只有程式本身出錯才會非零結束。
 行情原始檔放 data/cache/trend/（.gitignore，不進版控）。
+
+台指（^TWII）另外處理：台股與美股的交易日、收盤時間不同，不跟美股三檔比「最新交易日要同一天」，
+price_asof 與過期檢查仍只看美股。^TWII 抓不到時沿用舊快取，沒有快取就這一輪不出台指圖卡，
+不影響美股三檔的更新。
 """
 from __future__ import annotations
 
@@ -24,6 +28,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 
@@ -42,6 +47,11 @@ RULES = ROOT / "rules.json"
 # (檔名後綴, Yahoo range, interval)
 DATASETS = [("daily_1y", "1y", "1d"), ("daily_2y", "2y", "1d"), ("weekly_2y", "2y", "1wk"), ("weekly_5y", "5y", "1wk")]
 US_CLOSE_HM = (16, 15)  # 與 scripts/run.py 的 completed_daily 相同：紐約 16:15 前當日K 視為未完成
+TW_CLOSE_HM = (13, 30)  # 台股 13:30 收盤；之後（含 15:00 排程）當日K 視為已完成
+TW_TZ = ZoneInfo("Asia/Taipei")
+# 市場別：(判斷「今天」與收盤的時區, 收盤時分, 週K 星期一時間戳用的時區)
+MARKETS = {"US": (T.NY, US_CLOSE_HM, "America/New_York"), "TW": (TW_TZ, TW_CLOSE_HM, "Asia/Taipei")}
+TW_VOLUME_PROXY = "0050.TW"  # ^TWII 籌碼視窗沒有量時的代理（做法比照 SOX 用 SOXX）
 MIN_ROWS = {"daily_1y": 200, "daily_2y": 400, "weekly_2y": 60, "weekly_5y": 150}
 COLS = ["date", "timestamp", "open", "high", "low", "close", "adjclose", "volume"]
 
@@ -117,31 +127,21 @@ def market_time_taipei(ticker: str):
         return None
 
 
-def drop_unfinished_session(frames: dict) -> str | None:
-    """美股還沒收盤時，Yahoo 會給一根進行中的當日K。拿掉它，並把含它的那根週K 改用已收盤的日K 重組。
-
-    回傳被拿掉的日期（沒有就 None）。這是資料整理，不是分析規則。
-    """
-    now_ny = datetime.now(T.NY)
-    today = now_ny.strftime("%Y-%m-%d")
-    session_open = (now_ny.hour, now_ny.minute) < US_CLOSE_HM
-    last = frames["daily_2y"]["date"].iloc[-1]
-    if not (last > today or (last == today and session_open)):
-        return None
-    for key in ("daily_1y", "daily_2y"):
-        df = frames[key]
-        frames[key] = df[df["date"] < last].reset_index(drop=True)
-    d = pd.Timestamp(last)
+def rebuild_week(frames: dict, ref_date: str, week_tz: str):
+    """把 ref_date 那一週的週K 改用已收盤的日K 重組（frames 沒有週K 就不動）。"""
+    d = pd.Timestamp(ref_date)
     monday = (d - pd.Timedelta(days=d.weekday())).strftime("%Y-%m-%d")
     done = frames["daily_2y"]
     done = done[done["date"] >= monday]
     for key in ("weekly_2y", "weekly_5y"):
+        if key not in frames:
+            continue
         w = frames[key]
         w = w[w["date"] < monday].reset_index(drop=True)
         if len(done):
             row = {
                 "date": monday,
-                "timestamp": int(pd.Timestamp(monday, tz="America/New_York").timestamp()),
+                "timestamp": int(pd.Timestamp(monday, tz=week_tz).timestamp()),
                 "open": done["open"].iloc[0],
                 "high": done["high"].max(),
                 "low": done["low"].min(),
@@ -151,6 +151,29 @@ def drop_unfinished_session(frames: dict) -> str | None:
             }
             w = pd.concat([w, pd.DataFrame([row])], ignore_index=True)
         frames[key] = w
+
+
+def drop_unfinished_session(frames: dict, market: str = "US", now: datetime | None = None) -> str | None:
+    """還沒收盤時，Yahoo 會給一根進行中的當日K。拿掉它，並把含它的那根週K 改用已收盤的日K 重組。
+
+    market="US"：紐約 16:15 前算未完成（現狀）。
+    market="TW"：台北 13:30 前算未完成；13:30 之後（例如 15:00 排程）當日K 已完成，要留著。
+    now 只給測試用（有時區的 datetime）。frames 可以只有 daily_2y（代理量用）。
+    回傳被拿掉的日期（沒有就 None）。這是資料整理，不是分析規則。
+    """
+    tz, close_hm, week_tz = MARKETS[market]
+    now_local = (now or datetime.now(tz)).astimezone(tz)
+    today = now_local.strftime("%Y-%m-%d")
+    session_open = (now_local.hour, now_local.minute) < close_hm
+    last = frames["daily_2y"]["date"].iloc[-1]
+    if not (last > today or (last == today and session_open)):
+        return None
+    for key in ("daily_1y", "daily_2y"):
+        if key not in frames:
+            continue
+        df = frames[key]
+        frames[key] = df[df["date"] < last].reset_index(drop=True)
+    rebuild_week(frames, last, week_tz)
     return last
 
 
@@ -177,8 +200,31 @@ def validate(name: str, frames: dict):
             raise SourceError(f"{name} {key} 最後週K 收盤 {wc:.2f} 與日線收盤 {dc:.2f} 對不上")
 
 
+def fetch_tw(market_times: dict, dropped: dict) -> list:
+    """抓台指（^TWII）→ 檢查 → 通過才寫進快取。失敗只記錄：有舊快取就沿用，沒有就這一輪不出台指。"""
+    notes = []
+    for name in T.TW_IDS:
+        tk = T.SOURCE_TICKERS[name]
+        try:
+            frames = {key: fetch_one(tk, rng, itv) for key, rng, itv in DATASETS}
+            dropped[name] = drop_unfinished_session(frames, market="TW")
+            # Yahoo 的 ^TWII 週線在收盤後常常還沒有當週那一根（或收盤價落後），
+            # 一律用已完成的日K 重組最新交易日所在的那一週。
+            rebuild_week(frames, frames["daily_2y"]["date"].iloc[-1], MARKETS["TW"][2])
+            validate(name, frames)
+        except SourceError as e:
+            has_cache = all((CACHE / f"{name}_{key}.csv").exists() for key, _, _ in DATASETS)
+            notes.append(f"{name} 抓取失敗（{short_reason(e)}），" + ("沿用舊的快取" if has_cache else "沒有快取，這一輪不出台指圖卡"))
+            continue
+        for key, df in frames.items():
+            df[COLS].to_csv(CACHE / f"{name}_{key}.csv", index=False)
+        market_times[name] = market_time_taipei(tk)
+        notes.append(f"{name} 日線 {len(frames['daily_2y'])} 筆，截至 {frames['daily_2y']['date'].iloc[-1]}")
+    return notes
+
+
 def fetch_all() -> dict:
-    """抓三個指數 → 檢查 → 全部通過才寫進快取。回傳 fetch_meta。"""
+    """抓美股三個指數 → 檢查 → 全部通過才寫進快取；再抓台指（失敗不擋美股）。回傳 fetch_meta。"""
     fetched_at = iso(now_taipei())
     staged, dropped, market_times = {}, {}, {}
     for name in T.IDS:
@@ -192,14 +238,18 @@ def fetch_all() -> dict:
     for name, frames in staged.items():
         for key, df in frames.items():
             df[COLS].to_csv(CACHE / f"{name}_{key}.csv", index=False)
-    fetch_meta = {"fetched_at_taipei": fetched_at, "market_times": market_times, "dropped_unfinished_session": dropped}
+    tw_notes = fetch_tw(market_times, dropped)
+    fetch_meta = {"fetched_at_taipei": fetched_at, "market_times": market_times, "dropped_unfinished_session": dropped,
+                  "tw_notes": tw_notes}
     write_atomic(CACHE / "fetch_meta.json", json.dumps(fetch_meta, ensure_ascii=False, indent=2))
     return fetch_meta
 
 
 
 def fetch_optional_proxies(price_asof: str | None = None):
-    """選用代理資料：SOXX 成交量給 SOX 用；HOM Forward P/E 給估值位置頁。失敗只記錄，不讓整次更新失敗。"""
+    """選用代理資料：SOXX 成交量給 SOX 用；0050.TW 成交量給台指備用；HOM Forward P/E 給估值位置頁。
+
+    失敗只記錄，不讓整次更新失敗。"""
     CACHE.mkdir(parents=True, exist_ok=True)
     notes = []
     try:
@@ -216,6 +266,19 @@ def fetch_optional_proxies(price_asof: str | None = None):
             notes.append(f"SOXX 筆數不足（{len(df)}），略過")
     except Exception as e:
         notes.append(f"SOXX 抓取失敗（{type(e).__name__}: {e}），SOX 未驗量")
+    try:
+        # 台指：只有 ^TWII 籌碼視窗總量為 0 時才會用到（判斷在 trend_analyze.build）
+        df = fetch_one(TW_VOLUME_PROXY, "2y", "1d")
+        frames = {"daily_2y": df}
+        drop_unfinished_session(frames, market="TW")
+        df = frames["daily_2y"]
+        if len(df) >= 200:
+            df[COLS].to_csv(CACHE / T.TW_PROXY_CSV, index=False)
+            notes.append(f"0050.TW 日線 {len(df)} 筆，截至 {df['date'].iloc[-1]}")
+        else:
+            notes.append(f"0050.TW 筆數不足（{len(df)}），略過")
+    except Exception as e:
+        notes.append(f"0050.TW 抓取失敗（{type(e).__name__}: {e}），台指若無量則籌碼分布從缺")
     try:
         import valuation_pe as VP
         notes.extend(VP.fetch_hom(CACHE))
@@ -264,7 +327,7 @@ def short_reason(e: Exception) -> str:
 
 # ---------------- 主流程 ----------------
 def main() -> int:
-    ap = argparse.ArgumentParser(description="更新 SOX／NDX／SPX 走勢資料")
+    ap = argparse.ArgumentParser(description="更新 SOX／NDX／SPX 與台指走勢資料")
     ap.add_argument("--offline", action="store_true", help="不連網，用 data/cache/trend/ 的上次行情重算")
     args = ap.parse_args()
 
@@ -275,6 +338,8 @@ def main() -> int:
     try:
         fetch_meta = load_cached_meta() if args.offline else fetch_all()
         if not args.offline:
+            for note in fetch_meta.get("tw_notes") or []:
+                print(f"[trend] 台指：{note}")
             for note in fetch_optional_proxies():
                 print(f"[trend] 選用資料：{note}")
         try:
@@ -308,7 +373,9 @@ def main() -> int:
                  last_good_asof=price_asof, last_good_fetched_at=fetched)
 
     print(f"[trend] 成功{'（離線重算）' if args.offline else ''}：price_asof={price_asof}　fetched_at={fetched}")
-    for name in T.IDS:
+    for name, why in (analysis["meta"].get("tw_skipped") or {}).items():
+        print(f"[trend] 這一輪沒有 {name}：{why}")
+    for name in T.IDS + [n for n in T.TW_IDS if n in analysis["indices"]]:
         ix = analysis["indices"][name]
         hp = ix.get("home_pattern")
         tl = ix["trendlines"].get("rising_support_major") or {}
@@ -316,13 +383,16 @@ def main() -> int:
         m20 = ix["moving_averages"]["sma20"]
         tri = ix.get("descending_right_triangle")
         label = f"{hp['rule']} {hp['name']} {hp['badge_label']}" if hp else "（無）"
-        print(f"  {name} close={ix['last']['close']}　home_pattern={label}")
+        print(f"  {name} 截至={ix['last']['date']} close={ix['last']['close']}　home_pattern={label}")
         if tri:
             print(f"      下降直角三角 status={tri['status']} 頸線={tri['support']} "
                   f"vs={tri['close_vs_support_pct']}% confirmed={tri['confirmed']} target={tri.get('target')}")
         print(f"      升勢線 close_vs_line_pct={tl.get('close_vs_line_pct')} close_is={tl.get('close_is')} "
               f"broken_by_3pct_filter={tl.get('broken_by_3pct_filter')}；sma200 pct={m200['pct']} above={m200['above']}；"
               f"sma20 below_streak={m20.get('below_streak')}")
+        if name in T.TW_IDS:  # 台指不算牛熊階段（沒有台指的恐慌門檻）
+            print(f"      籌碼量來源={(ix.get('volume_by_price') or {}).get('source_label')}")
+            continue
         st = ix.get("market_stage") or {}
         print(f"      階段={st.get('headline')}  code={st.get('stage_code')}")
     import valuation_pe as VP

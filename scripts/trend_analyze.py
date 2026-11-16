@@ -7,6 +7,8 @@
   2. 抓資料時間、價格截至日、時差說明都由資料算出，不再寫死。
   3. 燈號摘要改讀本 repo 的 data/latest.json 與 rules.json。
 另外補上 home_pattern（首頁型態挑選）與下降直角三角形（v2／COBB 主高點讀法）。
+2026-11-16 另附台指（^TWII，TW_IDS）：同一套畫法與型態判定，但不跟美股三檔比交易日，
+也不進三指數對照、牛熊階段與估值。
 
 與 11 項燈號規則無關，不會改動燈號或門檻。由 scripts/update_trend.py 呼叫。
 """
@@ -24,9 +26,14 @@ import market_stage as MS  # noqa: E402
 import valuation_pe as VP  # noqa: E402
 
 IDS = ["SOX", "NDX", "SPX"]
+# 台股另外一組：交易日、收盤時間都跟美股不同，不參加「三個指數最新交易日要同一天」的檢查，
+# 也不進三指數對照、牛熊階段、估值與燈號摘要。只畫圖、判型態、算籌碼分布。
+TW_IDS = ["TWII"]
+TW_PROXY_CSV = "0050_daily_2y.csv"  # ^TWII 籌碼視窗沒有量時的代理（0050.TW 日線）
 SOURCE = "Yahoo Finance 圖表 API（query1.finance.yahoo.com/v8/finance/chart）"
-SOURCE_TICKERS = {"SOX": "^SOX", "NDX": "^NDX", "SPX": "^GSPC"}
-NAMES = {"SOX": "費城半導體指數（SOX, ^SOX）", "NDX": "那斯達克 100（NDX, ^NDX）", "SPX": "標普 500（SPX, ^GSPC）"}
+SOURCE_TICKERS = {"SOX": "^SOX", "NDX": "^NDX", "SPX": "^GSPC", "TWII": "^TWII"}
+NAMES = {"SOX": "費城半導體指數（SOX, ^SOX）", "NDX": "那斯達克 100（NDX, ^NDX）", "SPX": "標普 500（SPX, ^GSPC）",
+         "TWII": "台股加權指數（台指, ^TWII）"}
 TZ = timezone(timedelta(hours=8))
 NY = ZoneInfo("America/New_York")
 WEEKDAY_ZH = "一二三四五六日"
@@ -1530,6 +1537,42 @@ def home_pattern(ix: dict):
     return None
 
 
+def tw_volume(daily: pd.DataFrame, proxy_df: pd.DataFrame | None):
+    """台指籌碼分布要用哪個量。回傳 (volume, source_label, proxy)。
+
+    只看籌碼視窗（最近 VBP_BARS 根已完成日K）的 ^TWII 總量：> 0 就用指數自己的量
+    （單日為 0 不換來源）；總量為 0 才改用 0050.TW 日線量，按日期對齊（比照 SOX 用 SOXX）。
+    """
+    own = daily["volume"]
+    if float(own.tail(MS.VBP_BARS).fillna(0).sum()) > 0:
+        return own, "指數日線成交量（Yahoo ^TWII）", None
+    if proxy_df is None:
+        return None, "Yahoo ^TWII 這段期間成交量為 0，且沒有 0050.TW 快取，籌碼分布從缺", None
+    pv = proxy_df.set_index(proxy_df["date"].dt.strftime("%Y-%m-%d"))["volume"]
+    vol = daily["date"].dt.strftime("%Y-%m-%d").map(pv)
+    vol.index = daily.index
+    return vol, "0050.TW（元大台灣50）日線成交量（近似；Yahoo ^TWII 這段期間成交量為 0）", "0050"
+
+
+def analyze_tw(name: str, data_dir: Path) -> dict:
+    """台指：同一套 analyze_one／home_pattern／籌碼分布。不算 market_stage（PANIC_TH 沒有台指門檻）。"""
+    ix = analyze_one(name, data_dir)
+    ix["home_pattern"] = home_pattern(ix)
+    daily = load_csv(data_dir / f"{name}_daily_2y.csv")
+    proxy_path = data_dir / TW_PROXY_CSV
+    vol, vol_src, proxy = tw_volume(daily, load_csv(proxy_path) if proxy_path.exists() else None)
+    if vol is None:
+        vbp = {"available": False, "reason": vol_src, "source_label": vol_src}
+    else:
+        vbp = MS.volume_by_price(daily, volume=vol, source_label=vol_src)
+        if not vbp["available"]:
+            vbp["reason"] = "這段期間成交量為 0 或沒有可用的量。"
+    if proxy:
+        vbp["proxy"] = proxy  # 首頁據此標「0050估」
+    ix["volume_by_price"] = vbp
+    return ix
+
+
 def build(data_dir: Path, latest_path: Path, rules_path: Path, fetched_at_taipei: str, market_times: dict | None = None):
     """由 data_dir 內的行情 CSV 算出 (analysis, charts)。任何資料問題都以例外丟出，由呼叫端決定怎麼處理。"""
     data_dir = Path(data_dir)
@@ -1570,7 +1613,7 @@ def build(data_dir: Path, latest_path: Path, rules_path: Path, fetched_at_taipei
             daily, volume=vbp_vol,
             source_label=vol_src or "每日收盤價×成交量",
         )
-    stages = MS.summarize_stages({k: ix["market_stage"] for k, ix in indices.items()})
+    stages = MS.summarize_stages({k: indices[k]["market_stage"] for k in IDS})
 
     try:
         valuation = VP.build_valuation(data_dir, latest_path)
@@ -1622,6 +1665,25 @@ def build(data_dir: Path, latest_path: Path, rules_path: Path, fetched_at_taipei
             "gaps": "當日低點高於前一日高點＝向上缺口；當日高點低於前一日低點＝向下缺口。後續曾交易進缺口區間視為已回補。",
         },
     }
+    # 台指最後才加進來：前面的三指數同日檢查、階段總覽、三指數對照、估值、燈號摘要都只看美股。
+    # 快取缺檔或算不出來就這一輪省略，不擋美股三檔。
+    tw_asof, tw_skipped = {}, {}
+    for name in TW_IDS:
+        if not all((data_dir / f"{name}_{key}.csv").exists() for key in meta["files"]):
+            tw_skipped[name] = "沒有行情快取"
+            continue
+        try:
+            indices[name] = analyze_tw(name, data_dir)
+            tw_asof[name] = indices[name]["last"]["date"]
+        except Exception as e:
+            indices.pop(name, None)
+            tw_skipped[name] = f"分析失敗（{type(e).__name__}: {e}）"
+    meta["tw_asof"] = tw_asof  # 台股各自的截至日；price_asof 仍是美股
+    if tw_skipped:
+        meta["tw_skipped"] = tw_skipped
+    for key in meta["files"]:
+        meta["files"][key] += [f"{n}_{key}.csv" for n in tw_asof]
+
     payload = {"meta": meta, "indices": indices, "confirmation": confirmation, "cobb": cobb, "stages": stages, "valuation": valuation}
 
     # 圖表序列另外放（跟原本 analysis.json／chart_data.json 的切法相同）

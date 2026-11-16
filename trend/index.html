@@ -5,7 +5,7 @@
 <meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>慈善撲克王｜指數走勢觀察與燈號摘要</title>
-<meta name="description" content="SOX、NDX、SPX 走勢觀察，對照技術分析觀念，並摘要 COBB我大哥燈號。僅供參考，非投資建議。">
+<meta name="description" content="SOX、NDX、SPX 走勢觀察（另附台指），對照技術分析觀念，並摘要 COBB我大哥燈號。僅供參考，非投資建議。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
@@ -108,7 +108,7 @@ a{color:var(--edge)}
 <div class="wrap">
 <header>
   <h1>慈善撲克王</h1>
-  <p class="sub">SOX、NDX、SPX 走勢觀察，加上 COBB 我大哥燈號摘要</p>
+  <p class="sub">SOX、NDX、SPX 走勢觀察（另附台指），加上 COBB 我大哥燈號摘要</p>
   <p class="lede">這頁把最近一年的指數走勢，對照<a href="./ta-book/">股市趨勢技術分析圖解</a>的觀念來標註，並把<a href="../signals/">COBB我大哥</a>的 11 盞燈號做成簡單圖示。數字都有來源、都寫截至日。這裡是觀察，不是進出場指令，也不保證會怎樣走。</p>
   <p class="meta" id="src-line"></p>
   <p class="meta" id="trend-stale" role="status" style="color:var(--amber);margin-top:4px" hidden></p>
@@ -121,6 +121,7 @@ a{color:var(--edge)}
   <a href="#sox">SOX</a>
   <a href="#ndx">NDX</a>
   <a href="#spx">SPX</a>
+  <a href="#twii">台指</a>
   <a href="#tabook">技術分析圖解</a>
   <a href="#disclaimer">免責</a>
 </nav>
@@ -163,6 +164,7 @@ a{color:var(--edge)}
 <section id="sox"></section>
 <section id="ndx"></section>
 <section id="spx"></section>
+<section id="twii"></section>
 
 <section id="tabook">
   <h2>技術分析圖解</h2>
@@ -207,9 +209,10 @@ a{color:var(--edge)}
   const mktTimes = IDS.filter(id=>(meta.regular_market_time_taipei||{})[id])
     .map(id=>id+" "+meta.regular_market_time_taipei[id]).join("、");
   document.getElementById("src-line").innerHTML =
-    "行情來源：Yahoo Finance 圖表 API（^SOX、^NDX、^GSPC）。"+
+    "行情來源：Yahoo Finance 圖表 API（^SOX、^NDX、^GSPC；另附台指 ^TWII）。"+
     "抓資料時間（台北時間 UTC+8）："+esc(String(meta.fetched_at_taipei||"").slice(0,16).replace("T"," "))+"。"+
     "價格截至：美股 <strong>"+esc(meta.price_asof)+(meta.price_asof_weekday?"（"+esc(meta.price_asof_weekday)+"）":"")+"收盤</strong>。"+
+    ((meta.tw_asof||{}).TWII ? "台指截至台股 "+esc(meta.tw_asof.TWII)+" 收盤（交易日與美股分開算）。" : "")+
     (mktTimes ? "Yahoo 時間戳轉台北時間："+esc(mktTimes)+"。" : "")+"<br>"+
     "燈號來源：<a href=\""+esc(cobb.data_url)+"\">latest.json</a>，規則 "+esc(cobb.rules_version)+"，查詢時間 "+esc(cobb.queried_at)+"。<br>"+
     esc(cobb.note_timing);
@@ -729,6 +732,9 @@ a{color:var(--edge)}
   renderIndex("sox","SOX");
   renderIndex("ndx","NDX");
   renderIndex("spx","SPX");
+  // 另附台指：同一套 renderIndex。不進三指數對照，也不進牛熊階段卡片（沒有台指的恐慌門檻）。
+  if(A.indices.TWII && C.indices.TWII) renderIndex("twii","TWII");
+  else document.getElementById("twii").hidden = true;
   /* ---------- 走勢資料過期提醒（不擋圖；規則同首頁） ----------
      status.json 說更新失敗，或資料本身太舊（抓取時間超過 3 天、行情截至日超過 5 天）就提醒。 */
   (function(){

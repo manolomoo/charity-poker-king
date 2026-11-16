@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>慈善撲克王</title>
-<meta name="description" content="慈善撲克王：抄底燈號與 SOX、NDX、SPX 走勢觀察。僅供參考，非投資建議。">
+<meta name="description" content="慈善撲克王：抄底燈號與 SOX、NDX、SPX、台指走勢觀察。僅供參考，非投資建議。">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -321,12 +321,15 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
 })();
 
 
-/* ---------- SOX / NDX / SPX：近六個月日線小圖＋一行型態 ---------- */
+/* ---------- SOX / NDX / SPX / 台指：近六個月日線小圖＋一行型態 ---------- */
 (function(){
   "use strict";
   var D = window.SITE_DATA || {};
   var A = D.analysis, C = D.charts;
-  var IDS = ["SOX","NDX","SPX"];
+  // 台指（TWII）排在美股三張後面：同一套畫法與型態判定，但交易日各自算，不進 P/E 圖區、燈號與階段頁。
+  var IDS = ["SOX","NDX","SPX","TWII"];
+  var SYM = { TWII:"台指" };                       // 圖卡左上角顯示的名字；沒列的就用代號
+  var FULL = { TWII:"台股加權指數（^TWII）" };     // aria／title 用
   var host = document.getElementById("idx");
 
   function esc(s){
@@ -422,6 +425,7 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
   // （下降直角三角形優先，否則 A → B → C）。舊資料沒有這個欄位時才退回 pickPatternFallback。
   function pickPattern(ix){
     var hp = ix && ix.home_pattern;
+    if(ix && ("home_pattern" in ix) && !hp) return null;   // 算過了、資料不符合任何型態：不硬套
     if(hp && typeof hp.name === "string" && hp.name && BADGE[hp.badge] && typeof hp.slug === "string" && hp.slug){
       return {
         name: hp.name, badge: hp.badge, badgeLabel: hp.badge_label || BADGE[hp.badge][1],
@@ -459,7 +463,7 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
   }
   function patternRow(ix){
     var p = pickPattern(ix);
-    if(!p) return "";
+    if(!p) return ix ? '<p class="anno">目前不構成典型形態</p>' : "";
     var b = [BADGE[p.badge][0], p.badgeLabel || BADGE[p.badge][1]];
     var meta = "";
     if(typeof p.neckline === "number"){
@@ -647,7 +651,7 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
     var cid="hc"+(++uid);
     var vbpSvg = drawVbpSvg(id, y, pt, ih, vbpX, vbpBar, fs, narrow);
     container.innerHTML =
-      '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="'+esc(id)+' 近六個月日線圖與籌碼分布（估算）">'+
+      '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="'+esc(FULL[id]||id)+' 近六個月日線圖與籌碼分布（估算）">'+
       '<defs><clipPath id="'+cid+'"><rect x="'+pl+'" y="'+pt+'" width="'+iw+'" height="'+ih+'"/></clipPath></defs>'+
       '<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="#172135"/>'+
       grid+candles+'<g clip-path="url(#'+cid+')">'+mas+tls+'</g>'+marks+vbpSvg+
@@ -656,8 +660,9 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
 
   function drawVbpSvg(id, y, pt, ih, vx, vw, fs, narrow){
     var vbp = A.indices[id] && A.indices[id].volume_by_price;
-    var soxNote = (id==="SOX");
-    var cap = narrow ? (soxNote ? "SOXX估" : "估算") : (soxNote ? "籌碼（估算·SOXX）" : "籌碼（估算）");
+    // 用代理量時標出來：SOX 一律是 SOXX；台指只有 ^TWII 視窗沒有量、改用 0050 時才標（看 vbp.proxy）
+    var proxy = (id==="SOX") ? "SOXX" : ((vbp && vbp.proxy) || "");
+    var cap = narrow ? (proxy ? proxy+"估" : "估算") : (proxy ? "籌碼（估算·"+proxy+"）" : "籌碼（估算）");
     var label = '<text x="'+(vx+vw)+'" y="'+(pt-7)+'" text-anchor="end" fill="#a3aec0" font-size="'+(fs-2)+'">'+esc(cap)+'</text>';
     if(!vbp || !vbp.available || !vbp.bins || !vbp.bins.length){
       var miss = (vbp && vbp.reason) ? "無量" : "無量";
@@ -703,7 +708,8 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
     var ix = A && A.indices && A.indices[id];
     var hasChart = !!(ix && C && C.indices && C.indices[id] && C.indices[id].chart_daily_1y &&
                       (C.indices[id].chart_daily_1y.dates||[]).length);
-    var label = patternLabel(ix) || "資料載不進來";
+    // 台指抓不到時 update_trend.py 會整個省略；這時只留一行說明，不畫空圖
+    var label = patternLabel(ix) || (ix ? "" : (id==="TWII" ? "這次沒有台指資料" : "資料載不進來"));
     var lastDate = hasChart ? C.indices[id].chart_daily_1y.dates.slice(-1)[0] : null;
     var asof = (ix && ix.last && ix.last.date) || lastDate || (A && A.meta && A.meta.price_asof) || "";
 
@@ -713,8 +719,9 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
     var blk = document.createElement("article");
     blk.className = "iblk";
     blk.id = id.toLowerCase();
+    if(FULL[id]) blk.title = FULL[id];
     blk.innerHTML =
-      '<div class="top"><span class="sym">'+esc(id)+'</span><span class="st">'+esc(label)+'</span>'+peHtml+'</div>'+
+      '<div class="top"><span class="sym">'+esc(SYM[id]||id)+'</span><span class="st">'+esc(label)+'</span>'+peHtml+'</div>'+
       patternRow(ix)+
       (sma20Note(ix) ? '<p class="anno">'+esc(sma20Note(ix))+'</p>' : '')+
       '<div class="chart"></div>'+
@@ -723,11 +730,15 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
     host.appendChild(blk);
     var el = blk.querySelector(".chart");
     if(hasChart) charts.push({el:el,id:id});
-    else el.innerHTML = '<p class="msg">圖表資料載不進來</p>';
+    else if(ix || id!=="TWII") el.innerHTML = '<p class="msg">圖表資料載不進來</p>';
+    else el.style.minHeight = "0";
   });
 
   if(A && A.meta && A.meta.price_asof){
-    document.getElementById("asof-px").textContent = A.meta.price_asof;
+    // header 的截至日是美股；台指日期不同時補一個（台），各圖卡 footer 另有自己的截至日
+    var us = A.meta.price_asof;
+    var tw = A.indices && A.indices.TWII && A.indices.TWII.last && A.indices.TWII.last.date;
+    document.getElementById("asof-px").textContent = (tw && tw !== us) ? us+"（美）／"+tw+"（台）" : us;
   }
   drawAll(true);
   window.addEventListener("resize", function(){ drawAll(false); });
