@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>慈善撲克王｜分批投入計算器（越跌買越多）</title>
+<meta name="description" content="分批投入計算器：輸入原始金額、預期總跌幅、分幾次、遞增強度，算出每一批的金額與平均成本。只是數學試算，非投資建議。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#f3ecdc; --ink:#e8edf5; --text:#c6cfdc; --muted:#a3aec0;
+  --red:#ff7482; --green:#3fd0a0; --amber:#f2b552;
+  --line:#2b3850; --bg:#0f1724; --surface:#172135; --edge:#8fa6d8;
+  --pink:#5a2430; --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --c-amount:#2fa58a; --c-price:#5b8def; --c-avg:#c2842a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.75;background:var(--bg)}
+.wrap{max-width:1100px;margin:0 auto;padding:22px 16px 80px}
+h1{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(26px,6vw,44px);line-height:1.2;margin:0 0 6px}
+.sub{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(16px,3vw,20px);margin:0 0 12px}
+.lede{margin:0 0 12px;max-width:50em}
+nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 14px;margin:8px 0 18px;border-bottom:3px double var(--edge);position:sticky;top:0;z-index:5;background:rgba(15,23,36,.95)}
+nav a{display:inline-block;padding:5px 13px;border:1px solid #3a4864;border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:14px}
+nav a:hover{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+h2{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(22px,4vw,28px);margin:0 0 8px}
+h3{font-family:var(--serif);color:var(--navy);font-size:16px;margin:0 0 2px}
+section{margin:32px 0 40px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 12px}
+.box-o{background:#2a2414;border:1px solid #5c4b1f;border-radius:12px;padding:14px 16px;margin:12px 0}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 18px;align-items:start}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--ink)}
+label small{color:var(--muted);font-size:12px;line-height:1.5}
+input{background:#141e30;border:1px solid var(--line);border-radius:8px;color:var(--navy);font-size:16px;padding:8px 10px;width:100%;font-family:inherit}
+input:focus{outline:2px solid var(--edge);outline-offset:1px}
+input.bad{border-color:var(--red)}
+.err{color:var(--red);margin:12px 0 0;font-size:14px}
+.err[hidden]{display:none}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.sum .card{margin:0}
+.sum .k{color:var(--ink);font-size:14px;margin:0}
+.sum .v{font-family:var(--serif);font-weight:900;font-size:clamp(26px,5vw,34px);line-height:1.2;color:var(--navy);margin:2px 0 4px;font-variant-numeric:tabular-nums}
+.sum .d{color:var(--muted);font-size:12px;line-height:1.6;margin:0}
+.pos{color:var(--green)} .neg{color:var(--red)}
+.sum .v.pos{color:var(--green)} .sum .v.neg{color:var(--red)}
+.scroll{overflow:auto;-webkit-overflow-scrolling:touch;margin:8px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;font-size:13px;min-width:860px;width:100%;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:right;white-space:nowrap}
+th{background:#141e30;color:var(--navy);font-weight:700;vertical-align:bottom}
+th small{display:block;font-weight:400;color:var(--muted);font-size:11px;white-space:normal;min-width:11em;line-height:1.45}
+th.rowh,td.rowh{text-align:left;position:sticky;left:0;background:#141e30;color:var(--navy)}
+td.neg{color:var(--red)} td.pos{color:var(--green)}
+.legend{color:var(--muted);font-size:13px}
+.note{color:var(--muted);font-size:13px}
+a{color:var(--edge)}
+footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);font-size:13px}
+
+/* 圖 */
+.chart-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0 0 6px;padding:0;list-style:none;font-size:13px;color:var(--text)}
+.chart-legend li{display:flex;align-items:center;gap:6px}
+.sw{display:inline-block;flex:none}
+.sw.bar{width:12px;height:12px;border-radius:3px;background:var(--c-amount)}
+.sw.ln{width:18px;height:0;border-top:2px solid}
+.sw.ln.price{border-color:var(--c-price)}
+.sw.ln.avg{border-color:var(--c-avg);border-top-style:dashed}
+#chart{position:relative}
+#chart svg{display:block;width:100%;height:auto;touch-action:pan-y}
+#chart text{font-family:var(--sans);font-size:11px;fill:var(--muted)}
+#chart text.ttl{fill:var(--ink);font-size:12px}
+#chart text.end{fill:var(--ink)}
+#chart .grid{stroke:var(--line);stroke-width:1}
+#chart .base{stroke:#4a5a7a;stroke-width:1}
+#chart .cross{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.tip{position:absolute;top:0;left:0;pointer-events:none;background:#0f1724;border:1px solid #3a4864;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.6;color:var(--text);white-space:nowrap;z-index:2;font-variant-numeric:tabular-nums}
+.tip[hidden]{display:none}
+.tip b{color:var(--navy)}
+.tip .r{display:flex;justify-content:space-between;gap:14px}
+.tip .r span:first-child{display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>分批投入計算器（越跌買越多）</h1>
+  <p class="sub">先決定總金額與預期跌幅，再看每一批該買多少</p>
+  <p class="lede">只需修改黃底藍字的 4 格，其餘全部自動計算。跌幅以「第一批買進價」為起點。</p>
+  <p class="note">依使用者提供的 Excel 分批計算表做成網頁版，公式相同。網頁上的「黃底藍字 4 格」就是下面輸入區的四個欄位，改了數字會立刻重算。</p>
+</header>
+<nav>
+  <a href="../../">首頁</a>
+  <a href="../">走勢觀察</a>
+  <a href="#input">輸入區</a>
+  <a href="#summary">總結</a>
+  <a href="#chart-sec">圖</a>
+  <a href="#table">分批表</a>
+  <a href="../expectancy/">期望值表</a>
+</nav>
+
+<section id="input">
+  <h2>輸入區</h2>
+  <div class="card">
+    <div class="calc">
+      <label>原始金額（元）
+        <input id="in-total" type="number" inputmode="decimal" min="1" step="100000" value="10000000">
+        <small>要投入的總金額</small>
+      </label>
+      <label>預期總跌幅（%）
+        <input id="in-drop" type="number" inputmode="decimal" min="0" max="99.9" step="1" value="20">
+        <small>最後一批買在比起點低多少（例：20%）</small>
+      </label>
+      <label>分幾次
+        <input id="in-n" type="number" inputmode="numeric" min="1" max="30" step="1" value="11">
+        <small>1～30 批，觸發跌幅平均分配</small>
+      </label>
+      <label>遞增強度
+        <input id="in-k" type="number" inputmode="decimal" min="0.1" step="0.5" value="3">
+        <small>最後一批是第一批的幾倍；1 = 每批一樣多，數字越大越下面買越多</small>
+      </label>
+    </div>
+    <p class="err" id="err" role="alert" hidden></p>
+  </div>
+</section>
+
+<section id="summary">
+  <h2>總結</h2>
+  <div class="sum">
+    <div class="card">
+      <p class="k">全部買完的平均成本（相對起點價）</p>
+      <p class="v" id="s-avg">—</p>
+      <p class="d">全部批次買完後，平均每股成本是起點價的幾 %（例：起點 100 元、顯示 87.6% → 平均成本約 87.6 元）</p>
+    </div>
+    <div class="card">
+      <p class="k">平均成本比起點低</p>
+      <p class="v" id="s-below">—</p>
+      <p class="d">平均成本比第一批便宜幾 %（= 100% − 上一格）；股價高於平均成本就是整體賺錢</p>
+    </div>
+    <div class="card">
+      <p class="k">跌到最低點時的帳面損益</p>
+      <p class="v" id="s-low">—</p>
+    </div>
+    <div class="card">
+      <p class="k">從最低點反彈多少就回本</p>
+      <p class="v" id="s-rebound">—</p>
+    </div>
+    <div class="card">
+      <p class="k">第一批金額</p>
+      <p class="v" id="s-first">—</p>
+    </div>
+    <div class="card">
+      <p class="k">最後一批金額</p>
+      <p class="v" id="s-last">—</p>
+    </div>
+  </div>
+</section>
+
+<section id="chart-sec">
+  <h2>每一批買多少、買在哪</h2>
+  <div class="card">
+    <ul class="chart-legend" aria-label="圖例">
+      <li><span class="sw ln price"></span>買進價（相對起點）</li>
+      <li><span class="sw ln avg"></span>買到此批的平均成本</li>
+      <li><span class="sw bar"></span>每一批的投入金額</li>
+    </ul>
+    <div id="chart" role="img" aria-label="上半：每一批的買進價與買到此批的平均成本（相對起點的百分比）。下半：每一批的投入金額。數字與下方分批表相同。">
+      <div class="tip" id="tip" hidden></div>
+    </div>
+    <p class="note">上半兩條線共用同一條百分比軸；下半的柱子是金額，另外一格、自己的刻度。滑過或點一下某一批可看數字，完整數字在下面的分批表。</p>
+  </div>
+</section>
+
+<section id="table">
+  <h2>分批表</h2>
+  <p class="legend">手機可左右滑動。</p>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th class="rowh">批次</th>
+          <th>觸發跌幅</th>
+          <th>買進價（相對起點）</th>
+          <th>權重</th>
+          <th>投入金額</th>
+          <th>累計投入</th>
+          <th>累計投入占比</th>
+          <th>換算單位（計算用）</th>
+          <th title="如果只跌到這一批就反彈，你的平均成本是起點價的幾 %">買到此批的平均成本<small>如果只跌到這一批就反彈，你的平均成本是起點價的幾 %</small></th>
+          <th title="剛買完這一批時，整體部位的帳面損益">此時帳面損益<small>剛買完這一批時，整體部位的帳面損益</small></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <p class="note">註：權重由第 1 批的 1 線性遞增到最後一批的「遞增強度」倍；投入金額 = 原始金額 × 該批權重 ÷ 權重總和。所有數字來自輸入區，無外部資料。</p>
+  <div class="box-o">
+    <p style="margin:0">計算只是數學試算，不代表會跌到這裡或會反彈，非投資建議。</p>
+  </div>
+</section>
+
+<footer>
+  <p>計算只是數學試算，不代表會跌到這裡或會反彈，非投資建議。依使用者提供的 Excel 分批計算表做成網頁版。</p>
+  <p><a href="../../">← 首頁</a>　<a href="../">走勢觀察</a>　<a href="../expectancy/">期望值表</a></p>
+</footer>
+</div>
+
+<script src="./scale-in.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id);};
+  var NS="http://www.w3.org/2000/svg";
+  var last=null;
+
+  /* ---------- 格式 ---------- */
+  function fmtInt(x){ // Excel #,##0
+    var r=Math.round(x);
+    return (r===0?0:r).toLocaleString("en-US",{maximumFractionDigits:0});
+  }
+  function fmtPct(x,d){ // Excel 0.0% / 0.0%;-0.0%
+    d=d==null?1:d;
+    var s=(x*100).toFixed(d);
+    if(parseFloat(s)===0) s=(0).toFixed(d); // 不顯示 -0.0%
+    return s+"%";
+  }
+  function signCls(x){
+    var r=parseFloat((x*100).toFixed(1));
+    return r<0?"neg":r>0?"pos":"";
+  }
+  function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+
+  /* ---------- 讀輸入 ---------- */
+  function num(id){
+    var v=$(id).value.trim();
+    return v===""?NaN:Number(v);
+  }
+  function read(){
+    return {total:num("in-total"), drop:num("in-drop")/100, n:num("in-n"), k:num("in-k")};
+  }
+  function markBad(p){
+    $("in-total").classList.toggle("bad", !(p.total>0) || !isFinite(p.total));
+    $("in-drop").classList.toggle("bad", !(p.drop>=0 && p.drop<1));
+    $("in-n").classList.toggle("bad", !(Math.floor(p.n)===p.n && p.n>=ScaleIn.MIN_N && p.n<=ScaleIn.MAX_N));
+    $("in-k").classList.toggle("bad", !(p.k>0) || !isFinite(p.k));
+  }
+
+  /* ---------- 總結與表格 ---------- */
+  function setV(id,text,cls){
+    var el=$(id); el.textContent=text; el.className="v"+(cls?" "+cls:"");
+  }
+  function paintSummary(r){
+    setV("s-avg",fmtPct(r.avg_cost));
+    setV("s-below",fmtPct(r.below));
+    setV("s-low",fmtPct(r.low_pnl),signCls(r.low_pnl));
+    setV("s-rebound",fmtPct(r.rebound));
+    setV("s-first",fmtInt(r.first));
+    setV("s-last",fmtInt(r.last));
+  }
+  function paintTable(r){
+    var h="";
+    r.batches.forEach(function(b){
+      h+="<tr><td class='rowh'>"+b.i+"</td>"
+        +"<td>"+fmtPct(b.trigger)+"</td>"
+        +"<td>"+fmtPct(b.price)+"</td>"
+        +"<td>"+b.weight.toFixed(2)+"</td>"
+        +"<td>"+fmtInt(b.amount)+"</td>"
+        +"<td>"+fmtInt(b.cum_amt)+"</td>"
+        +"<td>"+fmtPct(b.cum_share)+"</td>"
+        +"<td>"+fmtInt(b.units)+"</td>"
+        +"<td>"+fmtPct(b.avg)+"</td>"
+        +"<td class='"+signCls(b.pnl)+"'>"+fmtPct(b.pnl)+"</td></tr>";
+    });
+    $("tbody").innerHTML=h;
+  }
+  function blank(){
+    ["s-avg","s-below","s-low","s-rebound","s-first","s-last"].forEach(function(id){setV(id,"—");});
+    $("tbody").innerHTML="";
+    clearChart();
+  }
+
+  /* ---------- 圖（純 SVG；上：百分比線，下：金額柱，共用批次 x 軸） ---------- */
+  function el(name,attrs,text){
+    var e=document.createElementNS(NS,name);
+    for(var a in attrs) e.setAttribute(a,attrs[a]);
+    if(text!=null) e.textContent=text;
+    return e;
+  }
+  function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+  function niceStep(span,target){
+    var raw=span/target, p=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)), m=raw/p;
+    return (m<=1?1:m<=2?2:m<=5?5:10)*p;
+  }
+  function fmtAmtAxis(v,max){
+    if(v===0) return "0";
+    if(max>=1e8) return +(v/1e8).toFixed(2)+" 億";
+    if(max>=1e4) return +(v/1e4).toFixed(1)+" 萬";
+    return fmtInt(v);
+  }
+  function clearChart(){
+    var c=$("chart"), s=c.querySelector("svg");
+    if(s) c.removeChild(s);
+    $("tip").hidden=true;
+  }
+  function paintChart(r){
+    clearChart();
+    var box=$("chart"), B=r.batches, n=B.length;
+    var W=Math.max(280, Math.round(box.clientWidth||680));
+    var mL=48, mR=W<480?12:120, endLabels=mR>100;
+    var top1=22, h1=150, gap=44, h2=110, mB=34;
+    var y1=top1, y2=top1+h1+gap, H=y2+h2+mB;
+    var pw=W-mL-mR, band=pw/n;
+    var cx=function(i){return mL+band*(i+0.5);};
+    var cPrice=cssVar("--c-price"), cAvg=cssVar("--c-avg"), cAmt=cssVar("--c-amount"), surf=cssVar("--surface");
+
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,"aria-hidden":"true"});
+
+    // 百分比軸：上限 100%，下限取到最低買進價以下的整刻度
+    var lo=B[n-1].price*100, span=Math.max(100-lo,1);
+    var st=niceStep(span,4);
+    var pMin=Math.floor(lo/st+1e-9)*st; if(pMin>=100) pMin=100-st;
+    var py=function(v){return y1+h1*(1-(v*100-pMin)/(100-pMin));};
+    svg.appendChild(el("text",{x:mL,y:12,"class":"ttl"},"相對起點價（%）"));
+    for(var t=pMin;t<=100+1e-9;t+=st){
+      var yy=py(t/100);
+      svg.appendChild(el("line",{x1:mL,x2:mL+pw,y1:yy,y2:yy,"class":"grid"}));
+      svg.appendChild(el("text",{x:mL-6,y:yy+4,"text-anchor":"end"},(+t.toFixed(2))+"%"));
+    }
+
+    // 金額軸：從 0 起
+    var aMax=0; B.forEach(function(b){aMax=Math.max(aMax,b.amount);});
+    var ast=niceStep(aMax,3), aTop=Math.ceil(aMax/ast-1e-9)*ast;
+    var ay=function(v){return y2+h2*(1-v/aTop);};
+    svg.appendChild(el("text",{x:mL,y:y2-10,"class":"ttl"},"每一批的投入金額（元）"));
+    for(var a=0;a<=aTop+ast*1e-9;a+=ast){
+      var ya=ay(a);
+      svg.appendChild(el("line",{x1:mL,x2:mL+pw,y1:ya,y2:ya,"class":a===0?"base":"grid"}));
+      svg.appendChild(el("text",{x:mL-6,y:ya+4,"text-anchor":"end"},fmtAmtAxis(a,aTop)));
+    }
+
+    // 柱
+    var bw=Math.max(2,Math.min(28,band-2));
+    B.forEach(function(b,i){
+      var top=ay(b.amount), hh=Math.max(1,y2+h2-top), rr=Math.min(4,bw/2,hh);
+      var x=cx(i)-bw/2, bot=y2+h2;
+      svg.appendChild(el("path",{fill:cAmt,
+        d:"M"+x+","+bot+"V"+(top+rr)+"Q"+x+","+top+" "+(x+rr)+","+top
+          +"H"+(x+bw-rr)+"Q"+(x+bw)+","+top+" "+(x+bw)+","+(top+rr)+"V"+bot+"Z"}));
+    });
+
+    // x 軸批次標籤（太擠就跳著標）
+    var every=Math.ceil(n/Math.max(1,Math.floor(pw/26)));
+    B.forEach(function(b,i){
+      if(i%every===0 || i===n-1 && (n-1)%every>=every/2){
+        svg.appendChild(el("text",{x:cx(i),y:y2+h2+16,"text-anchor":"middle"},String(b.i)));
+      }
+    });
+    svg.appendChild(el("text",{x:mL+pw/2,y:H-4,"text-anchor":"middle"},"批次"));
+
+    // 線
+    function line(key,color,dash){
+      var d=B.map(function(b,i){return (i?"L":"M")+cx(i).toFixed(1)+","+py(b[key]).toFixed(1);}).join("");
+      var attrs={d:d,fill:"none",stroke:color,"stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"};
+      if(dash) attrs["stroke-dasharray"]=dash;
+      svg.appendChild(el("path",attrs));
+      if(n<=16) B.forEach(function(b,i){
+        svg.appendChild(el("circle",{cx:cx(i),cy:py(b[key]),r:n===1?4:3,fill:color,stroke:surf,"stroke-width":1.5}));
+      });
+    }
+    line("price",cPrice);
+    line("avg",cAvg,"6 4");
+
+    // 線尾直接標示（寬螢幕才有；窄螢幕看圖例）
+    if(endLabels){
+      var L=B[n-1], ya2=py(L.avg), yp=py(L.price);
+      if(yp-ya2<14){ var mid=(yp+ya2)/2; ya2=mid-7; yp=mid+7; }
+      svg.appendChild(el("text",{x:mL+pw+4,y:ya2+4,"class":"end"},"平均成本 "+fmtPct(L.avg)));
+      svg.appendChild(el("text",{x:mL+pw+4,y:yp+4,"class":"end"},"買進價 "+fmtPct(L.price)));
+    }
+
+    // 滑過／點選：十字線＋提示
+    var cross=el("line",{y1:y1,y2:y2+h2,"class":"cross",visibility:"hidden"});
+    svg.appendChild(cross);
+    var hit=el("rect",{x:mL,y:y1,width:pw,height:y2+h2-y1,fill:"transparent"});
+    svg.appendChild(hit);
+    var tip=$("tip");
+    function show(ev){
+      var rect=svg.getBoundingClientRect(), sc=W/rect.width;
+      var i=Math.max(0,Math.min(n-1,Math.floor(((ev.clientX-rect.left)*sc-mL)/band)));
+      var b=B[i], x=cx(i);
+      cross.setAttribute("x1",x); cross.setAttribute("x2",x); cross.setAttribute("visibility","visible");
+      tip.innerHTML="<b>第 "+b.i+" 批</b>（跌 "+esc(fmtPct(b.trigger))+"）"
+        +"<div class='r'><span><i class='sw ln price'></i>買進價</span><b>"+fmtPct(b.price)+"</b></div>"
+        +"<div class='r'><span><i class='sw ln avg'></i>平均成本</span><b>"+fmtPct(b.avg)+"</b></div>"
+        +"<div class='r'><span><i class='sw bar'></i>投入金額</span><b>"+fmtInt(b.amount)+"</b></div>"
+        +"<div class='r'><span>此時帳面損益</span><b>"+fmtPct(b.pnl)+"</b></div>";
+      tip.hidden=false;
+      var px=x/sc, tw=tip.offsetWidth, left=px+12;
+      if(left+tw>rect.width) left=px-12-tw;
+      if(left<0) left=0;
+      tip.style.transform="translate("+left+"px,"+(y1/sc)+"px)";
+    }
+    function hide(){ cross.setAttribute("visibility","hidden"); tip.hidden=true; }
+    hit.addEventListener("pointermove",show);
+    hit.addEventListener("pointerdown",show);
+    hit.addEventListener("pointerleave",function(ev){ if(ev.pointerType==="mouse") hide(); });
+
+    box.appendChild(svg);
+  }
+
+  /* ---------- 重算 ---------- */
+  function paint(){
+    var p=read(), errEl=$("err");
+    markBad(p);
+    var msg=ScaleIn.validate(p.total,p.drop,p.n,p.k);
+    if(msg){
+      errEl.textContent=msg; errEl.hidden=false; last=null; blank(); return;
+    }
+    try{
+      var r=ScaleIn.compute(p.total,p.drop,p.n,p.k);
+      errEl.hidden=true; errEl.textContent="";
+      last=r;
+      paintSummary(r); paintTable(r); paintChart(r);
+    }catch(e){
+      errEl.textContent=(e&&e.message)||"無法計算，請檢查輸入"; errEl.hidden=false; last=null; blank();
+    }
+  }
+  ["in-total","in-drop","in-n","in-k"].forEach(function(id){
+    $(id).addEventListener("input",paint);
+  });
+  var rz=null;
+  window.addEventListener("resize",function(){
+    clearTimeout(rz); rz=setTimeout(function(){ if(last) paintChart(last); },120);
+  });
+  paint();
+})();
+</script>
+</body>
+</html>
