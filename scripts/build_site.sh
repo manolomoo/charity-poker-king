@@ -4,6 +4,7 @@
 #   _site/                極簡首頁（來源 home/index.html）＋首頁要抓的 data/、rules.json、assets/
 #   _site/signals/        完整燈號詳細站（repo 根目錄的 index.html / rules.html / history.html）
 #   _site/trend/          走勢觀察與技術分析圖解
+#   _site/yu-backtest/    財經皓角抄底回測
 #
 # data/ 會複製兩份（都排除 cache）：根目錄給首頁，signals/ 給詳細站，
 # 兩邊都用相對路徑 data/latest.json。
@@ -48,6 +49,12 @@ rm -f "$SIG/index.html.bak"
 if [ -d trend ]; then
   mkdir -p "$OUT/trend"
   cp -r trend/. "$OUT/trend/"
+fi
+
+# ── /yu-backtest/：財經皓角抄底回測（純靜態頁）──
+if [ -d yu-backtest ]; then
+  mkdir -p "$OUT/yu-backtest"
+  cp -r yu-backtest/. "$OUT/yu-backtest/"
 fi
 
 echo "完成：$OUT"

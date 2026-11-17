@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>財經皓角抄底回測</title>
+<meta name="description" content="把游庭皓〈總經資產配置看法〉的操作點對上 SOX、NDX、台灣加權做訊號回測。僅供參考，非投資建議。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+</head>
+<body>
+<div class="wrap">
+<nav class="top"><a href="../">← 首頁</a><a href="../trend/">走勢觀察</a></nav>
+<h1>財經皓角抄底回測</h1>
+<p class="lead">把游庭皓〈總經資產配置看法〉（2020-01-03～2026-11-15，共 300 篇）的操作點，對上 SOX、NDX、台灣加權（TWII）做訊號回測。僅供參考，非投資建議，也不是他的實際損益。</p>
+<p class="lead">300 篇中：加碼 111、觀望 90、持平 42、停止加碼 30、減碼 25、出清 2。</p>
+
+<h2>互動走勢圖（對數座標）</h2>
+<div class="tabs" role="group" aria-label="選擇指數">
+<button type="button" data-i="sox" aria-pressed="true">SOX</button>
+<button type="button" data-i="ndx" aria-pressed="false">NDX</button>
+<button type="button" data-i="twii" aria-pressed="false">TWII</button>
+</div>
+<div class="legend"><span class="g">▲ 加碼（點愈大加愈多）</span><span class="r">▼ 減碼／出清</span><span class="n">● 停止加碼／觀望</span></div>
+<div id="chart"><div class="s"></div><div id="tip"></div></div>
+<p class="lead" style="font-size:13px">滑過（手機請點）標記可看日期、動作、幅度與一句摘要。同一動作會畫在三張圖上，即使當週只做台股或只做美股。</p>
+<noscript><p class="warn">互動圖需要 JavaScript，下方有靜態圖。</p></noscript>
+
+<h2>靜態圖</h2>
+<div class="shots">
+<h3>SOX</h3><img src="./charts/sox.png" alt="SOX 與加減碼訊號" loading="lazy">
+<h3>NDX</h3><img src="./charts/ndx.png" alt="NDX 與加減碼訊號" loading="lazy">
+<h3>TWII</h3><img src="./charts/twii.png" alt="TWII 與加減碼訊號" loading="lazy">
+<h3>三合一</h3><img src="./charts/combined.png" alt="三個指數合併圖" loading="lazy">
+</div>
+<p class="lead" style="font-size:13px">單張圖下方的 stock_pct 為沿用舊值，不能當成真實倉位，見下方注意事項。</p>
+
+<h2>重點數字</h2>
+<ul>
+<li>加碼貼文 111 篇（large 9、ambiguous 13）。1m／3m／6m／12m 各有 107／105／98／85 筆，2026 年近期買點期間不足者直接排除。</li>
+<li>多數期間勝率落在 58%–73%，6m 最高（SOX 70%、NDX 68%、TWII 73%）。</li>
+<li>12m 平均：SOX +20.7%、NDX +11.3%、TWII +12.7%。</li>
+</ul>
+<p class="lead" style="font-size:13px">方法：進場價＝貼文日收盤，非交易日取下一個交易日收盤；1m=21、3m=63、6m=126、12m=252 個交易日。回撤＝進場價相對 2019-12-02 起最高收盤。</p>
+
+<h2>加碼後勝率與報酬</h2>
+<div class="scroll"><table>
+<thead><tr><th>指數</th><th>期間</th><th>n</th><th>勝率</th><th>平均</th><th>中位數</th></tr></thead>
+<tbody>
+<tr><td>SOX</td><td>1m</td><td>107</td><td>64%</td><td>3.7%</td><td>1.7%</td></tr>
+<tr><td>SOX</td><td>3m</td><td>105</td><td>61%</td><td>8.5%</td><td>5.3%</td></tr>
+<tr><td>SOX</td><td>6m</td><td>98</td><td>70%</td><td>18.0%</td><td>14.9%</td></tr>
+<tr><td>SOX</td><td>12m</td><td>85</td><td>58%</td><td>20.7%</td><td>18.4%</td></tr>
+<tr><td>NDX</td><td>1m</td><td>107</td><td>62%</td><td>2.2%</td><td>1.5%</td></tr>
+<tr><td>NDX</td><td>3m</td><td>105</td><td>61%</td><td>3.7%</td><td>3.7%</td></tr>
+<tr><td>NDX</td><td>6m</td><td>98</td><td>68%</td><td>7.8%</td><td>12.1%</td></tr>
+<tr><td>NDX</td><td>12m</td><td>85</td><td>66%</td><td>11.3%</td><td>16.0%</td></tr>
+<tr><td>TWII</td><td>1m</td><td>107</td><td>64%</td><td>2.1%</td><td>1.4%</td></tr>
+<tr><td>TWII</td><td>3m</td><td>105</td><td>61%</td><td>5.0%</td><td>3.6%</td></tr>
+<tr><td>TWII</td><td>6m</td><td>98</td><td>73%</td><td>11.1%</td><td>7.1%</td></tr>
+<tr><td>TWII</td><td>12m</td><td>85</td><td>62%</td><td>12.7%</td><td>10.4%</td></tr>
+</tbody></table></div>
+
+<h2>最佳與最差加碼</h2>
+<p class="lead" style="font-size:14px">以 12m 報酬排序，進場回撤為進場日相對起算以來高點。</p>
+<div class="scroll"><table>
+<thead><tr><th>指數</th><th>類型</th><th>日期</th><th>幅度</th><th>12m</th><th>進場回撤</th></tr></thead>
+<tbody>
+<tr><td>SOX</td><td>最佳</td><td>2020-03-20</td><td>large</td><td class="pos">+137.0%</td><td>-34.4%</td></tr>
+<tr><td>SOX</td><td>最差</td><td>2021-11-27</td><td>small</td><td class="neg">-31.7%</td><td>-0.0%</td></tr>
+<tr><td>NDX</td><td>最佳</td><td>2020-03-20</td><td>large</td><td class="pos">+87.1%</td><td>-28.0%</td></tr>
+<tr><td>NDX</td><td>最差</td><td>2021-12-17</td><td>large</td><td class="neg">-29.8%</td><td>-4.7%</td></tr>
+<tr><td>TWII</td><td>最佳</td><td>2025-04-13</td><td>large</td><td class="pos">+103.0%</td><td>-20.0%</td></tr>
+<tr><td>TWII</td><td>最差</td><td>2021-09-30</td><td>small</td><td class="neg">-22.6%</td><td>-6.1%</td></tr>
+</tbody></table></div>
+<p>2021 年底接近高點的加碼損失最大；最好的幾筆都出在大幅回撤之中。</p>
+
+<h2>大回檔時，買點離低點多近</h2>
+<p class="lead" style="font-size:14px">「高於低點」指買點收盤比事後區間低點高多少，0% 代表買在最低點。S／M／L＝small／medium／large。區間低點是事後選的，含 lookahead。</p>
+<div class="card"><h3>2020 COVID</h3>
+<p>低點：SOX 2020-03-18、NDX 2020-03-20、TWII 2020-03-19。2020-03-20 大量加碼（L）高於低點 SOX 0.9%、NDX 0.0%、TWII 6.4%，是整份回測最準的一筆。更早的 2020-02-17（M）高於低點 35.5%–49.9%。</p></div>
+<div class="card"><h3>2022 熊市</h3>
+<p>低點：SOX 2022-10-14、TWII 2022-10-25、NDX 2022-12-28。2022 年 5–10 月沒有任何 large 加碼，都是小到中額分批：8 月底高於 SOX 低點約 27%，一路買到 10-17 的 M（高於 SOX 低點 2.3%、TWII 2.4%）。NDX 低點在 12 月底，2022-10-31 的買點仍高於低點 6.8%。這是分批下跌均攤，不是精準抄底。</p></div>
+<div class="card"><h3>2023 秋季</h3>
+<p>低點：SOX 2023-10-30、NDX 2023-10-26、TWII 2023-10-31。2023-10-29（M）高於 SOX 低點 0.0%、2023-10-31（M）高於 TWII 低點 0.0%，非常貼近低點。</p></div>
+<div class="card"><h3>2024-07/08 回調</h3>
+<p>低點：SOX／NDX 2024-08-07、TWII 2024-08-05。2024-08-04（M）高於 NDX 低點 0.2%、TWII 低點 0.0%、SOX 低點 2.1%。其後 08-12 的 L 高於低點 3.8%–9.8%。7 月下旬的 S／M 則高於低點 7%–24%。</p></div>
+<div class="card"><h3>2025 關稅</h3>
+<p>低點：SOX／NDX 2025-04-08、TWII 2025-04-09。2025-04-06 的 L 在低點前兩天，高於低點 2%–10.6%；04-13 的 L 高於低點 10%–12.4%。2–3 月較早的 M 高於低點 13%–34%。large 確實集中在低點附近，但前面已動用部分資金。</p></div>
+<div class="card"><h3>2026 回檔</h3>
+<p>低點：SOX／NDX 2026-03-30、TWII 2026-01-02。低點前後多為 S／M，L 出現在 2026-04-05，高於 SOX 低點 10.8%、NDX 5.4%。2026-11 又有 large 加碼，尚無後續報酬可驗證。</p></div>
+
+<h2>注意事項</h2>
+<ul>
+<li>這是「訊號日對照指數」，不是實際損益，也未計部位大小與資金來源。週末發文用下一交易日收盤，進場價為近似值。</li>
+<li>同一波回檔多次加碼，報酬高度重疊、並不獨立，勝率可能高估。事後選定的區間低點也含 lookahead。</li>
+<li>同一動作畫在三張圖上，即使當週只做台股或只做美股。</li>
+<li>持股比例在 2021–2023 中段文章很少明講；圖下方 stock_pct 有近兩年停在約 30%，是沿用舊值，不能當成真實倉位。2023-11 才又出現 62% 等數字。約 22 篇語意較含糊。</li>
+<li>最新一篇 2026-11-15 為觀望；文章未重報比例，與會員配置頁當週「長期 82%、美債 4%、現金 14%」可能不同。</li>
+<li>價格來源 yfinance 收盤價，不含股息；SOX／NDX 至 2026-11-16，TWII 至 2026-11-17。</li>
+</ul>
+
+<footer>
+<p>僅供參考，非投資建議。操作摘要來自財經皓角〈總經資產配置看法〉，圖中僅引用單句摘要；指數價格來自 yfinance。</p>
+<p><a href="../">回到首頁</a>｜<a href="../trend/">走勢觀察</a></p>
+</footer>
+</div>
+<script src="./history.js"></script>
+<script src="./prices.js"></script>
+<script src="./page.js"></script>
+</body>
+</html>
