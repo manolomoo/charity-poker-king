@@ -114,11 +114,8 @@ def test_homepage_keeps_single_yu_entry():
     assert html.count("./yu-backtest/") == 1
 
 
-def test_build_emits_redirects_without_clobbering_home():
+def test_build_does_not_emit_legacy_redirects():
     out = ROOT / ".pytest_tmp_site"
-    if out.exists():
-        # 由腳本自己 rm -rf
-        pass
     subprocess.run([str(BUILD), str(out)], check=True, cwd=ROOT)
     try:
         root_index = (out / "index.html").read_text(encoding="utf-8")
@@ -126,22 +123,18 @@ def test_build_emits_redirects_without_clobbering_home():
         assert "location.replace" not in root_index
         assert 'id="home-nav"' in root_index
 
-        rules = (out / "rules.html").read_text(encoding="utf-8")
-        history = (out / "history.html").read_text(encoding="utf-8")
-        home_redir = (out / "home" / "index.html").read_text(encoding="utf-8")
-        for page, target in (
-            (rules, "./signals/rules.html"),
-            (history, "./signals/history.html"),
-            (home_redir, "../"),
-        ):
-            assert 'http-equiv="refresh"' in page
-            assert target in page
-            assert "location.replace" in page
-            assert f'href="{target}"' in page
+        assert not (out / "rules.html").exists()
+        assert not (out / "history.html").exists()
+        assert not (out / "home").exists()
+        assert not (ROOT / "redirects").exists()
 
         sig_rules = (out / "signals" / "rules.html").read_text(encoding="utf-8")
         assert "<h1>判定規則</h1>" in sig_rules
         assert "location.replace" not in sig_rules
         assert "慈善撲克王｜判定規則" in sig_rules
+        sig_hist = (out / "signals" / "history.html").read_text(encoding="utf-8")
+        assert "<h1>歷史紀錄</h1>" in sig_hist
+        sig_idx = (out / "signals" / "index.html").read_text(encoding="utf-8")
+        assert "<h1>慈善撲克王</h1>" in sig_idx
     finally:
         subprocess.run(["rm", "-rf", str(out)], check=True)

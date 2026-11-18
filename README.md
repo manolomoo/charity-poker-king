@@ -65,7 +65,7 @@ python3 -m http.server 8000
 python3 -m http.server 8000 --directory _site
 ```
 
-`scripts/build_site.sh` 會組出與線上相同的結構：根目錄是極簡首頁（來源 `home/index.html`），燈號詳細站在 `/signals/`（含 `data/`、`reports/`、`rules.md`、`rules.json`），另有 `/trend/`、`/yu-backtest/`。根目錄也會放一份給首頁讀的 `data/`（排除 `data/cache/`）與 `rules.json`、`assets/`、`.nojekyll`。舊路徑 `/rules.html`、`/history.html`、`/home/` 會輸出轉址頁，指向新位置；不會覆蓋根首頁。GitHub Actions 的部署流程會呼叫同一支腳本。
+`scripts/build_site.sh` 會組出與線上相同的結構：根目錄是極簡首頁（來源 `home/index.html`），燈號詳細站在 `/signals/`（含 `data/`、`reports/`、`rules.md`、`rules.json`），另有 `/trend/`、`/yu-backtest/`。根目錄也會放一份給首頁讀的 `data/`（排除 `data/cache/`）與 `rules.json`、`assets/`、`.nojekyll`。GitHub Actions 的部署流程會呼叫同一支腳本。
 
 ## 自動更新與部署排程
 
