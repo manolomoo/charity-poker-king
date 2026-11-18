@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>慈善撲克王｜左側買修正規則（研究參考）</title>
+<meta name="description" content="研究如何修正「左側分批買、買完抱著不動」在大崩盤時的風險。這是研究參考，不是燈號規則，非投資建議。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#f3ecdc; --ink:#e8edf5; --text:#c6cfdc; --muted:#a3aec0;
+  --red:#ff7482; --green:#3fd0a0; --amber:#f2b552;
+  --line:#2b3850; --bg:#0f1724; --surface:#172135; --edge:#8fa6d8;
+  --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --c-bh:#8fa6d8; --c-s0:#ff7482; --c-fin:#3fd0a0;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.75;background:var(--bg)}
+.wrap{max-width:1100px;margin:0 auto;padding:22px 16px 80px}
+h1{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(26px,6vw,42px);line-height:1.2;margin:0 0 6px}
+.sub{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(16px,3vw,20px);margin:0 0 12px}
+.lede,.note{margin:0 0 12px;max-width:52em}
+.note{color:var(--muted);font-size:13px}
+.tag{display:inline-block;margin:0 0 10px;padding:2px 10px;border:1px solid #5c4b1f;border-radius:999px;background:#2a2414;color:var(--amber);font-size:12px}
+nav.top{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 14px;margin:8px 0 18px;border-bottom:3px double var(--edge);position:sticky;top:0;z-index:5;background:rgba(15,23,36,.95)}
+nav.top a{display:inline-block;padding:5px 13px;border:1px solid #3a4864;border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:14px}
+nav.top a:hover{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+h2{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(22px,4vw,28px);margin:0 0 8px}
+h3{font-family:var(--serif);color:var(--navy);font-size:18px;margin:18px 0 6px}
+section{margin:32px 0 40px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 12px}
+.box-o{background:#2a2414;border:1px solid #5c4b1f;border-radius:12px;padding:14px 16px;margin:12px 0}
+.box-r{background:#2a181c;border:1px solid #5c2a32;border-radius:12px;padding:14px 16px;margin:12px 0}
+.take{margin:0 0 10px;color:var(--ink);font-size:16px;line-height:1.65}
+.take b{color:var(--navy)}
+a{color:var(--edge)}
+.scroll{overflow:auto;-webkit-overflow-scrolling:touch;margin:8px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;font-size:13px;min-width:640px;width:100%;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:right;white-space:nowrap}
+th{background:#141e30;color:var(--navy);font-weight:700;vertical-align:bottom}
+th.rowh,td.rowh,td.name{text-align:left;white-space:normal}
+td.neg{color:var(--red)} td.pos{color:var(--green)}
+tr.hl td{background:rgba(40,70,60,.4)}
+.steps{display:grid;gap:10px}
+.step{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.num{width:36px;height:36px;border-radius:50%;background:#141e30;border:1px solid var(--edge);color:var(--navy);font-family:var(--serif);font-weight:900;font-size:18px;display:flex;align-items:center;justify-content:center}
+.step h3{margin:0;font-size:16px}
+.step p{margin:2px 0 0;color:var(--text);font-size:14px}
+.arrow{text-align:center;color:var(--amber);font-size:20px;line-height:1;margin:-2px 0}
+.chart svg{display:block;width:100%;height:auto}
+.chart text{font-family:var(--sans)}
+.leg{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0 0 8px;padding:0;list-style:none;font-size:13px}
+.leg li{display:flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:16px;height:0;border-top:2.5px solid}
+.sw.bh{border-color:var(--c-bh)} .sw.s0{border-color:var(--c-s0)} .sw.fin{border-color:var(--c-fin)}
+.sw.bar{height:10px;width:12px;border:0;border-radius:2px;background:var(--red)}
+.sw.bar.fee{background:var(--amber)}
+footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);font-size:13px}
+ul.plain{margin:8px 0;padding:0 0 0 1.15em}
+ul.plain li{margin:0 0 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>左側買修正規則</h1>
+  <p class="sub">怎麼降低「越跌越買、買完就抱著不動」的風險</p>
+  <p class="tag">研究參考 · 不是燈號規則 · 11 項燈號仍是 v3.0，沒有改</p>
+  <p class="lede">這頁整理 2026-11-17 的回測研究。指定用 Claude Fable 討論，但 CLI 回「需要額度」，改用 Claude opus 跑了三輪；數字都對過回測結果。資料是 Yahoo 日收盤，到 2026-11-16。這不是投資建議，也不保證以後會跟歷史一樣。</p>
+</header>
+<nav class="top">
+  <a href="../../">首頁</a>
+  <a href="../scale-in/">分批計算</a>
+  <a href="../drawdowns/">歷史跌幅</a>
+  <a href="../../yu-backtest/">皓角回測</a>
+  <a href="../">走勢觀察</a>
+</nav>
+
+<section id="conclusion">
+  <h2>先看結論</h2>
+  <div class="box-o">
+    <p class="take" style="margin:0">「越跌買越多、買完抱著」最大的風險不在怎麼買，而在買完之後抱著不動。只改買法救不了慢慢跌的熊市；要有一條減碼規則，代價是平穩的年份會少賺。</p>
+  </div>
+</section>
+
+<section id="rules-visual">
+  <h2>標準版在做什麼（三步）</h2>
+  <p class="take">用白話講：跌了 10% 才開始分批買，錢不要一次用完；如果月底收盤明顯跌破十個月均線，就把持股減半；站回來再買回。</p>
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <div>
+        <h3>跌 10% 開始分批買</h3>
+        <p>收盤距一年高點第一次跌到 10%，那天當作起點。70% 的錢分 9 批，一路買到跌 40%，愈下面買愈多；另外 30% 留著，跌到 50% 和 60% 時再各買一半。</p>
+      </div>
+    </div>
+    <div class="arrow" aria-hidden="true">↓</div>
+    <div class="step">
+      <div class="num">2</div>
+      <div>
+        <h3>月底跌破十個月線 3%，減半</h3>
+        <p>這是唯一會賣的規則。月底收盤低於 10 個月均線的 3%，下一個交易日把持股減到一半；這段期間新的買進也只做一半。</p>
+      </div>
+    </div>
+    <div class="arrow" aria-hidden="true">↓</div>
+    <div class="step">
+      <div class="num">3</div>
+      <div>
+        <h3>站回均線 3%，再買回</h3>
+        <p>月底收盤高於 10 個月均線的 3%，再把部位補回滿。若開始買之後約 13 個月還有現金、而且沒有被規則 2 砍半，就把剩下的錢分 12 個月定額買完。</p>
+      </div>
+    </div>
+  </div>
+  <p class="note">另外還有「保守版」（跌破 10 月線就全部賣出）和「最簡版」（不做分批，一次買滿，只做規則 2 的減半）。完整條件在下面。</p>
+</section>
+
+<section id="curves">
+  <h2>兩次大崩盤，帳戶淨值怎麼走</h2>
+  <p class="note">本金從 1 開始。三條線都是從「高點之後第一次跌 10%」那天進場，最多看到 15 年。數字由研究用的回測引擎算出，不是手畫的。</p>
+  <p class="take" id="take-ndx"></p>
+  <div class="card">
+    <ul class="leg" aria-label="圖例">
+      <li><span class="sw bh"></span>一次買滿</li>
+      <li><span class="sw s0"></span>原計畫（買完抱著）</li>
+      <li><span class="sw fin"></span>標準版（有減碼）</li>
+    </ul>
+    <div class="chart" id="chart-ndx" role="img" aria-label="NDX .com 泡沫期間，三種做法的帳戶淨值"></div>
+  </div>
+  <p class="take" id="take-spx"></p>
+  <div class="card">
+    <ul class="leg">
+      <li><span class="sw bh"></span>一次買滿</li>
+      <li><span class="sw s0"></span>原計畫（買完抱著）</li>
+      <li><span class="sw fin"></span>標準版（有減碼）</li>
+    </ul>
+    <div class="chart" id="chart-spx" role="img" aria-label="SPX 2008 金融海嘯期間，三種做法的帳戶淨值"></div>
+  </div>
+</section>
+
+<section id="tradeoff">
+  <h2>最差會虧多少，平穩期又少賺多少</h2>
+  <p class="take" id="take-toff"></p>
+  <div class="card">
+    <ul class="leg">
+      <li><span class="sw bar"></span>180 次「跌 10% 開始買、抱 5 年」裡，最差虧掉本金多少</li>
+      <li><span class="sw bar fee"></span>2013–2019 起點、持有 5 年，NDX 比一次買滿少賺多少（保費）</li>
+    </ul>
+    <div class="chart" id="chart-toff" role="img" aria-label="各策略最差虧損與平穩期代價"></div>
+    <p class="note" style="margin:8px 0 0">最簡版的 180 次統計引自研究報告（一次買滿 + 規則 2），不是 event_5y.csv 裡的欄位；平穩期代價來自 summary_calm_cost.csv。</p>
+  </div>
+</section>
+
+<section id="problem">
+  <h2>問題有多大：原計畫碰上崩盤</h2>
+  <p class="take">用網站「分批計算」的預設（跌 20%、分 11 次、遞增 3 倍），從跌 10% 那天開始買、買完就抱著。錢通常在整段跌幅的四分之一到三分之一就用完了，剩下只能硬抱。</p>
+  <div class="scroll">
+    <table id="tbl-problem">
+      <thead>
+        <tr>
+          <th class="rowh">崩盤</th>
+          <th>資金用完時已跌</th>
+          <th>佔整段跌幅</th>
+          <th>本金最多虧</th>
+          <th>淨值低於本金多久</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="note" id="problem-note"></p>
+</section>
+
+<section id="event">
+  <h2>180 次「跌 10% 開始買」，抱 5 年</h2>
+  <p class="take">只擋加碼（跌破均線就停、波動大就停）的做法，最差還是虧將近 78%，跟原計畫差不多。有用的是對已經買到的持股減碼。</p>
+  <div class="scroll">
+    <table id="tbl-event">
+      <thead>
+        <tr>
+          <th class="rowh">策略</th>
+          <th>中位倍數</th>
+          <th>本金虧損 P10</th>
+          <th>最差本金虧損</th>
+          <th>結束時現金中位</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="note">結束時現金高，往往代表錢沒投進去，看起來安全其實是沒買滿。Forward P/E 那一列只有 31 次（測不到 2000 年）。</p>
+</section>
+
+<section id="crash-tbl">
+  <h2>命名崩盤怎麼走（從高點開始）</h2>
+  <p class="take">下表是從高點進場、看本金最大虧損／15 年後變成幾倍。快速 V 轉（例如 2020）時，減碼規則會少賺，這就是保費。</p>
+  <div class="scroll">
+    <table id="tbl-crash">
+      <thead></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="note">從「跌 10% 才開始」的同口徑數字在研究摘要裡也有；上方兩張淨值圖用的就是跌 10% 起點。</p>
+</section>
+
+<section id="calm">
+  <h2>平穩期的代價（保費）</h2>
+  <p class="take">在 2013–2019、以及 2023 年以後這種往上走的區間，分批加上減碼都會比一次買滿少賺。原計畫落後很多，主因是現金沒用完。</p>
+  <div class="scroll">
+    <table id="tbl-calm">
+      <thead></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="note">數字是中位終值相對「一次買滿」少多少。2023 年後是持有到 2026-11-16，不是滿 5 年。</p>
+</section>
+
+<section id="rules">
+  <h2>規則全文（研究提案）</h2>
+  <p class="note">標註：〔慣〕業界慣例，〔原〕原網站分批計畫，〔測〕這次回測比較後選出（有過度擬合風險），〔書〕技術分析教學頁有提到。</p>
+  <div class="card">
+    <h3>規則 1：起點與左側階梯</h3>
+    <p>收盤距 252 日最高收盤首次跌到 −10% 時，當天收盤記為 P0，之後不重設〔慣〕。依 P0 下表的位置分批買。收盤 ≤ 觸發價時買。前 9 檔權重 1→3〔原〕；深度到 −40% 加上 30% 準備金〔測〕。</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>位置</th><th>0%</th><th>−5%</th><th>−10%</th><th>−15%</th><th>−20%</th><th>−25%</th><th>−30%</th><th>−35%</th><th>−40%</th><th>−50%</th><th>−60%</th></tr></thead>
+        <tbody><tr><td class="rowh">資金</td><td>3.9%</td><td>4.9%</td><td>5.8%</td><td>6.8%</td><td>7.8%</td><td>8.7%</td><td>9.7%</td><td>10.7%</td><td>11.7%</td><td>15%</td><td>15%</td></tr></tbody>
+      </table>
+    </div>
+    <h3>規則 2：趨勢閘門（唯一會賣的規則）</h3>
+    <p>觸發：月底收盤 &lt; 10 個月均線 ×0.97。執行：下一個交易日把持股降到應有部位的 50%；這段期間觸發的階梯檔只買一半，規則 3 暫停扣款。恢復：月底收盤 &gt; 10 個月均線 ×1.03，下一個交易日補回 100%，並補扣暫停期間的定額。10 個月均線是慣例〔慣〕，書上沒有寫這條；±3% 對應書上常見的 3% 收盤規則〔書〕，也測過 0% 和 5%。減半〔測〕。</p>
+    <h3>規則 3：閒置現金轉定額</h3>
+    <p>觸發：P0 之後大約 13 個月，還有現金，而且規則 2 處在 100%。執行：每月第一個交易日買「剩餘現金 ÷ 剩餘期數」，共 12 期。參數 12/12〔測〕；不要早於 6 個月。</p>
+    <h3>規則 4：燈號不改變買賣</h3>
+    <p>VIX、波動、空頭燈號只用來提醒自己照規則做。「VIX &gt; 30 提前一檔」測過了，平穩期代價略降，但尾部變差（最差從 −43% 變成 −48%，SOX 2022 從 −10% 變成 −21%），所以不放進標準版。</p>
+    <h3>另外兩個版本</h3>
+    <ul class="plain">
+      <li><b>保守版</b>：規則 2 改成跌破 10 月線就降到 0%。</li>
+      <li><b>最簡版</b>：一次買滿，只執行規則 2。保費只有標準版的約三分之一到一半，但 180 次裡最差虧損是 −61%，標準版是 −43%。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="vix">
+  <h2>「波動加大、天有異象要小心」數據怎麼說</h2>
+  <ul class="plain">
+    <li><b>支持的部分：</b>價格跌破長期均線後要小心。規則 2、保守版在 .com、2008、日經、1929 都大幅減少虧損。VIX &gt; 30 而且本站空頭近似已成立時，4 次裡有 3 次之後 12 個月是負報酬（SPX 2001-09 −18%、SPX 2008-07 −23%、NDX 2001-09 −32%）。樣本太少，只能當參考。</li>
+    <li><b>不支持的部分：</b>「波動一大就停手或賣出」。每一波 VIX &gt; 30 的第一天之後，12 個月中位報酬：SPX 在 200 日線上 +16%（10 次）、線下 +15%（13 次）；NDX 線上 +25%（13 次）、線下 +20%（10 次）。負報酬只有 SPX 6/23 次、NDX 5/23 次。用波動擋加碼，最差情況都沒有改善。最慘的 NDX 2000-04（之後 12 個月 −66%）發生時，指數還在 200 日線上。</li>
+    <li>「天有異象」這類不看價格的徵兆，這次研究沒有測。</li>
+  </ul>
+</section>
+
+<section id="caveats">
+  <h2>限制與不能保證的事</h2>
+  <div class="box-r">
+    <ul class="plain" style="margin:0">
+      <li><b>獨立樣本少，而且是樣本內。</b>真正慢慢跌的大崩盤大約只有 5 次。−50%/−60% 準備金和 10 月線，都是看過這些崩盤之後才選的。</li>
+      <li><b>參數有挑過。</b>閒置定額比了 5 組，遲滯帶比了 3 組，階梯比了 3 種。中位數只差幾個百分點的，不能說誰比較好。</li>
+      <li><b>快速崩盤和盤整期會白付保費。</b>SPX 2020 從高點看，標準版 15 年是 2.28 倍，一次買滿是 2.50 倍。2023 年後每一種規則都落後一次買滿。</li>
+      <li><b>假設偏樂觀。</b>同一天收盤成交、成本 0.1%、沒算稅；股息率是固定假設值；1960 年前現金利率當 0；用的是指數不是 ETF。台股現金利率用的是美國短期利率。</li>
+      <li><b>不保證的事：</b>−43% 只是這份回測裡最差的一次，不是上限。SOX .com 套用標準版、從高點看仍虧 −45%。從淨值高點算的回撤也還很深。每月起點的中位數，標準版全部輸給一次買滿。</li>
+    </ul>
+  </div>
+  <p>過去的結果不能預測未來，任何版本都不保證贏過一次買滿。非投資建議。這頁沒有改網站的燈號規則。</p>
+</section>
+
+<footer>
+  <p>研究日期 2026-11-17（台北時間）。資料 Yahoo 日收盤至 2026-11-16。討論改用 Claude opus（Fable 需額度）。</p>
+  <p><a href="../../">← 首頁</a>　<a href="../scale-in/">分批計算</a>　<a href="../drawdowns/">歷史跌幅</a>　<a href="../../yu-backtest/">皓角回測</a></p>
+</footer>
+</div>
+<script src="./summary.js"></script>
+<script src="./curves.js"></script>
+<script>
+(function(){
+  "use strict";
+  var S = window.LEFT_SIDE_SUMMARY || {};
+  var C = window.LEFT_SIDE_CURVES || {};
+  var NS = "http://www.w3.org/2000/svg";
+  function $(id){return document.getElementById(id);}
+  function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+  function pct(x,d){
+    d=d==null?0:d;
+    var n=x*100, a=Math.abs(n).toFixed(d);
+    if(parseFloat(a)===0) return "0%";
+    return (n<0?"−":"+")+a+"%";
+  }
+  function years(y){
+    if(y>=14.5) return "15 年內沒回本";
+    var t = Math.round(y*10)/10;
+    return "約 " + t + " 年";
+  }
+  function el(name,attrs,text){
+    var e=document.createElementNS(NS,name);
+    for(var a in attrs) e.setAttribute(a,attrs[a]);
+    if(text!=null) e.textContent=text;
+    return e;
+  }
+  function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+
+  /* ----- problem table ----- */
+  (function(){
+    var tb = document.querySelector("#tbl-problem tbody");
+    if(!tb || !S.problem_s0_from_10) return;
+    var h="";
+    S.problem_s0_from_10.forEach(function(r){
+      if(["SPX 1987股災","SPX 2020疫情"].indexOf(r.label)>=0) return; // 放註裡當反例
+      h += "<tr><td class='name'>"+esc(r.label)+"</td>"
+        +"<td class='neg'>"+(r.spent_dd==null?"—":pct(r.spent_dd,0))+"</td>"
+        +"<td>"+(r.spent_share==null?"—":Math.round(r.spent_share*100)+"%")+"</td>"
+        +"<td class='neg'>"+pct(r.min_vs_capital,0)+"</td>"
+        +"<td>"+years(r.below_years)+"</td></tr>";
+    });
+    tb.innerHTML=h;
+    var yndx = S.problem_s0_from_10.filter(function(r){return r.label==="NDX .com泡沫";})[0];
+    var ysox = S.problem_s0_from_10.filter(function(r){return r.label==="SOX .com泡沫";})[0];
+    var c87 = S.problem_s0_from_10.filter(function(r){return r.label==="SPX 1987股災";})[0];
+    var c20 = S.problem_s0_from_10.filter(function(r){return r.label==="SPX 2020疫情";})[0];
+    var note = "皓角式（起點先投 50%、每跌 5% 再加 5%、永不賣的近似）在這幾次只少虧 1 到 4 個百分點";
+    if(yndx && ysox) note += "（例如 NDX .com "+pct(yndx.yu_min,0)+"、SOX .com "+pct(ysox.yu_min,0)+"）";
+    note += "。快速 V 轉時原計畫反而很好用";
+    if(c87 && c20) note += "，例如 1987 只虧 "+pct(c87.min_vs_capital,0)+"，2020 只虧 "+pct(c20.min_vs_capital,0);
+    note += "。";
+    $("problem-note").textContent = note;
+  })();
+
+  /* ----- 180-event table ----- */
+  (function(){
+    var tb = document.querySelector("#tbl-event tbody");
+    if(!tb || !S.event_5y) return;
+    var rows = [
+      ["一次買滿","BH_一次買滿"],
+      ["原計畫","S0_原計畫後抱"],
+      ["皓角式","Y_皓角式"],
+      ["低於 200 日線暫停加碼","B1_低於200日線暫停加碼"],
+      ["本站空頭規則暫停加碼","B2_本站空頭規則暫停加碼"],
+      ["波動 >1.5 倍暫停加碼","C_波動>1.5倍暫停加碼"],
+      ["10 月線 ±3% 減半","R2_10月線±3%減半"],
+      ["10 月線全出全回","E1_10月線全出全回"],
+      ["標準版（R1+R2+閒置定額）","FIN_標準(R1+R2+閒置定額)", true],
+      ["保守版（R1+E1+閒置定額）","FIN_保守(R1+E1+閒置定額)"],
+      ["最簡版（一次買滿 + R2）","__simple__"]
+    ];
+    var h="";
+    rows.forEach(function(row){
+      var rec = row[1]==="__simple__" ? S.simple_event : S.event_5y[row[1]];
+      if(!rec) return;
+      h += "<tr class='"+(row[2]?"hl":"")+"'><td class='name'>"+esc(row[0])+"</td>"
+        +"<td>"+rec.median_final.toFixed(2)+"</td>"
+        +"<td class='neg'>"+pct(rec.p10_loss,0)+"</td>"
+        +"<td class='neg'>"+pct(rec.worst_loss,0)+"</td>"
+        +"<td>"+(rec.median_cash_end==null?"—":Math.round(rec.median_cash_end*100)+"%")+"</td></tr>";
+    });
+    tb.innerHTML=h;
+  })();
+
+  /* ----- crash from-peak table ----- */
+  (function(){
+    var thead=document.querySelector("#tbl-crash thead");
+    var tb=document.querySelector("#tbl-crash tbody");
+    if(!thead || !S.crash_cmp) return;
+    var strats=["一次買滿","原計畫","最簡版","標準版","保守版"];
+    var labs=S.crash_cmp.map(function(r){return r.label;});
+    thead.innerHTML = "<tr><th class='rowh'>策略</th>"+labs.map(function(l){return "<th>"+esc(l)+"</th>";}).join("")+"</tr>";
+    var h="";
+    strats.forEach(function(s,i){
+      h += "<tr class='"+(s==="標準版"?"hl":"")+"'><td class='name'>"+s+"</td>";
+      S.crash_cmp.forEach(function(r){
+        var cell=r.from_peak[s];
+        if(!cell){ h += "<td>—</td>"; return; }
+        h += "<td class='neg'>"+pct(cell.min,0)+"／"+cell.final.toFixed(2)+"</td>";
+      });
+      h += "</tr>";
+    });
+    tb.innerHTML=h;
+  })();
+
+  /* ----- calm table ----- */
+  (function(){
+    var thead=document.querySelector("#tbl-calm thead");
+    var tb=document.querySelector("#tbl-calm tbody");
+    if(!thead || !S.calm_cost) return;
+    thead.innerHTML = "<tr><th class='rowh'>策略</th><th>2013–2019 · NDX</th><th>SOX</th><th>SPX</th><th>2023 後 · NDX</th><th>SOX</th><th>SPX</th><th>台股</th></tr>";
+    var map = [
+      ["原計畫","S0_原計畫後抱"],
+      ["原計畫＋閒置轉定額","S0I_原計畫+閒置12月後轉定額"],
+      ["最簡版（一次買滿 + R2）","BH+R2_10月線±3%減半"],
+      ["標準版","FIN_標準(R1+R2+閒置定額)", true],
+      ["保守版","FIN_保守(R1+E1+閒置定額)"]
+    ];
+    function cell(period, idx, key){
+      var v = S.calm_cost[period][idx] && S.calm_cost[period][idx][key];
+      if(v==null) return "<td>—</td>";
+      return "<td class='"+(v<0?"neg":v>0?"pos":"")+"'>"+pct(v,0)+"</td>";
+    }
+    var h="";
+    map.forEach(function(row){
+      h += "<tr class='"+(row[2]?"hl":"")+"'><td class='name'>"+row[0]+"</td>";
+      h += cell("2013_2019_5y","NDX",row[1])+cell("2013_2019_5y","SOX",row[1])+cell("2013_2019_5y","SPX",row[1]);
+      h += cell("2023_to_end","NDX",row[1])+cell("2023_to_end","SOX",row[1])+cell("2023_to_end","SPX",row[1])+cell("2023_to_end","TWII",row[1]);
+      h += "</tr>";
+    });
+    tb.innerHTML=h;
+  })();
+
+  /* ----- equity curves ----- */
+  function seriesOf(crash, label){
+    var c=(C.crashes||[]).filter(function(x){return x.id===crash;})[0];
+    if(!c) return null;
+    var s=c.series.filter(function(x){return x.label===label;})[0];
+    return {crash:c, s:s};
+  }
+  function paintCurve(boxId, crashId, takeId){
+    var box=$(boxId); if(!box) return;
+    var pack=["一次買滿","原計畫","標準版"].map(function(l){return seriesOf(crashId,l);});
+    if(pack.some(function(p){return !p || !p.s;})) return;
+    var allDates={};
+    pack.forEach(function(p){ p.s.dates.forEach(function(d){ allDates[d]=1; }); });
+    var dates=Object.keys(allDates).sort();
+    // map each series onto union dates via step (previous value)
+    function aligned(s){
+      var m={}; s.dates.forEach(function(d,i){ m[d]=s.values[i]; });
+      var out=[], last=s.values[0];
+      dates.forEach(function(d){ if(m[d]!=null) last=m[d]; out.push(last); });
+      return out;
+    }
+    var cols={ "一次買滿":cssVar("--c-bh"), "原計畫":cssVar("--c-s0"), "標準版":cssVar("--c-fin") };
+    var W=Math.max(300, Math.round(box.clientWidth||680));
+    var mL=36, mR=86, mT=16, mB=30, H=240;
+    var vals=[];
+    pack.forEach(function(p){ vals=vals.concat(p.s.values); });
+    var vmin=Math.min.apply(null, vals.concat([0.5]));
+    var vmax=Math.max.apply(null, vals.concat([1]));
+    // pad
+    vmin=Math.floor(vmin*10)/10;
+    vmax=Math.ceil(vmax*10)/10;
+    if(vmax<1.2) vmax=1.2;
+    var t0=new Date(dates[0]).getTime(), t1=new Date(dates[dates.length-1]).getTime();
+    var x=function(iso){ return mL+(W-mL-mR)*((new Date(iso).getTime()-t0)/(t1-t0)); };
+    var y=function(v){ return mT+(H-mT-mB)*(1-(v-vmin)/(vmax-vmin)); };
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,"aria-hidden":"true"});
+    var grid=cssVar("--line"), muted=cssVar("--muted"), ink=cssVar("--ink");
+    // y ticks
+    for(var v=vmin; v<=vmax+1e-9; v+= (vmax-vmin)>2 ? 0.5 : 0.2){
+      var yy=y(Math.round(v*10)/10);
+      svg.appendChild(el("line",{x1:mL,x2:W-mR,y1:yy,y2:yy,stroke:grid,"stroke-width":1}));
+      svg.appendChild(el("text",{x:mL-6,y:yy+4,"font-size":11,fill:muted,"text-anchor":"end"}, (Math.round(v*10)/10).toFixed(1)));
+    }
+    // capital=1
+    svg.appendChild(el("line",{x1:mL,x2:W-mR,y1:y(1),y2:y(1),stroke:ink,"stroke-width":1,"stroke-dasharray":"3 3","stroke-opacity":"0.5"}));
+    svg.appendChild(el("text",{x:W-mR+4,y:y(1)+4,"font-size":11,fill:muted},"本金 1"));
+    // year ticks
+    var y0=parseInt(dates[0].slice(0,4),10), y1=parseInt(dates[dates.length-1].slice(0,4),10);
+    var step = (y1-y0)>10 ? 3 : 2;
+    for(var yr=y0; yr<=y1; yr+=step){
+      var xx=x(yr+"-01-01");
+      if(xx<mL||xx>W-mR) continue;
+      svg.appendChild(el("text",{x:xx,y:H-10,"font-size":11,fill:muted,"text-anchor":"middle"}, String(yr)));
+    }
+    pack.forEach(function(p){
+      var vs=aligned(p.s);
+      var d=vs.map(function(val,i){ return (i?"L":"M")+x(dates[i]).toFixed(1)+","+y(val).toFixed(1); }).join("");
+      svg.appendChild(el("path",{d:d,fill:"none",stroke:cols[p.s.label],"stroke-width":2.4,"stroke-linejoin":"round","stroke-linecap":"round"}));
+      // end label
+      var last=vs[vs.length-1];
+      svg.appendChild(el("text",{x:W-mR+4,y:y(last)+4,"font-size":11,fill:cols[p.s.label],"font-weight":"700"}, p.s.label+" "+pct(p.s.min_vs_capital,0)));
+    });
+    // title
+    svg.appendChild(el("text",{x:mL,y:12,"font-size":13,fill:ink}, pack[0].crash.label+" · 從跌 10% 那天開始"));
+    box.innerHTML="";
+    box.appendChild(svg);
+
+    var s0=pack.filter(function(p){return p.s.label==="原計畫";})[0].s;
+    var fin=pack.filter(function(p){return p.s.label==="標準版";})[0].s;
+    var bh=pack.filter(function(p){return p.s.label==="一次買滿";})[0].s;
+    var take="";
+    if(crashId==="NDX"){
+      take="在 NDX 的 .com 泡沫，從跌 10% 那天開始買：原計畫最多虧到本金的 "+pct(s0.min_vs_capital,0)+"，標準版把最慘的虧損壓到 "+pct(fin.min_vs_capital,0)+"（一次買滿是 "+pct(bh.min_vs_capital,0)+"）。線在 1 下面代表還沒回本。";
+    } else {
+      take="在 2008 年金融海嘯，同樣從跌 10% 開始：原計畫最多虧 "+pct(s0.min_vs_capital,0)+"，標準版最多虧 "+pct(fin.min_vs_capital,0)+"。這次回復比較快，但標準版一路比較淺。";
+    }
+    $(takeId).textContent=take;
+  }
+
+  /* ----- tradeoff bars ----- */
+  function paintToff(){
+    var box=$("chart-toff"); if(!box || !S.event_5y || !S.calm_cost) return;
+    var items=[
+      {name:"原計畫", worst:S.event_5y["S0_原計畫後抱"].worst_loss, fee:S.calm_cost["2013_2019_5y"].NDX["S0_原計畫後抱"]},
+      {name:"標準版", worst:S.event_5y["FIN_標準(R1+R2+閒置定額)"].worst_loss, fee:S.calm_cost["2013_2019_5y"].NDX["FIN_標準(R1+R2+閒置定額)"], hl:true},
+      {name:"保守版", worst:S.event_5y["FIN_保守(R1+E1+閒置定額)"].worst_loss, fee:S.calm_cost["2013_2019_5y"].NDX["FIN_保守(R1+E1+閒置定額)"]},
+      {name:"最簡版", worst:S.simple_event.worst_loss, fee:S.calm_cost["2013_2019_5y"].NDX["BH+R2_10月線±3%減半"]},
+      {name:"一次買滿", worst:S.event_5y["BH_一次買滿"].worst_loss, fee:0}
+    ];
+    var W=Math.max(300, Math.round(box.clientWidth||680));
+    var rowH=64, mL=4, mR=8, top=4, mB=8;
+    var H=top+items.length*rowH+mB;
+    var lo=-0.85;
+    var x=function(p){ return 120 + (W-mR-128) * (p/lo); };
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,"aria-hidden":"true"});
+    var colW=cssVar("--red"), colF=cssVar("--amber"), ink=cssVar("--ink"), muted=cssVar("--muted");
+    items.forEach(function(it,i){
+      var y=top+i*rowH;
+      svg.appendChild(el("text",{x:mL,y:y+16,"font-size":14,fill:ink,"font-weight":it.hl?"700":"500"}, it.name));
+      // worst
+      var w1=Math.max(2, x(it.worst)-120);
+      svg.appendChild(el("rect",{x:120,y:y+8,width:w1,height:10,rx:2,fill:colW}));
+      svg.appendChild(el("text",{x:120+w1+6,y:y+17,"font-size":12,fill:colW},"最差 "+pct(it.worst,0)));
+      // fee
+      var w2=Math.max(it.fee===0?0:2, x(it.fee)-120);
+      if(it.fee!==0){
+        svg.appendChild(el("rect",{x:120,y:y+28,width:w2,height:10,rx:2,fill:colF}));
+        svg.appendChild(el("text",{x:120+w2+6,y:y+37,"font-size":12,fill:colF},"平穩期少賺 "+pct(it.fee,0)});
+      } else {
+        svg.appendChild(el("text",{x:120,y:y+37,"font-size":12,fill:muted},"平穩期當基準（少賺 0%）"));
+      }
+    });
+    box.innerHTML="";
+    box.appendChild(svg);
+    var st=items.filter(function(x){return x.name==="標準版";})[0];
+    var s0=items.filter(function(x){return x.name==="原計畫";})[0];
+    $("take-toff").textContent = "標準版把 180 次裡最慘的虧損，從原計畫的 "+pct(s0.worst,0)+" 壓到 "+pct(st.worst,0)+"；但在 2013–2019 這種平穩期，NDX 持有五年會比一次買滿少賺約 "+pct(st.fee,0)+"。這就是保費。";
+  }
+
+  function paintAll(){
+    paintCurve("chart-ndx","NDX","take-ndx");
+    paintCurve("chart-spx","SPX","take-spx");
+    paintToff();
+  }
+  var rz=null;
+  window.addEventListener("resize", function(){ clearTimeout(rz); rz=setTimeout(paintAll,120); });
+  paintAll();
+})();
+</script>
+</body>
+</html>

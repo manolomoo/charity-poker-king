@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>慈善撲克王｜歷史重大下跌段</title>
+<meta name="description" content="NDX、SPX、SOX、台灣加權的歷史重大下跌段：跌了多少、跌了多久。過去跌幅不能預測未來，非投資建議。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#f3ecdc; --ink:#e8edf5; --text:#c6cfdc; --muted:#a3aec0;
+  --red:#ff7482; --green:#3fd0a0; --amber:#f2b552;
+  --line:#2b3850; --bg:#0f1724; --surface:#172135; --edge:#8fa6d8;
+  --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --bar:#c45b68; --bar-soft:#8a4a55; --now:#f2b552; --avg:#8fa6d8;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.75;background:var(--bg)}
+.wrap{max-width:1100px;margin:0 auto;padding:22px 16px 80px}
+h1{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(26px,6vw,44px);line-height:1.2;margin:0 0 6px}
+.sub{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(16px,3vw,20px);margin:0 0 12px}
+.lede,.note{margin:0 0 12px;max-width:50em}
+.note{color:var(--muted);font-size:13px}
+nav.top{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 14px;margin:8px 0 18px;border-bottom:3px double var(--edge);position:sticky;top:0;z-index:5;background:rgba(15,23,36,.95)}
+nav.top a{display:inline-block;padding:5px 13px;border:1px solid #3a4864;border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:14px}
+nav.top a:hover{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+h2{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(22px,4vw,28px);margin:0 0 8px}
+section{margin:28px 0 36px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 12px}
+.box-o{background:#2a2414;border:1px solid #5c4b1f;border-radius:12px;padding:14px 16px;margin:12px 0}
+.take{margin:0 0 10px;color:var(--ink);font-size:16px;line-height:1.6}
+.take b{color:var(--navy)}
+.tabs{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 0 8px;margin:0 0 12px}
+.tabs button{
+  flex:0 0 auto;font:inherit;font-size:14px;color:var(--ink);
+  background:var(--surface);border:1px solid #3a4864;border-radius:999px;
+  padding:6px 14px;cursor:pointer;
+}
+.tabs button.on{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 14px}
+.sum .card{margin:0;padding:12px}
+.sum .k{color:var(--muted);font-size:13px;margin:0}
+.sum .v{font-family:var(--serif);font-weight:900;font-size:clamp(22px,5vw,30px);line-height:1.2;color:var(--navy);margin:2px 0 0;font-variant-numeric:tabular-nums}
+.sum .v.neg{color:var(--red)}
+.nowbox{border-color:#5c4b1f;background:#1c1a12}
+.nowbox .v{color:var(--amber)}
+.nowbox .d{color:var(--muted);font-size:12px;line-height:1.55;margin:6px 0 0}
+.sort{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.sort button{
+  font:inherit;font-size:12px;color:var(--muted);
+  background:transparent;border:1px solid var(--line);border-radius:999px;
+  padding:2px 10px;cursor:pointer;
+}
+.sort button.on{color:var(--ink);border-color:var(--edge)}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto}
+.chart text{font-family:var(--sans);fill:var(--muted)}
+.scroll{overflow:auto;-webkit-overflow-scrolling:touch;margin:8px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;font-size:13px;min-width:860px;width:100%;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:right;white-space:nowrap}
+th{background:#141e30;color:var(--navy);font-weight:700;vertical-align:bottom}
+th.rowh,td.rowh,td.name{text-align:left;white-space:normal;min-width:10em}
+td.neg{color:var(--red)}
+tr.severe td{background:rgba(80,40,48,.55)}
+tr.severe td.rowh{background:#2a1c22}
+.notes{margin:12px 0 0;padding:0 0 0 1.1em;color:var(--muted);font-size:13px;line-height:1.7}
+.notes li{margin:0 0 4px}
+a{color:var(--edge)}
+footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);font-size:13px}
+.leg{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0 0 8px;padding:0;list-style:none;font-size:13px;color:var(--text)}
+.leg li{display:flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:14px;height:8px;border-radius:2px;background:var(--bar)}
+.sw.soft{background:var(--bar-soft)}
+.sw.now{background:var(--now)}
+.sw.avg{width:16px;height:0;border-top:2px dashed var(--avg)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>歷史重大下跌段</h1>
+  <p class="sub">過去每次大跌，跌了多少、跌了多久</p>
+  <p class="lede">依使用者提供的 Excel 下跌段表做成網頁。表內高低點是 TradingView 日線的盤中最高價與最低價，不是收盤價。事件序列沿用完整表的編號（中間的上漲段沒有列出來，所以編號不是 1、2、3 連下去）。</p>
+</header>
+<nav class="top">
+  <a href="../../">首頁</a>
+  <a href="../">走勢觀察</a>
+  <a href="../scale-in/">分批計算</a>
+  <a href="../left-side-fix/">左側修正</a>
+  <a href="../../yu-backtest/">皓角回測</a>
+</nav>
+
+<div class="tabs" role="tablist" aria-label="指數" id="tabs"></div>
+
+<section id="overview">
+  <h2 id="idx-title">—</h2>
+  <div class="sum" id="sum"></div>
+  <p class="take" id="take-bars"></p>
+  <div class="card">
+    <ul class="leg">
+      <li><span class="sw"></span>跌幅達 20% 以上</li>
+      <li><span class="sw soft"></span>跌幅不到 20%</li>
+      <li><span class="sw avg"></span>平均跌幅</li>
+      <li><span class="sw now"></span>現在（若有本站資料）</li>
+    </ul>
+    <div class="sort" id="sort">
+      <button type="button" data-sort="size" class="on">依跌幅（深的在上）</button>
+      <button type="button" data-sort="time">依時間（舊的在上）</button>
+    </div>
+    <div class="chart" id="bars" role="img" aria-label="各次下跌的跌幅橫條圖"></div>
+  </div>
+  <p class="take" id="take-time"></p>
+  <div class="card">
+    <div class="chart" id="timeline" role="img" aria-label="各次下跌發生的時間與深度"></div>
+    <p class="note" style="margin:8px 0 0">橫軸是年份，每一塊是一次下跌從高點走到低點的期間；愈往下代表跌愈深。這是歷史事件的示意，不是每日回撤曲線。</p>
+  </div>
+</section>
+
+<section id="table-sec">
+  <h2>明細表</h2>
+  <p class="note">灰底＝跌幅達 20% 以上。手機可左右滑動。</p>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th class="rowh">事件序列</th>
+          <th>期間</th>
+          <th class="rowh">事件</th>
+          <th>歷時(日曆天)</th>
+          <th>歷經交易日</th>
+          <th>漲跌幅(點)</th>
+          <th>漲跌幅(%)</th>
+          <th>起始日</th>
+          <th>結束日</th>
+          <th>起點點位</th>
+          <th>終點點位</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <ul class="notes" id="footnotes"></ul>
+</section>
+
+<div class="box-o">
+  <p style="margin:0">過去的下跌段不能預測未來也會跌多少，也不是下一次一定會跌一樣深。非投資建議。</p>
+</div>
+
+<footer>
+  <p>過去的下跌段不能預測未來，非投資建議。依使用者提供的 Excel 下跌段表做成網頁版，公式（期間、日曆天、漲跌幅）已重新計算並對過 Excel 快取。</p>
+  <p><a href="../../">← 首頁</a>　<a href="../">走勢觀察</a>　<a href="../scale-in/">分批計算</a>　<a href="../left-side-fix/">左側修正</a></p>
+</footer>
+</div>
+<script src="./drawdowns.js"></script>
+<script src="../data.js"></script>
+<script>
+(function(){
+  "use strict";
+  var DATA = window.DRAWDOWNS_DATA || {indices:[]};
+  var NS = "http://www.w3.org/2000/svg";
+  var curId = (DATA.indices[0] && DATA.indices[0].id) || "NDX";
+  var sortBy = "size";
+
+  function $(id){ return document.getElementById(id); }
+  function idxById(id){ return DATA.indices.filter(function(x){return x.id===id;})[0]; }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+  function pct(x, d){
+    d = d==null ? 1 : d;
+    var n = x*100;
+    var s = n.toFixed(d);
+    if(parseFloat(s)===0) s = (0).toFixed(d);
+    return s + "%";
+  }
+  function pctSigned(x, d){
+    var n = x*100, s = Math.abs(n).toFixed(d==null?1:d);
+    if(parseFloat(s)===0) return "0%";
+    return (n<0?"−":"+") + s + "%";
+  }
+  function pts(x){
+    var n = Math.round(x*100)/100;
+    return n.toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function isoToYmd(s){
+    var p = String(s).split("-");
+    if(p.length!==3) return s;
+    return p[0]+"/"+Number(p[1])+"/"+Number(p[2]);
+  }
+  function dur(days){
+    var s = "跌了 " + days + " 天";
+    if(days < 60) return s;
+    var y = Math.floor(days/365), m = Math.round((days%365)/30.44);
+    if(m===12){ y++; m=0; }
+    if(y>0 && m>0) s += "（約 " + y + " 年 " + m + " 個月）";
+    else if(y>0) s += "（約 " + y + " 年）";
+    else if(m>0) s += "（約 " + m + " 個月）";
+    return s;
+  }
+  function currentDD(id){
+    var D = window.SITE_DATA || {};
+    var ix = D.analysis && D.analysis.indices && D.analysis.indices[id];
+    if(!ix || !ix.range_52w || ix.range_52w.close_vs_high_pct==null) return null;
+    return {
+      vsHigh: ix.range_52w.close_vs_high_pct/100,
+      vsCloseHigh: ix.range_52w.close_vs_close_high_pct/100,
+      highDate: ix.range_52w.high_date,
+      asof: (ix.last && ix.last.date) || ix.asof_session,
+      close: ix.last && ix.last.close
+    };
+  }
+
+  function el(name, attrs, text){
+    var e = document.createElementNS(NS, name);
+    for(var a in attrs) e.setAttribute(a, attrs[a]);
+    if(text!=null) e.textContent = text;
+    return e;
+  }
+  function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+  function paintTabs(){
+    var box = $("tabs");
+    box.innerHTML = "";
+    DATA.indices.forEach(function(ix){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = ix.id==="TWII" ? "台灣加權" : ix.id;
+      b.setAttribute("aria-selected", ix.id===curId ? "true" : "false");
+      if(ix.id===curId) b.className = "on";
+      b.addEventListener("click", function(){ curId = ix.id; paint(); });
+      box.appendChild(b);
+    });
+  }
+
+  function paintSummary(ix, now){
+    var sev = ix.events.filter(function(e){return e.severe;}).length;
+    var html = "";
+    function card(k,v,cls,extra){
+      return '<div class="card'+(extra||"")+'"><p class="k">'+k+'</p><p class="v '+(cls||"")+'">'+v+'</p></div>';
+    }
+    html += card("下跌次數", String(ix.events.length));
+    html += card("平均跌幅", pctSigned(ix.avg_pct), "neg");
+    html += card("中位數跌幅", pctSigned(ix.median_pct), "neg");
+    html += card("跌超過 20%", sev + " 次");
+    if(now){
+      html += '<div class="card nowbox"><p class="k">現在（收盤 vs 52 週高點）</p><p class="v">'+pctSigned(now.vsHigh)+'</p>'
+        + '<p class="d">截至 '+esc(now.asof)+'。這是本站 Yahoo 收盤價相對 52 週盤中高點（高點日 '+esc(now.highDate)+'），和表內 TradingView 盤中高低點算法不同，只能當位置參考。</p></div>';
+    }
+    $("sum").innerHTML = html;
+  }
+
+  function ordered(ix){
+    var ev = ix.events.slice();
+    if(sortBy==="size") ev.sort(function(a,b){ return a.change_pct - b.change_pct; });
+    else ev.sort(function(a,b){ return a.start_date < b.start_date ? -1 : 1; });
+    return ev;
+  }
+
+  function paintBars(ix, now){
+    var box = $("bars");
+    box.innerHTML = "";
+    var ev = ordered(ix);
+    var W = Math.max(300, Math.round(box.clientWidth || 680));
+    var rowH = 52, top = 8, mL = 4, mR = 8, mB = 28;
+    var hasNow = now && now.vsHigh < 0;
+    var n = ev.length + (hasNow ? 1 : 0);
+    var H = top + n*rowH + mB;
+    var deepest = ev[0] ? ev.reduce(function(m,e){return Math.min(m,e.change_pct);},0) : -0.2;
+    if(hasNow) deepest = Math.min(deepest, now.vsHigh);
+    deepest = Math.min(deepest, ix.avg_pct, -0.2);
+    var axisMin = Math.floor(deepest*10 - 0.01)/10; // e.g. -0.9
+    var barX0 = 8, barX1 = W - 8;
+    var x = function(p){ return barX0 + (barX1-barX0) * (p / axisMin); }; // p negative
+    var svg = el("svg", {viewBox:"0 0 "+W+" "+H, width:W, height:H, "aria-hidden":"true"});
+    var colBar = cssVar("--bar"), colSoft = cssVar("--bar-soft"), colNow = cssVar("--now"), colAvg = cssVar("--avg");
+
+    // avg line
+    var xa = x(ix.avg_pct);
+    svg.appendChild(el("line", {x1:xa,x2:xa,y1:top-2,y2:top+n*rowH-6, stroke:colAvg, "stroke-width":1.5, "stroke-dasharray":"5 4"}));
+    svg.appendChild(el("text", {x:Math.min(W-4, xa+4), y:H-8, "font-size":11, fill:colAvg}, "平均 "+pctSigned(ix.avg_pct)));
+
+    function row(i, label, sub, val, color, isNow){
+      var y = top + i*rowH;
+      svg.appendChild(el("text", {x:barX0, y:y+14, "font-size":13, fill:"#e8edf5", "font-weight": isNow?"700":"500"}, label));
+      svg.appendChild(el("text", {x:barX0, y:y+30, "font-size":12, fill:"#a3aec0"}, sub));
+      var w = Math.max(2, x(val) - barX0);
+      var h = 10, yy = y+34;
+      svg.appendChild(el("rect", {x:barX0, y:yy, width:w, height:h, rx:2, fill:color}));
+      var lx = barX0 + w + 6;
+      var anchor = "start";
+      if(lx + 54 > W-4){ lx = barX0 + w - 6; anchor = "end"; }
+      svg.appendChild(el("text", {x:lx, y:yy+h-1, "font-size":13, "font-weight":"700", fill:color, "text-anchor":anchor}, pctSigned(val)));
+    }
+    ev.forEach(function(e,i){
+      var sub = pctSigned(e.change_pct) + " · " + dur(e.calendar_days);
+      row(i, e.name, sub, e.change_pct, e.severe?colBar:colSoft, false);
+    });
+    if(hasNow){
+      row(ev.length, "現在（截至 "+now.asof+"）", "Yahoo 收盤相對 52 週高點，算法不同", now.vsHigh, colNow, true);
+    }
+    box.appendChild(svg);
+  }
+
+  function paintTimeline(ix, now){
+    var box = $("timeline");
+    box.innerHTML = "";
+    var ev = ix.events.slice().sort(function(a,b){ return a.start_date < b.start_date ? -1 : 1; });
+    var W = Math.max(300, Math.round(box.clientWidth || 680));
+    var mL = 40, mR = 12, mT = 18, mB = 36;
+    var years0 = 2000, years1 = 2026;
+    ev.forEach(function(e){
+      years0 = Math.min(years0, parseInt(e.start_date.slice(0,4),10));
+      years1 = Math.max(years1, parseInt(e.end_date.slice(0,4),10));
+    });
+    if(now && now.asof) years1 = Math.max(years1, parseInt(String(now.asof).slice(0,4),10));
+    years0 -= 0; years1 += 0;
+    var t0 = Date.UTC(years0,0,1), t1 = Date.UTC(years1,11,31);
+    var x = function(iso){
+      var p = String(iso).split("-");
+      var t = Date.UTC(+p[0], (+p[1]||1)-1, +p[2]||1);
+      return mL + (W-mL-mR) * (t-t0)/(t1-t0);
+    };
+    var deepest = ev.reduce(function(m,e){return Math.min(m,e.change_pct);},0);
+    deepest = Math.min(deepest, -0.2);
+    var axisMin = Math.floor(deepest*10 - 0.01)/10;
+    var H = 220;
+    var y = function(p){ return mT + (H-mT-mB) * (p / axisMin); };
+    var svg = el("svg", {viewBox:"0 0 "+W+" "+H, width:W, height:H, "aria-hidden":"true"});
+    var colBar = cssVar("--bar"), colSoft = cssVar("--bar-soft"), colNow = cssVar("--now"), colAvg = cssVar("--avg"), grid=cssVar("--line");
+    // grid
+    for(var yr=years0; yr<=years1; yr+= (years1-years0>16?5:2)){
+      var xx = x(yr+"-01-01");
+      svg.appendChild(el("line", {x1:xx,x2:xx,y1:mT,y2:H-mB, stroke:grid, "stroke-width":1}));
+      svg.appendChild(el("text", {x:xx, y:H-12, "font-size":11, "text-anchor":"middle"}, String(yr)));
+    }
+    [0, -0.2, -0.4, -0.6, -0.8].forEach(function(p){
+      if(p < axisMin-1e-9) return;
+      var yy = y(p);
+      svg.appendChild(el("line", {x1:mL,x2:W-mR,y1:yy,y2:yy, stroke:grid, "stroke-width":1}));
+      svg.appendChild(el("text", {x:mL-6, y:yy+4, "font-size":11, "text-anchor":"end"}, p===0?"0":pctSigned(p,0)));
+    });
+    var ya = y(ix.avg_pct);
+    svg.appendChild(el("line", {x1:mL,x2:W-mR,y1:ya,y2:ya, stroke:colAvg, "stroke-width":1.5, "stroke-dasharray":"5 4"}));
+    ev.forEach(function(e){
+      var x1 = x(e.start_date), x2 = x(e.end_date);
+      if(x2-x1 < 3) x2 = x1+3;
+      var yy = y(e.change_pct);
+      svg.appendChild(el("rect", {x:x1, y:y(0), width:x2-x1, height:Math.max(2, yy-y(0)), rx:1, fill:e.severe?colBar:colSoft, opacity:"0.85"}));
+    });
+    if(now && now.asof && now.vsHigh<0){
+      var xn = x(now.asof);
+      svg.appendChild(el("line", {x1:xn,x2:xn,y1:mT,y2:H-mB, stroke:colNow, "stroke-width":2, "stroke-dasharray":"3 3"}));
+      var yn = y(now.vsHigh);
+      svg.appendChild(el("circle", {cx:xn, cy:yn, r:5, fill:colNow}));
+      svg.appendChild(el("text", {x:Math.min(W-mR, xn+8), y:yn-8, "font-size":11, fill:colNow, "font-weight":"700"}, "現在 "+pctSigned(now.vsHigh)));
+    }
+    box.appendChild(svg);
+  }
+
+  function paintTable(ix){
+    var h = "";
+    ix.events.forEach(function(e){
+      h += "<tr class='"+(e.severe?"severe":"")+"'>"
+        + "<td class='rowh'>"+e.seq+"</td>"
+        + "<td>"+esc(e.period)+"</td>"
+        + "<td class='name'>"+esc(e.name)+"</td>"
+        + "<td>"+e.calendar_days+"</td>"
+        + "<td>"+e.trading_days+"</td>"
+        + "<td class='neg'>"+pts(e.change_pts)+"</td>"
+        + "<td class='neg'>"+pctSigned(e.change_pct,2)+"</td>"
+        + "<td>"+isoToYmd(e.start_date)+"</td>"
+        + "<td>"+isoToYmd(e.end_date)+"</td>"
+        + "<td>"+pts(e.start_px)+"</td>"
+        + "<td>"+pts(e.end_px)+"</td></tr>";
+    });
+    // summary rows
+    h += "<tr><td></td><td></td><td class='name'>下跌段平均跌幅(%)</td><td></td><td></td><td></td><td class='neg'>"+pctSigned(ix.avg_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
+    h += "<tr><td></td><td></td><td class='name'>下跌段跌幅中位數(%)</td><td></td><td></td><td></td><td class='neg'>"+pctSigned(ix.median_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
+    $("tbody").innerHTML = h;
+    $("footnotes").innerHTML = ix.footnotes.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
+  }
+
+  function takeaways(ix, now){
+    var ev = ix.events.slice().sort(function(a,b){ return a.change_pct-b.change_pct; });
+    var deep = ev[0];
+    var sev = ev.filter(function(e){return e.severe;}).length;
+    var t1 = "這一張列了 "+ev.length+" 次下跌，平均跌 "+pctSigned(ix.avg_pct)+"，中位數 "+pctSigned(ix.median_pct)+"。有 "+sev+" 次跌超過 20%。最深的是「"+deep.name+"」，跌了 "+pctSigned(deep.change_pct)+"，"+dur(deep.calendar_days)+"。";
+    if(now){
+      t1 += " 目前收盤相對 52 週高點約 "+pctSigned(now.vsHigh)+"（截至 "+now.asof+"，Yahoo 口徑，和表內算法不同）。";
+    }
+    $("take-bars").innerHTML = t1;
+    $("take-time").textContent = "下面這張圖用時間來看：每一次下跌佔了哪一段年份、當時跌得多深。色塊愈長代表跌得愈久，愈往下代表跌得愈深。";
+  }
+
+  function paint(){
+    var ix = idxById(curId);
+    if(!ix) return;
+    $("idx-title").textContent = ix.title;
+    var now = currentDD(ix.id);
+    paintTabs();
+    paintSummary(ix, now);
+    takeaways(ix, now);
+    paintBars(ix, now);
+    paintTimeline(ix, now);
+    paintTable(ix);
+  }
+
+  document.getElementById("sort").addEventListener("click", function(ev){
+    var b = ev.target.closest("button");
+    if(!b) return;
+    sortBy = b.getAttribute("data-sort");
+    Array.prototype.forEach.call(document.querySelectorAll("#sort button"), function(x){
+      x.classList.toggle("on", x===b);
+    });
+    paint();
+  });
+  var rz=null;
+  window.addEventListener("resize", function(){
+    clearTimeout(rz); rz=setTimeout(paint, 120);
+  });
+  paint();
+})();
+</script>
+</body>
+</html>

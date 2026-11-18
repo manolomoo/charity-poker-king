@@ -191,17 +191,22 @@ def test_page_has_excel_wording():
     assert "書" not in html
 
 
-def test_home_footer_link_only():
+def test_home_inner_nav_has_scale_in():
+    """首頁極簡：分批計算只出現在「內頁」晶片列，不進燈號／走勢圖正文，也不再重複放頁腳。"""
     html = HOME.read_text(encoding="utf-8")
     link = '<a href="./trend/scale-in/">分批計算</a>'
-    assert html.count("scale-in") == 1, "首頁只能有頁腳那一個連結"
-    assert html.count("分批") == 1
+    assert html.count(link) == 1
+    assert html.count("scale-in") == 1
+    nav = re.search(r'<nav class="book-nav" aria-label="內頁">.*?</nav>', html, re.S)
+    assert nav, "缺少內頁晶片列"
+    assert link in nav.group(0)
     footer = re.search(r"<footer>.*?</footer>", html, re.S).group(0)
-    assert link in footer
-    assert re.search(r'估值位置</a>｜<a href="\./trend/scale-in/">分批計算</a></p>', footer)
-    outside = html.replace(footer, "")
-    for word in ("scale-in", "分批", "ScaleIn", "越跌買越多", "遞增強度"):
-        assert word not in outside, f"首頁主內容不該出現 {word}"
+    assert "scale-in" not in footer
+    assert "分批計算" not in footer
+    # 主內容（燈、圖、本益比）不該出現計算器用語
+    lights_to_pe = html.split('<div class="inner-nav"', 1)[0]
+    for word in ("ScaleIn", "越跌買越多", "遞增強度"):
+        assert word not in lights_to_pe, f"首頁主內容不該出現 {word}"
 
 
 def test_expectancy_links():

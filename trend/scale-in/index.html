@@ -68,6 +68,8 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 .sw.ln{width:18px;height:0;border-top:2px solid}
 .sw.ln.price{border-color:var(--c-price)}
 .sw.ln.avg{border-color:var(--c-avg);border-top-style:dashed}
+.sw.ln.low{border-color:var(--red);border-top-style:dotted;border-top-width:2px}
+.take{margin:0 0 10px;color:var(--ink);font-size:16px;line-height:1.65;max-width:50em}
 #chart{position:relative}
 #chart svg{display:block;width:100%;height:auto;touch-action:pan-y}
 #chart text{font-family:var(--sans);font-size:11px;fill:var(--muted)}
@@ -99,6 +101,8 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
   <a href="#chart-sec">圖</a>
   <a href="#table">分批表</a>
   <a href="../expectancy/">期望值表</a>
+  <a href="../drawdowns/">歷史跌幅</a>
+  <a href="../left-side-fix/">左側修正</a>
 </nav>
 
 <section id="input">
@@ -111,7 +115,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
       </label>
       <label>預期總跌幅（%）
         <input id="in-drop" type="number" inputmode="decimal" min="0" max="99.9" step="1" value="20">
-        <small>最後一批買在比起點低多少（例：20%）</small>
+        <small>最後一批買在比起點低多少（例：20%）。選數字時可對照各指數的<a href="../drawdowns/">歷史重大下跌段</a>；過去跌幅不能預測未來。</small>
       </label>
       <label>分幾次
         <input id="in-n" type="number" inputmode="numeric" min="1" max="30" step="1" value="11">
@@ -160,8 +164,10 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 
 <section id="chart-sec">
   <h2>每一批買多少、買在哪</h2>
+  <p class="take" id="chart-take">全部買完後，平均成本會比最低買進價高；股價從最低點反彈到平均成本就回本。</p>
   <div class="card">
     <ul class="chart-legend" aria-label="圖例">
+      <li><span class="sw ln low"></span>最低價（最後一批）</li>
       <li><span class="sw ln price"></span>買進價（相對起點）</li>
       <li><span class="sw ln avg"></span>買到此批的平均成本</li>
       <li><span class="sw bar"></span>每一批的投入金額</li>
@@ -203,7 +209,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 
 <footer>
   <p>計算只是數學試算，不代表會跌到這裡或會反彈，非投資建議。依使用者提供的 Excel 分批計算表做成網頁版。</p>
-  <p><a href="../../">← 首頁</a>　<a href="../">走勢觀察</a>　<a href="../expectancy/">期望值表</a></p>
+  <p><a href="../../">← 首頁</a>　<a href="../">走勢觀察</a>　<a href="../expectancy/">期望值表</a>　<a href="../drawdowns/">歷史跌幅</a>　<a href="../left-side-fix/">左側修正</a></p>
 </footer>
 </div>
 
@@ -372,12 +378,23 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     line("price",cPrice);
     line("avg",cAvg,"6 4");
 
+    // 最低價（最後一批買進價）橫線，方便對照平均成本
+    var L=B[n-1];
+    var yLow=py(L.price);
+    svg.appendChild(el("line",{x1:mL,x2:mL+pw,y1:yLow,y2:yLow,stroke:"var(--red)","stroke-width":1.5,"stroke-dasharray":"2 4","stroke-opacity":"0.85"}));
+
     // 線尾直接標示（寬螢幕才有；窄螢幕看圖例）
     if(endLabels){
-      var L=B[n-1], ya2=py(L.avg), yp=py(L.price);
-      if(yp-ya2<14){ var mid=(yp+ya2)/2; ya2=mid-7; yp=mid+7; }
+      var ya2=py(L.avg), yp=yLow;
+      if(yp-ya2<16){ var mid=(yp+ya2)/2; ya2=mid-8; yp=mid+8; }
       svg.appendChild(el("text",{x:mL+pw+4,y:ya2+4,"class":"end"},"平均成本 "+fmtPct(L.avg)));
-      svg.appendChild(el("text",{x:mL+pw+4,y:yp+4,"class":"end"},"買進價 "+fmtPct(L.price)));
+      svg.appendChild(el("text",{x:mL+pw+4,y:yp+4,"class":"end"},"最低價 "+fmtPct(L.price)));
+    }
+
+    var take=$("chart-take");
+    if(take){
+      take.textContent="全部買完後，平均成本是起點價的 "+fmtPct(r.avg_cost)+"，最低買進價是 "+fmtPct(L.price)+"。"
+        +"股價從最低點再漲 "+fmtPct(r.rebound)+" 就回到平均成本（回本）。這只是數學試算，不代表真的會跌到這裡或會反彈。";
     }
 
     // 滑過／點選：十字線＋提示

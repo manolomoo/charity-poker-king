@@ -94,6 +94,9 @@ section{margin-top:28px}
   background:var(--card);color:var(--head);text-decoration:none;font-size:14px;line-height:1.6;white-space:nowrap;
 }
 .book-nav a:hover,.book-nav a:focus-visible{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+
+.inner-nav{margin:16px 0 0}
+.inner-nav-label{margin:0 0 4px;padding:0 2px;color:var(--mute);font-size:12px;letter-spacing:.06em}
 .yu-card{display:block;margin-top:28px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:10px}
 .yu-card:hover,.yu-card:focus-visible{border-color:var(--accent)}
 .yu-card b{display:block;color:var(--head);font-size:16px;font-weight:500}
@@ -195,6 +198,23 @@ footer .more a:hover{color:var(--accent)}
 
   <nav id="ta-nav" class="book-nav" aria-label="技術分析教學段落"></nav>
 
+  <div class="inner-nav" id="inner-nav">
+    <p class="inner-nav-label">內頁</p>
+    <nav class="book-nav" aria-label="內頁">
+      <a href="./trend/stage/">階段現況</a>
+      <a href="./trend/expectancy/">期望值</a>
+      <a href="./trend/valuation/">估值</a>
+      <a href="./trend/scale-in/">分批計算</a>
+      <a href="./trend/drawdowns/">歷史跌幅</a>
+      <a href="./yu-backtest/">皓角回測</a>
+      <a href="./trend/left-side-fix/">左側修正</a>
+      <a href="./signals/">訊號詳情</a>
+      <a href="./trend/">走勢</a>
+      <a href="./trend/ta-book/">教學</a>
+    </nav>
+  </div>
+
+
   <section id="pe-charts" aria-label="Forward P/E 估值位置">
     <div class="pe-top">
       <a class="pe-title" href="./trend/valuation/">估值位置</a>
@@ -216,7 +236,6 @@ footer .more a:hover{color:var(--accent)}
 
   <footer>
     <p>僅供參考，非投資建議。</p>
-    <p class="more">更多：<a href="./trend/stage/">階段現況</a>｜<a href="./trend/expectancy/">期望值表</a>｜<a href="./trend/valuation/">估值位置</a>｜<a href="./trend/scale-in/">分批計算</a>｜<a href="./yu-backtest/">財經皓角抄底回測</a></p>
   </footer>
 </div>
 
