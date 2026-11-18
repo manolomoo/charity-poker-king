@@ -12,10 +12,15 @@ window.TA_BOOK_NAV = [
   { id: "expectancy", label: "期望值" },
   { id: "valuation", label: "估值" }
 ];
-window.renderTaBookNav = function(el, prefix){
+window.renderTaBookNav = function(el, prefix, opts){
   if(!el || !window.TA_BOOK_NAV) return;
   prefix = prefix || "";
-  el.innerHTML = window.TA_BOOK_NAV.map(function(it){
+  opts = opts || {};
+  var skip = {};
+  (opts.exclude || []).forEach(function(id){ skip[id] = true; });
+  el.innerHTML = window.TA_BOOK_NAV.filter(function(it){
+    return !skip[it.id];
+  }).map(function(it){
     var href = prefix + "#" + it.id;
     return '<a href="'+href+'">'+it.label+'</a>';
   }).join("");

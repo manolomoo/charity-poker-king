@@ -280,10 +280,10 @@ def test_page_has_content_and_notes(computed):
 def test_home_and_scale_in_links():
     home = HOME.read_text(encoding="utf-8")
     assert '<a href="./trend/drawdowns/">歷史跌幅</a>' in home
-    nav = re.search(r'<nav class="book-nav" aria-label="內頁">.*?</nav>', home, re.S)
+    nav = re.search(r'<nav class="book-nav" aria-label="看現況">.*?</nav>', home, re.S)
     assert nav and "drawdowns/" in nav.group(0)
-    # 極簡：主圖區（內頁列之前）不要出現下跌段正文
-    head = home.split('<div class="inner-nav"', 1)[0]
+    # 極簡：主圖區（分類導覽之前）不要出現下跌段正文
+    head = home.split('<div class="home-nav"', 1)[0]
     assert "歷史重大下跌段" not in head
     scale = SCALE.read_text(encoding="utf-8")
     assert 'href="../drawdowns/"' in scale

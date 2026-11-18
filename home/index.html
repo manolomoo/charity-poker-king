@@ -95,8 +95,20 @@ section{margin-top:28px}
 }
 .book-nav a:hover,.book-nav a:focus-visible{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
 
-.inner-nav{margin:16px 0 0}
-.inner-nav-label{margin:0 0 4px;padding:0 2px;color:var(--mute);font-size:12px;letter-spacing:.06em}
+.home-nav{margin:16px 0 0}
+.nav-group + .nav-group{margin-top:10px}
+.nav-group-label{margin:0;padding:0 2px;color:var(--mute);font-size:12px;letter-spacing:.06em;line-height:1.4}
+.home-nav .book-nav{margin:4px 0 0;padding:6px 0 0}
+.ta-chapters{margin:6px 0 0}
+.ta-chapters summary{
+  cursor:pointer;color:var(--mute);font-size:13px;line-height:1.5;
+  padding:2px 2px;list-style:none;display:inline-flex;align-items:center;gap:4px;
+  user-select:none;
+}
+.ta-chapters summary::-webkit-details-marker{display:none}
+.ta-chapters summary::after{content:"▸";font-size:11px}
+.ta-chapters[open] summary::after{content:"▾"}
+.ta-chapters summary:hover,.ta-chapters summary:focus-visible{color:var(--head)}
 .yu-card{display:block;margin-top:28px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:10px}
 .yu-card:hover,.yu-card:focus-visible{border-color:var(--accent)}
 .yu-card b{display:block;color:var(--head);font-size:16px;font-weight:500}
@@ -196,22 +208,36 @@ footer .more a:hover{color:var(--accent)}
     <div class="idx" id="idx"></div>
   </section>
 
-  <nav id="ta-nav" class="book-nav" aria-label="技術分析教學段落"></nav>
-
-  <div class="inner-nav" id="inner-nav">
-    <p class="inner-nav-label">內頁</p>
-    <nav class="book-nav" aria-label="內頁">
-      <a href="./trend/stage/">階段現況</a>
-      <a href="./trend/expectancy/">期望值</a>
-      <a href="./trend/valuation/">估值</a>
-      <a href="./trend/scale-in/">分批計算</a>
-      <a href="./trend/drawdowns/">歷史跌幅</a>
-      <a href="./yu-backtest/">皓角回測</a>
-      <a href="./trend/left-side-fix/">左側修正</a>
-      <a href="./signals/">訊號詳情</a>
-      <a href="./trend/">走勢</a>
-      <a href="./trend/ta-book/">教學</a>
-    </nav>
+  <div class="home-nav" id="home-nav">
+    <div class="nav-group">
+      <p class="nav-group-label">看現況</p>
+      <nav class="book-nav" aria-label="看現況">
+        <a href="./signals/">訊號詳情</a>
+        <a href="./trend/">走勢</a>
+        <a href="./trend/stage/">階段現況</a>
+        <a href="./trend/valuation/">估值</a>
+        <a href="./trend/drawdowns/">歷史跌幅</a>
+      </nav>
+    </div>
+    <div class="nav-group">
+      <p class="nav-group-label">工具與研究</p>
+      <nav class="book-nav" aria-label="工具與研究">
+        <a href="./trend/scale-in/">分批計算</a>
+        <a href="./trend/expectancy/">期望值</a>
+        <a href="./trend/left-side-fix/">左側修正</a>
+        <a href="./yu-backtest/">皓角回測</a>
+      </nav>
+    </div>
+    <div class="nav-group" id="learn-nav">
+      <p class="nav-group-label">學觀念（技術分析書）</p>
+      <nav class="book-nav" aria-label="學觀念">
+        <a href="./trend/ta-book/">教學首頁</a>
+      </nav>
+      <details class="ta-chapters">
+        <summary>教學章節</summary>
+        <nav id="ta-nav" class="book-nav" aria-label="技術分析教學章節"></nav>
+      </details>
+    </div>
   </div>
 
 
@@ -242,7 +268,7 @@ footer .more a:hover{color:var(--accent)}
 <script src="./trend/data.js"></script>
 <script src="./trend/ta-book/nav.js"></script>
 <script>
-renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/");
+renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/", {exclude:["expectancy","valuation"]});
 /* ---------- 燈號：只列 🔴 / 🟡，其餘一行帶過 ---------- */
 (function(){
   "use strict";

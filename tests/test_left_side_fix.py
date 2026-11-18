@@ -109,7 +109,7 @@ def test_cross_links_and_home_chip():
         assert href in html
     home = HOME.read_text(encoding="utf-8")
     assert '<a href="./trend/left-side-fix/">左側修正</a>' in home
-    nav = re.search(r'<nav class="book-nav" aria-label="內頁">.*?</nav>', home, re.S)
+    nav = re.search(r'<nav class="book-nav" aria-label="工具與研究">.*?</nav>', home, re.S)
     assert nav and "left-side-fix/" in nav.group(0)
     for page, href in ((SCALE, "../left-side-fix/"), (DRAW, "../left-side-fix/")):
         assert href in page.read_text(encoding="utf-8")
@@ -117,25 +117,30 @@ def test_cross_links_and_home_chip():
 
 def test_home_inner_nav_complete():
     html = HOME.read_text(encoding="utf-8")
-    nav = re.search(r'<nav class="book-nav" aria-label="內頁">.*?</nav>', html, re.S)
-    assert nav
-    text = nav.group(0)
-    expected = {
-        "./trend/stage/": "階段現況",
-        "./trend/expectancy/": "期望值",
-        "./trend/valuation/": "估值",
-        "./trend/scale-in/": "分批計算",
-        "./trend/drawdowns/": "歷史跌幅",
-        "./yu-backtest/": "皓角回測",
-        "./trend/left-side-fix/": "左側修正",
+    now = re.search(r'<nav class="book-nav" aria-label="看現況">.*?</nav>', html, re.S)
+    tools = re.search(r'<nav class="book-nav" aria-label="工具與研究">.*?</nav>', html, re.S)
+    learn = re.search(r'<nav class="book-nav" aria-label="學觀念">.*?</nav>', html, re.S)
+    assert now and tools and learn
+    expected_now = {
         "./signals/": "訊號詳情",
         "./trend/": "走勢",
-        "./trend/ta-book/": "教學",
+        "./trend/stage/": "階段現況",
+        "./trend/valuation/": "估值",
+        "./trend/drawdowns/": "歷史跌幅",
     }
-    for href, label in expected.items():
-        assert href in text and label in text, (href, label)
-    assert "內頁" in html
+    expected_tools = {
+        "./trend/scale-in/": "分批計算",
+        "./trend/expectancy/": "期望值",
+        "./trend/left-side-fix/": "左側修正",
+        "./yu-backtest/": "皓角回測",
+    }
+    for href, label in expected_now.items():
+        assert href in now.group(0) and label in now.group(0), (href, label)
+    for href, label in expected_tools.items():
+        assert href in tools.group(0) and label in tools.group(0), (href, label)
+    assert '<a href="./trend/ta-book/">教學首頁</a>' in learn.group(0)
+    assert "學觀念（技術分析書）" in html
     footer = re.search(r"<footer>.*?</footer>", html, re.S).group(0)
-    # 頁腳不再重複列出內頁連結
+    # 頁腳不再重複列出導覽連結
     assert "trend/stage/" not in footer
     assert "僅供參考，非投資建議。" in footer
