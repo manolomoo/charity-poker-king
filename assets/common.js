@@ -49,7 +49,7 @@
       el("div", { class: "wrap" }, [
         el("a", { class: "brand", href: "../" }, [
           el("img", { src: "assets/favicon.svg", alt: "", width: "24", height: "24" }),
-          "COBB我大哥",
+          "慈善撲克王",
         ]),
         el(
           "nav",

@@ -1,39 +1,40 @@
 /* 慈善撲克王大賽 — 共用樣式 */
 
 :root {
-  --bg: #faf4ec;
-  --bg-card: #ffffff;
-  --bg-card-soft: #fdf9f3;
-  --ink: #2b2420;
-  --ink-soft: #6b6058;
-  --ink-faint: #93897f;
-  --border: #e9ddcc;
-  --red: #d64545;
-  --red-bg: #fbe4e2;
-  --red-ink: #a52f2f;
-  --yellow: #e0a429;
-  --yellow-bg: #fbedd0;
-  --yellow-ink: #8a6417;
-  --gray: #b9b1a6;
-  --gray-bg: #eee8df;
-  --gray-ink: #6b6058;
-  --purple: #8a7ca8;
-  --purple-bg: #ece6f5;
-  --purple-ink: #5c4f7a;
-  --ref: #5b7a99;
-  --ref-bg: #e3edf5;
-  --ref-ink: #3a5a78;
-  --green: #3f8f5f;
-  --accent: #b23b3b;
-  --link: #9a3324;
-  --shadow: 0 1px 3px rgba(60, 40, 20, 0.08), 0 1px 2px rgba(60, 40, 20, 0.06);
+  --bg: #0f1724;
+  --bg-card: #172135;
+  --bg-card-soft: #141e30;
+  --ink: #e8edf5;
+  --ink-soft: #c6cfdc;
+  --ink-faint: #a3aec0;
+  --border: #2b3850;
+  --red: #ff7482;
+  --red-bg: #2a1518;
+  --red-ink: #ffb3ba;
+  --yellow: #f2b552;
+  --yellow-bg: #2b2412;
+  --yellow-ink: #f6d48a;
+  --gray: #6b7688;
+  --gray-bg: #1c2433;
+  --gray-ink: #c6cfdc;
+  --purple: #b9a4e0;
+  --purple-bg: #241c33;
+  --purple-ink: #d4c6f0;
+  --ref: #8fa6d8;
+  --ref-bg: #152033;
+  --ref-ink: #c5d3f0;
+  --green: #3fd0a0;
+  --accent: #8fa6d8;
+  --link: #a9c1f5;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   --radius: 14px;
   --max-width: 880px;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; color-scheme: dark; }
 
 body {
   margin: 0;
@@ -58,7 +59,7 @@ img { max-width: 100%; }
 
 /* 導覽列 */
 .topnav {
-  background: #fffdf9;
+  background: rgba(15, 23, 36, 0.95);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -134,7 +135,7 @@ header.page-header .subtitle {
 /* 提示框 */
 .notice {
   background: var(--yellow-bg);
-  border: 1px solid #ecd79b;
+  border: 1px solid #5c4b1f;
   color: var(--yellow-ink);
   border-radius: var(--radius);
   padding: 12px 16px;
@@ -143,14 +144,14 @@ header.page-header .subtitle {
 }
 .notice.error {
   background: var(--red-bg);
-  border-color: #eec4c0;
+  border-color: #6a3030;
   color: var(--red-ink);
 }
 .notice ul { margin: 6px 0 0; padding-left: 20px; }
 
 /* COBB 提醒框 */
 .cobb-framing {
-  background: #fdecd2;
+  background: #2a2414;
   border-left: 4px solid var(--accent);
   border-radius: 10px;
   padding: 12px 16px;
@@ -208,7 +209,7 @@ header.page-header .subtitle {
 .progress-segments .seg.gray { background: var(--gray); }
 .progress-segments .seg.ref { background: var(--ref); }
 .progress-segments .seg.unknown {
-  background: repeating-linear-gradient(45deg, var(--purple), var(--purple) 3px, #ffffff 3px, #ffffff 6px);
+  background: repeating-linear-gradient(45deg, var(--purple), var(--purple) 3px, var(--bg) 3px, var(--bg) 6px);
 }
 
 .legend {
@@ -257,9 +258,9 @@ header.page-header .subtitle {
   font-size: 0.72rem;
   padding: 2px 7px;
   border-radius: 999px;
-  background: #f1e9fb;
-  color: #6b4fa0;
-  border: 1px solid #ddcdf0;
+  background: var(--purple-bg);
+  color: var(--purple-ink);
+  border: 1px solid #5a4a78;
   cursor: help;
 }
 
@@ -270,7 +271,7 @@ header.page-header .subtitle {
   border-radius: 999px;
   background: var(--yellow-bg);
   color: var(--yellow-ink);
-  border: 1px solid #ecd79b;
+  border: 1px solid #5c4b1f;
 }
 
 /* 訊號分組 */
@@ -410,7 +411,7 @@ table.rows-table td.note-highlight { color: var(--purple-ink); font-weight: 600;
   border-top: 1px dashed var(--border);
   color: var(--ink-soft);
 }
-.row-card.unk { background: #f6f2fb; border-color: #e1d4f2; }
+.row-card.unk { background: var(--purple-bg); border-color: #5a4a78; }
 
 @media (max-width: 680px) {
   .rows-table-wrap { display: none; }
@@ -453,7 +454,7 @@ table.rows-table td.note-highlight { color: var(--purple-ink); font-weight: 600;
   color: var(--ink-soft);
 }
 .md code {
-  background: #f1ebe0;
+  background: #1c2433;
   padding: 1px 5px;
   border-radius: 4px;
   font-size: 0.88em;
@@ -513,7 +514,7 @@ table.heatmap th.sig-name {
   left: 0;
   background: var(--bg-card);
   z-index: 2;
-  box-shadow: 2px 0 2px rgba(0,0,0,0.04);
+  box-shadow: 2px 0 2px rgba(0,0,0,0.35);
 }
 table.heatmap thead th.sig-name { background: var(--bg-card-soft); z-index: 3; }
 table.heatmap td.cell { font-size: 1.1rem; }
@@ -549,7 +550,7 @@ footer.site-footer p { margin: 0.4em 0; }
   position: absolute;
   left: -999px;
   top: auto;
-  background: #fff;
+  background: var(--bg-card);
   padding: 8px 14px;
   border-radius: 8px;
   z-index: 100;
@@ -584,7 +585,7 @@ button.linklike {
 .row-cards { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; margin-top: 10px; }
 .row-cards .row-card { margin-top: 0; }
 @media (max-width: 680px) { .row-cards { grid-template-columns: 1fr; } }
-.badge-custom.partial { background: #f3f0ea; color: #6b5f4b; border-color: #e3dccd; }
+.badge-custom.partial { background: #1c2433; color: #c6cfdc; border-color: #3a4864; }
 
 /* 歷史頁：手機上訊號名稱欄縮窄、可換行，讓狀態格子看得到 */
 table.heatmap thead th .full { display: block; font-size: 0.7rem; color: var(--ink-faint); font-weight: 400; }
@@ -621,7 +622,7 @@ details.report-table-collapse > summary { cursor: pointer; font-weight: 600; pad
 
 .notice-warn {
   background: var(--red-bg);
-  border-color: #e7b2a8;
+  border-color: #6a3030;
   color: var(--red-ink);
   font-weight: 650;
 }
@@ -639,7 +640,7 @@ details.report-table-collapse > summary { cursor: pointer; font-weight: 600; pad
   background: var(--bg);
   color: var(--ink-soft);
 }
-.badge-source { border-color: #ddcdf0; background: #f1e9fb; color: #6b4fa0; }
+.badge-source { border-color: #5a4a78; background: var(--purple-bg); color: var(--purple-ink); }
 .episode { margin: 22px 0 8px; }
 .episode h2 { font-size: 1.15rem; margin: 0 0 8px; }
 .episode-lead, .episode-note { color: var(--ink-soft); font-size: 0.92rem; }

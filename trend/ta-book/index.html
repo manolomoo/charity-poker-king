@@ -4,24 +4,26 @@
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>股市趨勢技術分析 圖解重點</title>
+<title>慈善撲克王｜股市趨勢技術分析 圖解重點</title>
 <meta name="description" content="《股市趨勢技術分析》第 10 版圖解重點導讀：看趨勢、認形態、守紀律。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --navy:#1b2a4a; --ink:#27324a; --text:#4f596b; --muted:#6f798a;
-  --red:#d0293d; --green:#0e8a6a; --amber:#b7740f; --line:#d9dee7; --bg:#f1f4f8;
+  --navy:#f3ecdc; --ink:#e8edf5; --text:#c6cfdc; --muted:#a3aec0;
+  --red:#ff7482; --green:#3fd0a0; --amber:#f2b552; --line:#2b3850; --bg:#0f1724;
+  --surface:#172135; --edge:#8fa6d8;
   --serif:"Noto Serif TC","Noto Serif CJK TC","Songti TC","PMingLiU",serif;
   --sans:"Noto Sans TC","Noto Sans CJK TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{
   margin:0; color:var(--text); font-family:var(--sans); font-size:15px; line-height:1.75;
   background-color:var(--bg);
-  background-image:linear-gradient(rgba(27,42,74,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(27,42,74,.045) 1px,transparent 1px);
+  background-image:linear-gradient(rgba(190,210,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(190,210,255,.045) 1px,transparent 1px);
   background-size:24px 24px;
   overflow-wrap:anywhere;
 }
@@ -33,35 +35,36 @@ h1{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(29
 .card p,.pts li,.sig li,.rule p,td{text-wrap:pretty}
 h2,.card p.tnote{text-wrap:balance}
 .intro{max-width:580px;margin:0 0 22px;font-size:16px}
-nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 14px;margin-top:-12px;border-bottom:3px double var(--navy);position:sticky;top:0;z-index:5;background:rgba(241,244,248,.95);backdrop-filter:blur(4px)}
-nav a{display:inline-block;padding:5px 13px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);text-decoration:none;font-size:14px;line-height:1.6;white-space:nowrap}
-nav a:hover,nav a.on{border-color:var(--navy);background:var(--navy);color:#fff}
+nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 14px;margin-top:-12px;border-bottom:3px double var(--edge);position:sticky;top:0;z-index:5;background:rgba(15,23,36,.95);backdrop-filter:blur(4px)}
+nav a{display:inline-block;padding:5px 13px;border:1px solid #3a4864;border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:14px;line-height:1.6;white-space:nowrap}
+nav a:hover,nav a.on{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
+nav.site-nav{position:static;margin-top:0;margin-bottom:4px;padding-top:0;padding-bottom:8px;border-bottom:none;background:transparent}
 section{padding-top:52px;scroll-margin-top:36px}
 h2{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:clamp(23px,4.4vw,30px);line-height:1.3;margin:0 0 6px}
 .lead{max-width:600px;margin:0 0 20px;color:var(--muted)}
 .note{max-width:720px;margin:14px 0 0;font-size:14px;color:var(--muted)}
 .note strong{color:var(--ink)}
-.card{background:#fff;border:1px solid var(--line);box-shadow:0 1px 3px rgba(27,42,74,.06);min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.35);min-width:0}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.tcard{border-top:3px solid var(--navy);padding:18px 18px 16px}
-.pcard{border-top:3px solid var(--navy);scroll-margin-top:84px}
+.tcard{border-top:3px solid var(--edge);padding:18px 18px 16px}
+.pcard{border-top:3px solid var(--edge);scroll-margin-top:84px}
 h3{font-family:var(--serif);font-weight:700;color:var(--navy);font-size:19px;line-height:1.4;margin:0 0 8px}
 .card p{margin:0 0 10px}
 .card p:last-child{margin-bottom:0}
-.fig{border-bottom:1px solid var(--line);padding:6px 6px 4px;background:#fff}
+.fig{border-bottom:1px solid var(--line);padding:6px 6px 4px;background:var(--surface)}
 .fig svg{display:block;width:100%;height:auto}
 .figwide svg{max-width:640px;margin:0 auto}
 .fignarrow svg{max-width:470px;margin:0 auto}
-svg .lb{font-family:var(--sans);fill:#5d6779}
-svg .lb.b{font-weight:700;fill:var(--navy)}
+svg .lb{font-family:var(--sans);fill:#b9c4d4}
+svg .lb.b{font-weight:700;fill:#f3ecdc}
 .body{padding:14px 18px 18px}
 .use strong,.pts strong{color:var(--ink)}
-.badge{display:inline-block;vertical-align:.18em;margin-left:4px;padding:0 9px;border:1.5px solid;border-radius:999px;font-family:var(--sans);font-size:12px;font-weight:700;line-height:1.7;white-space:nowrap;background:#fff}
+.badge{display:inline-block;vertical-align:.18em;margin-left:4px;padding:0 9px;border:1.5px solid;border-radius:999px;font-family:var(--sans);font-size:12px;font-weight:700;line-height:1.7;white-space:nowrap;background:transparent}
 .b-up{color:var(--red);border-color:var(--red)}
 .b-down{color:var(--green);border-color:var(--green)}
-.b-both{color:var(--amber);border-color:#d79a2b;background:#fff8ea}
-.b-tool{color:#55617a;border-color:#aab3c5}
-.wide{border-top:3px solid var(--navy)}
+.b-both{color:var(--amber);border-color:var(--amber);background:#2b2412}
+.b-tool{color:#b9c4d4;border-color:#77849c}
+.wide{border-top:3px solid var(--edge)}
 .pts{margin:0;padding:16px 20px 16px 38px}
 .pts li{margin:0 0 6px}
 .pts li:last-child{margin-bottom:0}
@@ -69,8 +72,9 @@ svg .lb.b{font-weight:700;fill:var(--navy)}
 .tablecard{padding:18px}
 table{width:100%;border-collapse:collapse;font-size:14.5px}
 th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
-th{color:var(--ink);font-weight:700;border-bottom:2px solid var(--navy)}
+th{color:var(--ink);font-weight:700;border-bottom:2px solid var(--edge)}
 td:first-child{color:var(--ink);font-weight:500;width:34%}
+tbody tr:nth-child(even){background:#1c2840}
 .tnote{margin:12px 0 0!important;font-size:14px;color:var(--muted)}
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .sig{padding:18px 20px}
@@ -79,12 +83,13 @@ td:first-child{color:var(--ink);font-weight:500;width:34%}
 .sig ul{margin:0;padding-left:20px}
 .sig li{margin-bottom:5px}
 .rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 16px}
-.rule{background:#fbf0d3;border:1px solid #ecd9a6;padding:14px 16px 16px;min-width:0}
+.rule{background:#2a2414;border:1px solid #5c4b1f;padding:14px 16px 16px;min-width:0}
 .rule .num{display:block;font-family:var(--serif);font-weight:900;font-size:24px;line-height:1.2;color:var(--amber)}
-.rule h4{margin:2px 0 4px;color:var(--ink);font-size:16px}
-.rule p{margin:0;color:#5b5646}
+.rule h4{margin:2px 0 4px;color:#f5ecd4;font-size:16px}
+.rule p{margin:0;color:#d8cfb6}
 footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);max-width:640px;font-size:13px;color:var(--muted)}
 footer p{margin:0}
+.nw{white-space:nowrap}
 @media (max-width:899px){
   .grid,.rules{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -92,7 +97,7 @@ footer p{margin:0}
   .wrap{padding:36px 16px 48px}
   .grid,.rules,.two{grid-template-columns:minmax(0,1fr)}
   section{padding-top:40px;scroll-margin-top:34px}
-  nav{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding:10px 16px 10px;border-bottom:1px solid var(--navy)}
+  nav{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding:10px 16px 10px;border-bottom:1px solid var(--edge)}
   nav::-webkit-scrollbar{display:none}
   nav a{flex:0 0 auto}
   .pts{padding:14px 16px 14px 32px}
@@ -100,31 +105,6 @@ footer p{margin:0}
   th,td{padding:8px 6px}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-
-
-/* ---------- dark theme overrides ---------- */
-:root{--navy:#f3ecdc;--ink:#e8edf5;--text:#c6cfdc;--muted:#a3aec0;--red:#ff7482;--green:#3fd0a0;--amber:#f2b552;--line:#2b3850;--bg:#0f1724;--surface:#172135;--edge:#8fa6d8;color-scheme:dark}
-body{background-color:var(--bg);background-image:linear-gradient(rgba(190,210,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(190,210,255,.045) 1px,transparent 1px)}
-nav{background:rgba(15,23,36,.95);border-bottom-color:var(--edge)}
-nav a{background:var(--surface);border-color:#3a4864;color:var(--ink)}
-nav a:hover,nav a.on{background:#a9c1f5;border-color:#a9c1f5;color:#0f1724}
-.card{background:var(--surface);border-color:var(--line);box-shadow:0 1px 3px rgba(0,0,0,.35)}
-.tcard,.pcard,.wide{border-top-color:var(--edge)}
-.fig{background:var(--surface);border-bottom-color:var(--line)}
-svg .lb{fill:#b9c4d4}
-svg .lb.b{fill:#f3ecdc}
-.badge{background:transparent}
-.b-both{color:var(--amber);border-color:var(--amber);background:#2b2412}
-.b-tool{color:#b9c4d4;border-color:#77849c}
-th{border-bottom-color:var(--edge)}
-tbody tr:nth-child(even){background:#1c2840}
-.sig-in{border-left-color:var(--red)}
-.sig-out{border-left-color:var(--green)}
-.rule{background:#2a2414;border-color:#5c4b1f}
-.rule p{color:#d8cfb6}
-.rule h4{color:#f5ecd4}
-footer{border-top-color:var(--line)}
-.nw{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -136,6 +116,10 @@ footer{border-top-color:var(--line)}
 <p class="intro">這本書很厚，核心其實只有三件事：看趨勢、認形態、守紀律。下面用圖把它講完。</p>
 </header>
 <script src="nav.js"></script>
+<nav class="site-nav" aria-label="網站導覽">
+  <a href="../../">首頁</a>
+  <a href="../">走勢觀察</a>
+</nav>
 <nav id="nav" aria-label="段落導覽"></nav>
 <script>renderTaBookNav(document.getElementById("nav"));</script>
 <main>
@@ -431,6 +415,7 @@ footer{border-top-color:var(--line)}
 </main>
 <footer>
 <p>本頁是依《股市趨勢技術分析》（Robert D. Edwards、John Magee、W. H. C. Bassetti 著，原書第 10 版）整理的重點導讀。所有圖形都是重新繪製的示意圖，並非原書圖表的重現。內容整理自原書，僅供學習，不構成投資建議。</p>
+<p><a href="../../">← 首頁</a>　<a href="../">走勢觀察</a></p>
 </footer>
 </div>
 <script>

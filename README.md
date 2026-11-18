@@ -1,6 +1,6 @@
-# COBB我大哥 — 台股與美股抄底訊號追蹤
+# 慈善撲克王 — 台股與美股抄底訊號追蹤
 
-一個純靜態網站，追蹤 11 項「抄底訊號」在台股與美股的觸發狀態，資料由 Python 追蹤器自動抓取、判定，並以 GitHub Actions 自動部署到 GitHub Pages。排程為平日台灣時間 06:30（美股收盤後）、15:00（台股收盤後）、22:00（融資資料公布後）。全站介面為繁體中文，僅供參考，**不是投資建議**。
+一個純靜態網站（方法來源：COBB我大哥），追蹤 11 項「抄底訊號」在台股與美股的觸發狀態，資料由 Python 追蹤器自動抓取、判定，並以 GitHub Actions 自動部署到 GitHub Pages。排程為平日台灣時間 06:30（美股收盤後）、15:00（台股收盤後）、22:00（融資資料公布後）。全站介面為繁體中文，僅供參考，**不是投資建議**。
 
 - 網站（部署後）：`https://manolomoo.github.io/charity-poker-king/`
 - 規則版本與門檻：見 [`rules.md`](rules.md) / [`rules.json`](rules.json)（機器可讀，程式直接讀取判定）
@@ -56,7 +56,7 @@ reports/
 python3 -m http.server 8000
 ```
 
-再打開 <http://localhost:8000/>。三個頁面（首頁／規則／歷史）都會用相對路徑讀取 `data/`、`rules.json`、`rules.md`、`reports/` 等檔案。
+再打開 <http://localhost:8000/>。注意：直接在倉庫根目錄開 server 時，根目錄的 `index.html` 是燈號詳細站的原始檔，不是線上的極簡首頁。若要看與線上相同的結構（極簡首頁在 `/`，燈號在 `/signals/`），請用下面的 `_site` 方式。
 
 ### 3. 驗證部署用的 `_site` 資料夾
 
@@ -65,7 +65,7 @@ python3 -m http.server 8000
 python3 -m http.server 8000 --directory _site
 ```
 
-`scripts/build_site.sh` 只會複製網站需要的檔案（網頁、`assets/`、`data/` 但排除 `data/cache/`、`reports/`、`rules.md`、`rules.json`、`.nojekyll`），GitHub Actions 的部署流程會呼叫同一支腳本。
+`scripts/build_site.sh` 會組出與線上相同的結構：根目錄是極簡首頁（來源 `home/index.html`），燈號詳細站在 `/signals/`（含 `data/`、`reports/`、`rules.md`、`rules.json`），另有 `/trend/`、`/yu-backtest/`。根目錄也會放一份給首頁讀的 `data/`（排除 `data/cache/`）與 `rules.json`、`assets/`、`.nojekyll`。舊路徑 `/rules.html`、`/history.html`、`/home/` 會輸出轉址頁，指向新位置；不會覆蓋根首頁。GitHub Actions 的部署流程會呼叫同一支腳本。
 
 ## 自動更新與部署排程
 

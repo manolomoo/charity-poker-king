@@ -5,6 +5,7 @@
 #   _site/signals/        完整燈號詳細站（repo 根目錄的 index.html / rules.html / history.html）
 #   _site/trend/          走勢觀察與技術分析圖解
 #   _site/yu-backtest/    財經皓角抄底回測
+#   _site/rules.html、history.html、home/   舊路徑轉址（來源 redirects/；不要覆蓋根首頁）
 #
 # data/ 會複製兩份（都排除 cache）：根目錄給首頁，signals/ 給詳細站，
 # 兩邊都用相對路徑 data/latest.json。
@@ -55,6 +56,16 @@ fi
 if [ -d yu-backtest ]; then
   mkdir -p "$OUT/yu-backtest"
   cp -r yu-backtest/. "$OUT/yu-backtest/"
+fi
+
+# ── 舊路徑轉址：/rules.html、/history.html、/home/ ──
+# 必須在複製極簡首頁到 $OUT/index.html 之後做，且不可覆蓋該檔。
+# 真正的規則／歷史頁已在上面複製到 $OUT/signals/。
+if [ -d redirects ]; then
+  cp redirects/rules.html "$OUT/rules.html"
+  cp redirects/history.html "$OUT/history.html"
+  mkdir -p "$OUT/home"
+  cp redirects/home/index.html "$OUT/home/index.html"
 fi
 
 echo "完成：$OUT"

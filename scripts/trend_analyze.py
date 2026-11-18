@@ -1233,7 +1233,7 @@ def cobb_snapshot(latest_path: Path, rules_path: Path, price_asof: str):
     for s in signals:
         counts[s["status"]] = counts.get(s["status"], 0) + 1
     return {
-        "site": "COBB我大哥",
+        "site": "慈善撲克王",
         "live_url": "https://manolomoo.github.io/charity-poker-king/",
         "repo": "https://github.com/manolomoo/charity-poker-king",
         "data_url": "https://manolomoo.github.io/charity-poker-king/data/latest.json",
@@ -1429,7 +1429,7 @@ def write_markdown(payload: dict, path: Path):
     lines.append(f"- {conf['opinion']}")
     lines.append("")
     c = payload["cobb"]
-    lines.append("## COBB我大哥燈號（摘要）")
+    lines.append("## 燈號摘要（方法來源：COBB我大哥）")
     lines.append("")
     lines.append(f"- 來源：{c['data_url']}；規則 {c['rules_version']}（{c['rules_url']}）。")
     lines.append(f"- 燈號查詢時間：{c['queried_at']}；相對上次（{c['previous_run']}）：{c['changes_vs_previous']}。")

@@ -3,7 +3,7 @@ import json, os, time, datetime as dt
 from zoneinfo import ZoneInfo
 import requests
 
-SITE_NAME = "COBB我大哥"
+SITE_NAME = "慈善撲克王"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, "raw")
 DATA = os.path.join(ROOT, "data")
