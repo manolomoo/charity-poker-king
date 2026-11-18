@@ -68,6 +68,9 @@ th.rowh,td.rowh,td.name{text-align:left;white-space:normal;min-width:10em}
 td.neg{color:var(--red)}
 tr.severe td{background:rgba(80,40,48,.55)}
 tr.severe td.rowh{background:#2a1c22}
+tr.current td{background:rgba(255,220,60,.16)}
+tr.current td.rowh,tr.current td.name{background:rgba(255,220,60,.22);color:var(--navy)}
+tr.current td.neg{color:#f2d36b}
 .notes{margin:12px 0 0;padding:0 0 0 1.1em;color:var(--muted);font-size:13px;line-height:1.7}
 .notes li{margin:0 0 4px}
 a{color:var(--edge)}
@@ -85,7 +88,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 <header>
   <h1>歷史重大下跌段</h1>
   <p class="sub">過去每次大跌，跌了多少、跌了多久</p>
-  <p class="lede">依使用者提供的 Excel 下跌段表做成網頁。表內高低點是 TradingView 日線的盤中最高價與最低價，不是收盤價。事件序列沿用完整表的編號（中間的上漲段沒有列出來，所以編號不是 1、2、3 連下去）。</p>
+  <p class="lede">依使用者提供的 Excel 下跌段表做成網頁。表內高低點是 TradingView 日線的盤中最高價與最低價，不是收盤價。事件序列已重新由 1 編號（與完整表的編號不同）。黃底的「現在本波下跌」是表上的靜態快照，不是本站自動更新；若之後再創新低，數字會變動，也不計入平均與中位數。</p>
 </header>
 <nav class="top">
   <a href="../../">首頁</a>
@@ -100,13 +103,15 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 <section id="overview">
   <h2 id="idx-title">—</h2>
   <div class="sum" id="sum"></div>
+  <p class="take" id="compare"></p>
   <p class="take" id="take-bars"></p>
+  <p class="note" id="yahoo-note" hidden></p>
   <div class="card">
     <ul class="leg">
       <li><span class="sw"></span>跌幅達 20% 以上</li>
       <li><span class="sw soft"></span>跌幅不到 20%</li>
       <li><span class="sw avg"></span>平均跌幅</li>
-      <li><span class="sw now"></span>現在（若有本站資料）</li>
+      <li><span class="sw now"></span>現在本波下跌（表上的黃底列）</li>
     </ul>
     <div class="sort" id="sort">
       <button type="button" data-sort="size" class="on">依跌幅（深的在上）</button>
@@ -123,7 +128,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 
 <section id="table-sec">
   <h2>明細表</h2>
-  <p class="note">灰底＝跌幅達 20% 以上。手機可左右滑動。</p>
+  <p class="note">紅底＝跌幅達 20% 以上；黃底＝現在本波下跌（不計入平均與中位數）。手機可左右滑動。</p>
   <div class="scroll">
     <table>
       <thead>
@@ -200,16 +205,18 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     else if(m>0) s += "（約 " + m + " 個月）";
     return s;
   }
-  function currentDD(id){
+  function daysNum(x){
+    if(x==null || !isFinite(x)) return "—";
+    if(Math.abs(x-Math.round(x))<1e-9) return String(Math.round(x));
+    return String(Math.round(x*10)/10);
+  }
+  function yahooDD(id){
     var D = window.SITE_DATA || {};
     var ix = D.analysis && D.analysis.indices && D.analysis.indices[id];
     if(!ix || !ix.range_52w || ix.range_52w.close_vs_high_pct==null) return null;
     return {
       vsHigh: ix.range_52w.close_vs_high_pct/100,
-      vsCloseHigh: ix.range_52w.close_vs_close_high_pct/100,
-      highDate: ix.range_52w.high_date,
-      asof: (ix.last && ix.last.date) || ix.asof_session,
-      close: ix.last && ix.last.close
+      asof: (ix.last && ix.last.date) || ix.asof_session
     };
   }
 
@@ -235,19 +242,19 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     });
   }
 
-  function paintSummary(ix, now){
+  function paintSummary(ix, wave){
     var sev = ix.events.filter(function(e){return e.severe;}).length;
     var html = "";
-    function card(k,v,cls,extra){
-      return '<div class="card'+(extra||"")+'"><p class="k">'+k+'</p><p class="v '+(cls||"")+'">'+v+'</p></div>';
+    function card(k,v,cls,extra,d){
+      return '<div class="card'+(extra||"")+'"><p class="k">'+k+'</p><p class="v '+(cls||"")+'">'+v+'</p>'+(d?'<p class="d">'+d+'</p>':'')+'</div>';
     }
-    html += card("下跌次數", String(ix.events.length));
-    html += card("平均跌幅", pctSigned(ix.avg_pct), "neg");
-    html += card("中位數跌幅", pctSigned(ix.median_pct), "neg");
+    html += card("歷史下跌次數", String(ix.events.length));
+    html += card("平均跌幅", pctSigned(ix.avg_pct), "neg", "", "平均 "+daysNum(ix.avg_calendar_days)+" 天／"+daysNum(ix.avg_trading_days)+" 個交易日（不含本波）");
+    html += card("中位數跌幅", pctSigned(ix.median_pct), "neg", "", "中位數 "+daysNum(ix.median_calendar_days)+" 天／"+daysNum(ix.median_trading_days)+" 個交易日");
     html += card("跌超過 20%", sev + " 次");
-    if(now){
-      html += '<div class="card nowbox"><p class="k">現在（收盤 vs 52 週高點）</p><p class="v">'+pctSigned(now.vsHigh)+'</p>'
-        + '<p class="d">截至 '+esc(now.asof)+'。這是本站 Yahoo 收盤價相對 52 週盤中高點（高點日 '+esc(now.highDate)+'），和表內 TradingView 盤中高低點算法不同，只能當位置參考。</p></div>';
+    if(wave){
+      html += '<div class="card nowbox"><p class="k">現在本波下跌</p><p class="v">'+pctSigned(wave.change_pct)+'</p>'
+        + '<p class="d">'+esc(wave.period)+"，跌了 "+wave.calendar_days+" 天（"+wave.trading_days+" 個交易日）。這是 Excel 表上的靜態快照（TradingView 盤中高低點），不是自動更新；不計入左邊的平均與中位數。</p></div>";
     }
     $("sum").innerHTML = html;
   }
@@ -265,11 +272,11 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     var ev = ordered(ix);
     var W = Math.max(300, Math.round(box.clientWidth || 680));
     var rowH = 52, top = 8, mL = 4, mR = 8, mB = 28;
-    var hasNow = now && now.vsHigh < 0;
+    var hasNow = now && now.change_pct != null;
     var n = ev.length + (hasNow ? 1 : 0);
     var H = top + n*rowH + mB;
     var deepest = ev[0] ? ev.reduce(function(m,e){return Math.min(m,e.change_pct);},0) : -0.2;
-    if(hasNow) deepest = Math.min(deepest, now.vsHigh);
+    if(hasNow) deepest = Math.min(deepest, now.change_pct);
     deepest = Math.min(deepest, ix.avg_pct, -0.2);
     var axisMin = Math.floor(deepest*10 - 0.01)/10; // e.g. -0.9
     var barX0 = 8, barX1 = W - 8;
@@ -299,7 +306,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
       row(i, e.name, sub, e.change_pct, e.severe?colBar:colSoft, false);
     });
     if(hasNow){
-      row(ev.length, "現在（截至 "+now.asof+"）", "Yahoo 收盤相對 52 週高點，算法不同", now.vsHigh, colNow, true);
+      row(ev.length, "現在本波下跌", pctSigned(now.change_pct)+" · "+dur(now.calendar_days)+" · "+esc(now.period), now.change_pct, colNow, true);
     }
     box.appendChild(svg);
   }
@@ -315,7 +322,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
       years0 = Math.min(years0, parseInt(e.start_date.slice(0,4),10));
       years1 = Math.max(years1, parseInt(e.end_date.slice(0,4),10));
     });
-    if(now && now.asof) years1 = Math.max(years1, parseInt(String(now.asof).slice(0,4),10));
+    if(now && now.end_date) years1 = Math.max(years1, parseInt(String(now.end_date).slice(0,4),10));
     years0 -= 0; years1 += 0;
     var t0 = Date.UTC(years0,0,1), t1 = Date.UTC(years1,11,31);
     var x = function(iso){
@@ -324,7 +331,8 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
       return mL + (W-mL-mR) * (t-t0)/(t1-t0);
     };
     var deepest = ev.reduce(function(m,e){return Math.min(m,e.change_pct);},0);
-    deepest = Math.min(deepest, -0.2);
+    deepest = Math.min(deepest, -0.2, ix.avg_pct);
+    if(now && now.change_pct!=null) deepest = Math.min(deepest, now.change_pct);
     var axisMin = Math.floor(deepest*10 - 0.01)/10;
     var H = 220;
     var y = function(p){ return mT + (H-mT-mB) * (p / axisMin); };
@@ -350,61 +358,78 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
       var yy = y(e.change_pct);
       svg.appendChild(el("rect", {x:x1, y:y(0), width:x2-x1, height:Math.max(2, yy-y(0)), rx:1, fill:e.severe?colBar:colSoft, opacity:"0.85"}));
     });
-    if(now && now.asof && now.vsHigh<0){
-      var xn = x(now.asof);
-      svg.appendChild(el("line", {x1:xn,x2:xn,y1:mT,y2:H-mB, stroke:colNow, "stroke-width":2, "stroke-dasharray":"3 3"}));
-      var yn = y(now.vsHigh);
-      svg.appendChild(el("circle", {cx:xn, cy:yn, r:5, fill:colNow}));
-      svg.appendChild(el("text", {x:Math.min(W-mR, xn+8), y:yn-8, "font-size":11, fill:colNow, "font-weight":"700"}, "現在 "+pctSigned(now.vsHigh)));
+    if(now && now.start_date && now.end_date){
+      var x1 = x(now.start_date), x2 = x(now.end_date);
+      if(x2-x1 < 3) x2 = x1+3;
+      var yn = y(now.change_pct);
+      svg.appendChild(el("rect", {x:x1, y:y(0), width:x2-x1, height:Math.max(2, yn-y(0)), rx:1, fill:colNow, opacity:"0.9"}));
+      var xn = x2;
+      svg.appendChild(el("text", {x:Math.min(W-mR, xn+4), y:yn-8, "font-size":11, fill:colNow, "font-weight":"700"}, "現在 "+pctSigned(now.change_pct)));
     }
     box.appendChild(svg);
   }
 
+  function rowHtml(e, cls){
+    return "<tr class='"+cls+"'>"
+      + "<td class='rowh'>"+esc(String(e.seq))+"</td>"
+      + "<td>"+esc(e.period)+"</td>"
+      + "<td class='name'>"+esc(e.name)+"</td>"
+      + "<td>"+e.calendar_days+"</td>"
+      + "<td>"+e.trading_days+"</td>"
+      + "<td class='neg'>"+pts(e.change_pts)+"</td>"
+      + "<td class='neg'>"+pctSigned(e.change_pct,2)+"</td>"
+      + "<td>"+isoToYmd(e.start_date)+"</td>"
+      + "<td>"+isoToYmd(e.end_date)+"</td>"
+      + "<td>"+pts(e.start_px)+"</td>"
+      + "<td>"+pts(e.end_px)+"</td></tr>";
+  }
   function paintTable(ix){
     var h = "";
     ix.events.forEach(function(e){
-      h += "<tr class='"+(e.severe?"severe":"")+"'>"
-        + "<td class='rowh'>"+e.seq+"</td>"
-        + "<td>"+esc(e.period)+"</td>"
-        + "<td class='name'>"+esc(e.name)+"</td>"
-        + "<td>"+e.calendar_days+"</td>"
-        + "<td>"+e.trading_days+"</td>"
-        + "<td class='neg'>"+pts(e.change_pts)+"</td>"
-        + "<td class='neg'>"+pctSigned(e.change_pct,2)+"</td>"
-        + "<td>"+isoToYmd(e.start_date)+"</td>"
-        + "<td>"+isoToYmd(e.end_date)+"</td>"
-        + "<td>"+pts(e.start_px)+"</td>"
-        + "<td>"+pts(e.end_px)+"</td></tr>";
+      h += rowHtml(e, e.severe?"severe":"");
     });
-    // summary rows
-    h += "<tr><td></td><td></td><td class='name'>下跌段平均跌幅(%)</td><td></td><td></td><td></td><td class='neg'>"+pctSigned(ix.avg_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
-    h += "<tr><td></td><td></td><td class='name'>下跌段跌幅中位數(%)</td><td></td><td></td><td></td><td class='neg'>"+pctSigned(ix.median_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
+    if(ix.current){
+      h += rowHtml(ix.current, "current");
+    }
+    h += "<tr><td></td><td></td><td class='name'>下跌段平均</td><td>"+daysNum(ix.avg_calendar_days)+"</td><td>"+daysNum(ix.avg_trading_days)+"</td><td></td><td class='neg'>"+pctSigned(ix.avg_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
+    h += "<tr><td></td><td></td><td class='name'>下跌段中位數</td><td>"+daysNum(ix.median_calendar_days)+"</td><td>"+daysNum(ix.median_trading_days)+"</td><td></td><td class='neg'>"+pctSigned(ix.median_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
     $("tbody").innerHTML = h;
     $("footnotes").innerHTML = ix.footnotes.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
   }
 
-  function takeaways(ix, now){
+  function takeaways(ix, wave, yahoo){
     var ev = ix.events.slice().sort(function(a,b){ return a.change_pct-b.change_pct; });
     var deep = ev[0];
     var sev = ev.filter(function(e){return e.severe;}).length;
-    var t1 = "這一張列了 "+ev.length+" 次下跌，平均跌 "+pctSigned(ix.avg_pct)+"，中位數 "+pctSigned(ix.median_pct)+"。有 "+sev+" 次跌超過 20%。最深的是「"+deep.name+"」，跌了 "+pctSigned(deep.change_pct)+"，"+dur(deep.calendar_days)+"。";
-    if(now){
-      t1 += " 目前收盤相對 52 週高點約 "+pctSigned(now.vsHigh)+"（截至 "+now.asof+"，Yahoo 口徑，和表內算法不同）。";
+    if(wave){
+      $("compare").textContent = "本波 "+pctSigned(wave.change_pct)+"、跌了 "+wave.calendar_days+" 天（"+wave.trading_days+" 個交易日）；歷史平均 "+pctSigned(ix.avg_pct)+"、平均 "+daysNum(ix.avg_calendar_days)+" 天（"+daysNum(ix.avg_trading_days)+" 個交易日）。這是表上的靜態快照，不是自動更新。";
+    } else {
+      $("compare").textContent = "";
     }
-    $("take-bars").innerHTML = t1;
-    $("take-time").textContent = "下面這張圖用時間來看：每一次下跌佔了哪一段年份、當時跌得多深。色塊愈長代表跌得愈久，愈往下代表跌得愈深。";
+    var t1 = "歷史列了 "+ev.length+" 次下跌，平均跌 "+pctSigned(ix.avg_pct)+"，中位數 "+pctSigned(ix.median_pct)+"。有 "+sev+" 次跌超過 20%。最深的是「"+deep.name+"」，跌了 "+pctSigned(deep.change_pct)+"，"+dur(deep.calendar_days)+"。";
+    $("take-bars").textContent = t1;
+    var yn = $("yahoo-note");
+    if(yahoo){
+      yn.hidden = false;
+      yn.textContent = "對照：本站 Yahoo 收盤相對 52 週高點約 "+pctSigned(yahoo.vsHigh)+"（截至 "+yahoo.asof+"），口徑不同，不是表上的「現在本波」。";
+    } else {
+      yn.hidden = true;
+      yn.textContent = "";
+    }
+    $("take-time").textContent = "下面這張圖用時間來看：每一次下跌佔了哪一段年份、當時跌得多深。黃色塊是表上的「現在本波下跌」。色塊愈長代表跌得愈久，愈往下代表跌得愈深。";
   }
 
   function paint(){
     var ix = idxById(curId);
     if(!ix) return;
     $("idx-title").textContent = ix.title;
-    var now = currentDD(ix.id);
+    var wave = ix.current || null;
+    var yahoo = yahooDD(ix.id);
     paintTabs();
-    paintSummary(ix, now);
-    takeaways(ix, now);
-    paintBars(ix, now);
-    paintTimeline(ix, now);
+    paintSummary(ix, wave);
+    takeaways(ix, wave, yahoo);
+    paintBars(ix, wave);
+    paintTimeline(ix, wave);
     paintTable(ix);
   }
 

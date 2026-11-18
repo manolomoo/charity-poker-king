@@ -1,11 +1,12 @@
 window.DRAWDOWNS_DATA = {
   "source": "使用者提供的 Excel 歷史下跌段表",
   "generated_by": "scripts/build_drawdowns.py",
+  "current_is_snapshot": true,
   "indices": [
     {
       "id": "NDX",
       "sheet": "NDX",
-      "title": "NDX 那斯達克100指數",
+      "title": "NDX 那斯達克100指數　｜　下跌區段",
       "events": [
         {
           "seq": 1,
@@ -22,7 +23,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 3,
+          "seq": 2,
           "period": "2007/10/31~2008/11/21",
           "name": "2008金融海嘯",
           "calendar_days": 387,
@@ -36,7 +37,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 5,
+          "seq": 3,
           "period": "2015/7/20~2015/8/24",
           "name": "中國上證股災、美國升息預期",
           "calendar_days": 35,
@@ -50,7 +51,7 @@ window.DRAWDOWNS_DATA = {
           "severe": false
         },
         {
-          "seq": 7,
+          "seq": 4,
           "period": "2015/11/4~2016/2/8",
           "name": "美國升息、中國股市持續崩盤",
           "calendar_days": 96,
@@ -64,7 +65,7 @@ window.DRAWDOWNS_DATA = {
           "severe": false
         },
         {
-          "seq": 9,
+          "seq": 5,
           "period": "2018/10/1~2018/12/24",
           "name": "中美貿易戰加劇",
           "calendar_days": 84,
@@ -78,7 +79,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 11,
+          "seq": 6,
           "period": "2020/2/19~2020/3/23",
           "name": "COVID-19全球疫情引爆",
           "calendar_days": 33,
@@ -92,7 +93,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 13,
+          "seq": 7,
           "period": "2021/11/22~2022/10/13",
           "name": "通膨失控與美國暴力升息",
           "calendar_days": 325,
@@ -106,7 +107,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 15,
+          "seq": 8,
           "period": "2025/2/19~2025/4/7",
           "name": "川普MAGA新政，關稅風暴席捲全球",
           "calendar_days": 47,
@@ -120,23 +121,41 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         }
       ],
+      "current": {
+        "seq": "現在",
+        "period": "2026/10/6~2026/11/17",
+        "name": "現在本波下跌",
+        "calendar_days": 42,
+        "trading_days": 30,
+        "change_pts": -4780.509999999998,
+        "change_pct": -0.15243307291741393,
+        "start_date": "2026-10-06",
+        "end_date": "2026-11-17",
+        "start_px": 31361.37,
+        "end_px": 26580.86
+      },
       "avg_pct": -0.36549358671320653,
       "median_pct": -0.2800505466553102,
+      "avg_calendar_days": 241.875,
+      "median_calendar_days": 90.0,
+      "avg_trading_days": 166.375,
+      "median_trading_days": 61.0,
       "footnotes": [
-        "只列下跌段，事件序列沿用完整表的編號。資料來源：TradingView 日線 NASDAQ:NDX，取盤中最高價與最低價（非收盤價）。",
+        "只列下跌段，事件序列重新由 1 編號（與完整表的編號不同）。資料來源：TradingView 日線 NASDAQ:NDX，取盤中最高價與最低價（非收盤價）。",
         "歷經交易日＝起訖兩根日K之間的K棒根數差，與 TradingView 粉色量測框顯示的根數相同。",
-        "紅字＝下跌段；灰底＝跌幅達 20% 以上的下跌段。H~K 欄為計算依據，期間、日曆天、漲跌幅由它們算出。",
+        "紅字＝下跌段；紅底＝跌幅達 20% 以上的下跌段。右側灰色區（H~K 欄）為計算依據，期間、日曆天、漲跌幅由它們算出。",
         "事件劃分：以 NDX 的 15 段為基礎，各指數取自己的高低點；上漲段中若有盤中高點到之後低點跌幅達 20% 的回檔，另列為事件。",
         "事件序列各指數自行由 1 編起，不同指數的同一編號不一定是同一事件。",
-        "平均跌幅與中位數只計入下跌段（紅字列）的漲跌幅(%)。",
+        "表格下方的平均與中位數只計入下跌段（紅字列），涵蓋日曆天、交易日、漲跌幅(%)。",
         "上漲段中沒有跌幅達 20% 的回檔（最大為 2006 年的 -17.9%），故無新增事件。",
-        "事件13 漲跌幅原表寫 -37.22%，經您確認為筆誤，已更正為 -37.72%。"
+        "事件7 漲跌幅原表寫 -37.22%，經您確認為筆誤，已更正為 -37.72%。",
+        "「現在本波下跌」（黃底列）：從 2025/4 低點之後的最高點，算到該高點以來的最低點；資料截至 2026/11/17 收盤（不含 11/18 盤中）。若之後再創新低，數字會變動。此列不計入上方的平均與中位數。"
       ]
     },
     {
       "id": "SPX",
       "sheet": "SPX",
-      "title": "SPX 標普500指數",
+      "title": "SPX 標普500指數　｜　下跌區段",
       "events": [
         {
           "seq": 1,
@@ -153,7 +172,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 3,
+          "seq": 2,
           "period": "2007/10/11~2009/3/6",
           "name": "2008金融海嘯",
           "calendar_days": 512,
@@ -167,7 +186,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 5,
+          "seq": 3,
           "period": "2011/5/2~2011/10/4",
           "name": "歐債危機、美債遭降評",
           "calendar_days": 155,
@@ -181,7 +200,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 7,
+          "seq": 4,
           "period": "2015/5/20~2015/8/24",
           "name": "中國上證股災、美國升息預期",
           "calendar_days": 96,
@@ -195,7 +214,7 @@ window.DRAWDOWNS_DATA = {
           "severe": false
         },
         {
-          "seq": 9,
+          "seq": 5,
           "period": "2015/11/3~2016/2/11",
           "name": "美國升息、中國股市持續崩盤",
           "calendar_days": 100,
@@ -209,7 +228,7 @@ window.DRAWDOWNS_DATA = {
           "severe": false
         },
         {
-          "seq": 11,
+          "seq": 6,
           "period": "2018/9/21~2018/12/26",
           "name": "中美貿易戰加劇",
           "calendar_days": 96,
@@ -223,7 +242,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 13,
+          "seq": 7,
           "period": "2020/2/19~2020/3/23",
           "name": "COVID-19全球疫情引爆",
           "calendar_days": 33,
@@ -237,7 +256,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 15,
+          "seq": 8,
           "period": "2022/1/4~2022/10/13",
           "name": "通膨失控與美國暴力升息",
           "calendar_days": 282,
@@ -251,7 +270,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 17,
+          "seq": 9,
           "period": "2025/2/19~2025/4/7",
           "name": "川普MAGA新政，關稅風暴席捲全球",
           "calendar_days": 47,
@@ -265,23 +284,41 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         }
       ],
+      "current": {
+        "seq": "現在",
+        "period": "2026/10/6~2026/11/17",
+        "name": "現在本波下跌",
+        "calendar_days": 42,
+        "trading_days": 30,
+        "change_pts": -556.1800000000003,
+        "change_pct": -0.07090045025062086,
+        "start_date": "2026-10-06",
+        "end_date": "2026-11-17",
+        "start_px": 7844.52,
+        "end_px": 7288.34
+      },
       "avg_pct": -0.2903371616918922,
       "median_pct": -0.21582833544922586,
+      "avg_calendar_days": 250.11111111111111,
+      "median_calendar_days": 100,
+      "avg_trading_days": 172.11111111111111,
+      "median_trading_days": 68,
       "footnotes": [
-        "只列下跌段，事件序列沿用完整表的編號。資料來源：TradingView 日線 SP:SPX，取盤中最高價與最低價（非收盤價）。",
+        "只列下跌段，事件序列重新由 1 編號（與完整表的編號不同）。資料來源：TradingView 日線 SP:SPX，取盤中最高價與最低價（非收盤價）。",
         "歷經交易日＝起訖兩根日K之間的K棒根數差，與 TradingView 粉色量測框顯示的根數相同。",
-        "紅字＝下跌段；灰底＝跌幅達 20% 以上的下跌段。H~K 欄為計算依據，期間、日曆天、漲跌幅由它們算出。",
+        "紅字＝下跌段；紅底＝跌幅達 20% 以上的下跌段。右側灰色區（H~K 欄）為計算依據，期間、日曆天、漲跌幅由它們算出。",
         "事件劃分：以 NDX 的 15 段為基礎，各指數取自己的高低點；上漲段中若有盤中高點到之後低點跌幅達 20% 的回檔，另列為事件。",
         "事件序列各指數自行由 1 編起，不同指數的同一編號不一定是同一事件。",
-        "平均跌幅與中位數只計入下跌段（紅字列）的漲跌幅(%)。",
-        "新增事件5（2011 年，-21.58%）；原「金融危機後的復甦」上漲段因此拆成事件4、6。",
-        "事件3 低點取 SPX 自己的最低點 2009/3/6（NDX 為 2008/11/21）。"
+        "表格下方的平均與中位數只計入下跌段（紅字列），涵蓋日曆天、交易日、漲跌幅(%)。",
+        "事件3（2011 年，-21.58%）為新增的跌幅達 20% 事件。",
+        "事件2 低點取 SPX 自己的最低點 2009/3/6（NDX 為 2008/11/21）。",
+        "「現在本波下跌」（黃底列）：從 2025/4 低點之後的最高點，算到該高點以來的最低點；資料截至 2026/11/17 收盤（不含 11/18 盤中）。若之後再創新低，數字會變動。此列不計入上方的平均與中位數。"
       ]
     },
     {
       "id": "SOX",
       "sheet": "SOX",
-      "title": "SOX 費城半導體指數",
+      "title": "SOX 費城半導體指數　｜　下跌區段",
       "events": [
         {
           "seq": 1,
@@ -298,7 +335,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 3,
+          "seq": 2,
           "period": "2002/12/2~2003/2/10",
           "name": "美伊戰爭前夕、科技股二次探底",
           "calendar_days": 70,
@@ -312,7 +349,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 5,
+          "seq": 3,
           "period": "2004/1/12~2004/9/8",
           "name": "半導體庫存修正、聯準會啟動升息",
           "calendar_days": 240,
@@ -326,7 +363,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 7,
+          "seq": 4,
           "period": "2006/1/27~2006/7/21",
           "name": "聯準會連續升息、2006全球股市修正",
           "calendar_days": 175,
@@ -340,7 +377,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 9,
+          "seq": 5,
           "period": "2007/7/17~2008/11/21",
           "name": "2008金融海嘯",
           "calendar_days": 493,
@@ -354,7 +391,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 11,
+          "seq": 6,
           "period": "2009/1/6~2009/3/3",
           "name": "金融海嘯最後一跌",
           "calendar_days": 56,
@@ -368,7 +405,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 13,
+          "seq": 7,
           "period": "2010/4/26~2010/8/31",
           "name": "歐債危機第一波、閃電崩盤、二次衰退疑慮",
           "calendar_days": 127,
@@ -382,7 +419,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 15,
+          "seq": 8,
           "period": "2011/2/18~2011/10/4",
           "name": "日本311地震、歐債危機、美債遭降評",
           "calendar_days": 228,
@@ -396,7 +433,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 17,
+          "seq": 9,
           "period": "2012/3/27~2012/7/17",
           "name": "歐債危機再起、半導體需求放緩",
           "calendar_days": 112,
@@ -410,7 +447,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 19,
+          "seq": 10,
           "period": "2015/6/1~2015/8/24",
           "name": "中國上證股災、美國升息預期",
           "calendar_days": 84,
@@ -424,7 +461,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 21,
+          "seq": 11,
           "period": "2015/12/3~2016/2/11",
           "name": "美國升息、中國股市持續崩盤",
           "calendar_days": 70,
@@ -438,7 +475,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 23,
+          "seq": 12,
           "period": "2018/3/13~2018/12/26",
           "name": "中美貿易戰加劇",
           "calendar_days": 288,
@@ -452,7 +489,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 25,
+          "seq": 13,
           "period": "2020/2/14~2020/3/18",
           "name": "COVID-19全球疫情引爆",
           "calendar_days": 33,
@@ -466,7 +503,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 27,
+          "seq": 14,
           "period": "2022/1/4~2022/10/13",
           "name": "通膨失控與美國暴力升息",
           "calendar_days": 282,
@@ -480,7 +517,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 29,
+          "seq": 15,
           "period": "2024/7/11~2025/4/7",
           "name": "川普MAGA新政，關稅風暴席捲全球",
           "calendar_days": 270,
@@ -494,24 +531,42 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         }
       ],
+      "current": {
+        "seq": "現在",
+        "period": "2026/6/22~2026/11/5",
+        "name": "現在本波下跌",
+        "calendar_days": 136,
+        "trading_days": 96,
+        "change_pts": -5657.9000000000015,
+        "change_pct": -0.38606537298136034,
+        "start_date": "2026-06-22",
+        "end_date": "2026-11-05",
+        "start_px": 14655.29,
+        "end_px": 8997.39
+      },
       "avg_pct": -0.373936184084408,
       "median_pct": -0.3207992580726752,
+      "avg_calendar_days": 231.06666666666666,
+      "median_calendar_days": 175,
+      "avg_trading_days": 159.2,
+      "median_trading_days": 121,
       "footnotes": [
-        "只列下跌段，事件序列沿用完整表的編號。資料來源：TradingView 日線 NASDAQ:SOX，取盤中最高價與最低價（非收盤價）。",
+        "只列下跌段，事件序列重新由 1 編號（與完整表的編號不同）。資料來源：TradingView 日線 NASDAQ:SOX，取盤中最高價與最低價（非收盤價）。",
         "歷經交易日＝起訖兩根日K之間的K棒根數差，與 TradingView 粉色量測框顯示的根數相同。",
-        "紅字＝下跌段；灰底＝跌幅達 20% 以上的下跌段。H~K 欄為計算依據，期間、日曆天、漲跌幅由它們算出。",
+        "紅字＝下跌段；紅底＝跌幅達 20% 以上的下跌段。右側灰色區（H~K 欄）為計算依據，期間、日曆天、漲跌幅由它們算出。",
         "事件劃分：以 NDX 的 15 段為基礎，各指數取自己的高低點；上漲段中若有盤中高點到之後低點跌幅達 20% 的回檔，另列為事件。",
         "事件序列各指數自行由 1 編起，不同指數的同一編號不一定是同一事件。",
-        "平均跌幅與中位數只計入下跌段（紅字列）的漲跌幅(%)。",
-        "新增 7 段跌幅達 20% 的回檔：事件3、5、7、11、13、15、17；被拆開的上漲段沿用原事件名稱。",
-        "事件9（金融海嘯）高點取 2007/7/17；2004/1/12 的高點 560.68 已獨立列為事件5 的起點。",
-        "事件23 高點取 2018/3/13、事件29 高點取 2024/7/11，皆為該次低點之前 SOX 自己的最高點（離 NDX 的事件時間較遠）。"
+        "表格下方的平均與中位數只計入下跌段（紅字列），涵蓋日曆天、交易日、漲跌幅(%)。",
+        "新增 7 段跌幅達 20% 的回檔：事件2、3、4、6、7、8、9。",
+        "事件5（金融海嘯）高點取 2007/7/17；2004/1/12 的高點 560.68 已獨立列為事件3 的起點。",
+        "事件12 高點取 2018/3/13、事件15 高點取 2024/7/11，皆為該次低點之前 SOX 自己的最高點（離 NDX 的事件時間較遠）。",
+        "「現在本波下跌」（黃底列）：從 2025/4 低點之後的最高點，算到該高點以來的最低點；資料截至 2026/11/17 收盤（不含 11/18 盤中）。若之後再創新低，數字會變動。此列不計入上方的平均與中位數。"
       ]
     },
     {
       "id": "TWII",
       "sheet": "台灣加權",
-      "title": "台灣加權指數 (TAIEX)",
+      "title": "台灣加權指數 (TAIEX)　｜　下跌區段",
       "events": [
         {
           "seq": 1,
@@ -528,7 +583,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 3,
+          "seq": 2,
           "period": "2002/4/22~2002/10/11",
           "name": "美國會計醜聞、全球科技股二次探底",
           "calendar_days": 172,
@@ -542,7 +597,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 5,
+          "seq": 3,
           "period": "2003/1/24~2003/4/28",
           "name": "美伊戰爭、SARS疫情",
           "calendar_days": 94,
@@ -556,7 +611,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 7,
+          "seq": 4,
           "period": "2004/3/5~2004/8/5",
           "name": "319槍擊案、中國宏觀調控",
           "calendar_days": 153,
@@ -570,7 +625,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 9,
+          "seq": 5,
           "period": "2007/10/30~2008/11/21",
           "name": "2008金融海嘯",
           "calendar_days": 388,
@@ -584,7 +639,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 11,
+          "seq": 6,
           "period": "2011/2/8~2011/12/19",
           "name": "歐債危機、美債遭降評",
           "calendar_days": 314,
@@ -598,7 +653,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 13,
+          "seq": 7,
           "period": "2015/4/28~2015/8/24",
           "name": "中國上證股災、美國升息預期",
           "calendar_days": 118,
@@ -612,7 +667,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 15,
+          "seq": 8,
           "period": "2015/11/5~2016/1/18",
           "name": "美國升息、中國股市持續崩盤",
           "calendar_days": 74,
@@ -626,7 +681,7 @@ window.DRAWDOWNS_DATA = {
           "severe": false
         },
         {
-          "seq": 17,
+          "seq": 9,
           "period": "2018/1/23~2019/1/4",
           "name": "中美貿易戰加劇",
           "calendar_days": 346,
@@ -640,7 +695,7 @@ window.DRAWDOWNS_DATA = {
           "severe": false
         },
         {
-          "seq": 19,
+          "seq": 10,
           "period": "2020/1/3~2020/3/19",
           "name": "COVID-19全球疫情引爆",
           "calendar_days": 76,
@@ -654,7 +709,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 21,
+          "seq": 11,
           "period": "2022/1/5~2022/10/25",
           "name": "通膨失控與美國暴力升息",
           "calendar_days": 293,
@@ -668,7 +723,7 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         },
         {
-          "seq": 23,
+          "seq": 12,
           "period": "2024/7/11~2025/4/9",
           "name": "川普MAGA新政，關稅風暴席捲全球",
           "calendar_days": 272,
@@ -682,19 +737,37 @@ window.DRAWDOWNS_DATA = {
           "severe": true
         }
       ],
+      "current": {
+        "seq": "現在",
+        "period": "2026/10/6~2026/11/6",
+        "name": "現在本波下跌",
+        "calendar_days": 31,
+        "trading_days": 20,
+        "change_pts": -12131.869999999995,
+        "change_pct": -0.24278831721798266,
+        "start_date": "2026-10-06",
+        "end_date": "2026-11-06",
+        "start_px": 49968.92,
+        "end_px": 37837.05
+      },
       "avg_pct": -0.32881515236847314,
       "median_pct": -0.28720632175116906,
+      "avg_calendar_days": 240.5,
+      "median_calendar_days": 222.0,
+      "avg_trading_days": 162.08333333333334,
+      "median_trading_days": 148.5,
       "footnotes": [
-        "只列下跌段，事件序列沿用完整表的編號。資料來源：TradingView 日線 TWSE:TAIEX (IX0001)，取盤中最高價與最低價（非收盤價）。",
+        "只列下跌段，事件序列重新由 1 編號（與完整表的編號不同）。資料來源：TradingView 日線 TWSE:TAIEX (IX0001)，取盤中最高價與最低價（非收盤價）。",
         "歷經交易日＝起訖兩根日K之間的K棒根數差，與 TradingView 粉色量測框顯示的根數相同。",
-        "紅字＝下跌段；灰底＝跌幅達 20% 以上的下跌段。H~K 欄為計算依據，期間、日曆天、漲跌幅由它們算出。",
+        "紅字＝下跌段；紅底＝跌幅達 20% 以上的下跌段。右側灰色區（H~K 欄）為計算依據，期間、日曆天、漲跌幅由它們算出。",
         "事件劃分：以 NDX 的 15 段為基礎，各指數取自己的高低點；上漲段中若有盤中高點到之後低點跌幅達 20% 的回檔，另列為事件。",
         "事件序列各指數自行由 1 編起，不同指數的同一編號不一定是同一事件。",
-        "平均跌幅與中位數只計入下跌段（紅字列）的漲跌幅(%)。",
-        "新增 4 段跌幅達 20% 的回檔：事件3、5、7、11；被拆開的上漲段沿用原事件名稱。",
+        "表格下方的平均與中位數只計入下跌段（紅字列），涵蓋日曆天、交易日、漲跌幅(%)。",
+        "新增 4 段跌幅達 20% 的回檔：事件2、3、4、6。",
         "事件1 低點取台股自己的最低點 2001/9/26（911 之後）。",
-        "事件17 高點取 2018/1/23、事件23 高點取 2024/7/11，皆為該次低點之前台股自己的最高點（離 NDX 的事件時間較遠）。",
-        "交易日以台灣開市日計算。"
+        "事件9 高點取 2018/1/23、事件12 高點取 2024/7/11，皆為該次低點之前台股自己的最高點（離 NDX 的事件時間較遠）。",
+        "交易日以台灣開市日計算。",
+        "「現在本波下跌」（黃底列）：從 2025/4 低點之後的最高點，算到該高點以來的最低點；資料截至 2026/11/18 收盤。若之後再創新低，數字會變動。此列不計入上方的平均與中位數。"
       ]
     }
   ]
