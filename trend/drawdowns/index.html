@@ -280,35 +280,68 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     var barX0 = 8, barX1 = W - 8;
     var x = function(p){ return barX0 + (barX1-barX0) * (p / axisMin); }; // p negative
     var colBar = cssVar("--bar"), colSoft = cssVar("--bar-soft"), colNow = cssVar("--now"), colAvg = cssVar("--avg");
-    var maxSub = Math.max(120, W - barX0 - 8);
+    var maxTitle = Math.max(120, W - barX0 - 8);
 
-    function measure(s, size){
+    function measure(s, size, weight){
       try{
         if(!measure.ctx) measure.ctx = document.createElement("canvas").getContext("2d");
-        measure.ctx.font = "400 "+size+'px "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif';
+        measure.ctx.font = (weight||"400")+" "+size+'px "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif';
         return measure.ctx.measureText(s).width;
       }catch(err){
-        var w=0;
-        for(var i=0;i<s.length;i++) w += s.charCodeAt(i)>127 ? size : size*0.62;
+        var w=0, unit = (weight==="700"?size*1.05:size);
+        for(var i=0;i<s.length;i++) w += s.charCodeAt(i)>127 ? unit : unit*0.62;
         return w;
       }
     }
-    // 副標：跌幅、多久、期間。手機太窄時日期單獨一行。
-    function subLines(pctVal, days, period){
-      var head = pctSigned(pctVal) + " · " + dur(days);
-      var full = head + " · " + period;
-      if(measure(full, 12) <= maxSub) return [full];
-      return [head, period];
+    function wrapText(s, size, weight, maxW){
+      var lines=[], i=0;
+      while(i<s.length){
+        var j=i+1;
+        while(j<=s.length && measure(s.slice(i,j), size, weight)<=maxW) j++;
+        j--;
+        if(j<=i) j=i+1;
+        if(j<s.length){
+          var k=j;
+          while(k>i+1 && "，、。；, ".indexOf(s.charAt(k-1))<0) k--;
+          if(k>i+1) j=k;
+        }
+        lines.push(s.slice(i,j));
+        i=j;
+      }
+      return lines.length?lines:[s];
     }
-    function rowHFor(lines){ return lines.length>1 ? 68 : 52; }
+    // 標題：事件名（期間）；期間用全形括號、略小略淡。太長就自然換行。
+    function titleLines(name, period, weight){
+      var dateStr = "（" + period + "）";
+      var dateW = measure(dateStr, 11, "400");
+      var chunks = wrapText(name, 13, weight, maxTitle);
+      var last = chunks[chunks.length-1];
+      var lines = chunks.slice(0,-1).map(function(n){ return {name:n}; });
+      if(measure(last, 13, weight)+dateW <= maxTitle){
+        lines.push({name:last, date:dateStr});
+      } else {
+        lines.push({name:last});
+        lines.push({date:dateStr});
+      }
+      return lines;
+    }
+    function rowHFor(title){ return 52 + Math.max(0, title.length-1)*16; }
 
     var items = ev.map(function(e){
-      var lines = subLines(e.change_pct, e.calendar_days, e.period);
-      return {label:e.name, lines:lines, val:e.change_pct, color:e.severe?colBar:colSoft, isNow:false, h:rowHFor(lines)};
+      var title = titleLines(e.name, e.period, "500");
+      return {
+        title:title,
+        sub: pctSigned(e.change_pct) + " · " + dur(e.calendar_days),
+        val:e.change_pct, color:e.severe?colBar:colSoft, isNow:false, h:rowHFor(title)
+      };
     });
     if(hasNow){
-      var nLines = subLines(now.change_pct, now.calendar_days, now.period);
-      items.push({label:"現在本波下跌", lines:nLines, val:now.change_pct, color:colNow, isNow:true, h:rowHFor(nLines)});
+      var nTitle = titleLines("現在本波下跌", now.period, "700");
+      items.push({
+        title:nTitle,
+        sub: pctSigned(now.change_pct) + " · " + dur(now.calendar_days),
+        val:now.change_pct, color:colNow, isNow:true, h:rowHFor(nTitle)
+      });
     }
     var rowsH = 0;
     items.forEach(function(it){ rowsH += it.h; });
@@ -321,14 +354,20 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     svg.appendChild(el("text", {x:Math.min(W-4, xa+4), y:H-8, "font-size":11, fill:colAvg}, "平均 "+pctSigned(ix.avg_pct)));
 
     function row(y, it){
-      svg.appendChild(el("text", {x:barX0, y:y+14, "font-size":13, fill:"#e8edf5", "font-weight": it.isNow?"700":"500"}, it.label));
-      var t = el("text", {x:barX0, y:y+30, "font-size":12, fill:"#a3aec0"});
-      it.lines.forEach(function(line, j){
-        t.appendChild(el("tspan", {x:barX0, dy: j===0 ? 0 : 14}, line));
+      var t = el("text", {x:barX0, y:y+14, "font-size":13, fill:"#e8edf5", "font-weight": it.isNow?"700":"500"});
+      it.title.forEach(function(line, j){
+        if(line.name){
+          t.appendChild(el("tspan", {x:barX0, dy: j===0?0:16}, line.name));
+          if(line.date) t.appendChild(el("tspan", {"font-size":"11", fill:"#a3aec0", "font-weight":"400"}, line.date));
+        } else if(line.date){
+          t.appendChild(el("tspan", {x:barX0, dy: j===0?0:16, "font-size":"11", fill:"#a3aec0", "font-weight":"400"}, line.date));
+        }
       });
       svg.appendChild(t);
+      var subY = y + 30 + Math.max(0, it.title.length-1)*16;
+      svg.appendChild(el("text", {x:barX0, y:subY, "font-size":12, fill:"#a3aec0"}, it.sub));
       var w = Math.max(2, x(it.val) - barX0);
-      var h = 10, yy = y + 20 + it.lines.length*14;
+      var h = 10, yy = subY + 4;
       svg.appendChild(el("rect", {x:barX0, y:yy, width:w, height:h, rx:2, fill:it.color}));
       var lx = barX0 + w + 6;
       var anchor = "start";
