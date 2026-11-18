@@ -271,43 +271,75 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     box.innerHTML = "";
     var ev = ordered(ix);
     var W = Math.max(300, Math.round(box.clientWidth || 680));
-    var rowH = 52, top = 8, mL = 4, mR = 8, mB = 28;
+    var top = 8, mB = 28;
     var hasNow = now && now.change_pct != null;
-    var n = ev.length + (hasNow ? 1 : 0);
-    var H = top + n*rowH + mB;
     var deepest = ev[0] ? ev.reduce(function(m,e){return Math.min(m,e.change_pct);},0) : -0.2;
     if(hasNow) deepest = Math.min(deepest, now.change_pct);
     deepest = Math.min(deepest, ix.avg_pct, -0.2);
     var axisMin = Math.floor(deepest*10 - 0.01)/10; // e.g. -0.9
     var barX0 = 8, barX1 = W - 8;
     var x = function(p){ return barX0 + (barX1-barX0) * (p / axisMin); }; // p negative
-    var svg = el("svg", {viewBox:"0 0 "+W+" "+H, width:W, height:H, "aria-hidden":"true"});
     var colBar = cssVar("--bar"), colSoft = cssVar("--bar-soft"), colNow = cssVar("--now"), colAvg = cssVar("--avg");
+    var maxSub = Math.max(120, W - barX0 - 8);
+
+    function measure(s, size){
+      try{
+        if(!measure.ctx) measure.ctx = document.createElement("canvas").getContext("2d");
+        measure.ctx.font = "400 "+size+'px "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif';
+        return measure.ctx.measureText(s).width;
+      }catch(err){
+        var w=0;
+        for(var i=0;i<s.length;i++) w += s.charCodeAt(i)>127 ? size : size*0.62;
+        return w;
+      }
+    }
+    // 副標：跌幅、多久、期間。手機太窄時日期單獨一行。
+    function subLines(pctVal, days, period){
+      var head = pctSigned(pctVal) + " · " + dur(days);
+      var full = head + " · " + period;
+      if(measure(full, 12) <= maxSub) return [full];
+      return [head, period];
+    }
+    function rowHFor(lines){ return lines.length>1 ? 68 : 52; }
+
+    var items = ev.map(function(e){
+      var lines = subLines(e.change_pct, e.calendar_days, e.period);
+      return {label:e.name, lines:lines, val:e.change_pct, color:e.severe?colBar:colSoft, isNow:false, h:rowHFor(lines)};
+    });
+    if(hasNow){
+      var nLines = subLines(now.change_pct, now.calendar_days, now.period);
+      items.push({label:"現在本波下跌", lines:nLines, val:now.change_pct, color:colNow, isNow:true, h:rowHFor(nLines)});
+    }
+    var rowsH = 0;
+    items.forEach(function(it){ rowsH += it.h; });
+    var H = top + rowsH + mB;
+    var svg = el("svg", {viewBox:"0 0 "+W+" "+H, width:W, height:H, "aria-hidden":"true"});
 
     // avg line
     var xa = x(ix.avg_pct);
-    svg.appendChild(el("line", {x1:xa,x2:xa,y1:top-2,y2:top+n*rowH-6, stroke:colAvg, "stroke-width":1.5, "stroke-dasharray":"5 4"}));
+    svg.appendChild(el("line", {x1:xa,x2:xa,y1:top-2,y2:top+rowsH-6, stroke:colAvg, "stroke-width":1.5, "stroke-dasharray":"5 4"}));
     svg.appendChild(el("text", {x:Math.min(W-4, xa+4), y:H-8, "font-size":11, fill:colAvg}, "平均 "+pctSigned(ix.avg_pct)));
 
-    function row(i, label, sub, val, color, isNow){
-      var y = top + i*rowH;
-      svg.appendChild(el("text", {x:barX0, y:y+14, "font-size":13, fill:"#e8edf5", "font-weight": isNow?"700":"500"}, label));
-      svg.appendChild(el("text", {x:barX0, y:y+30, "font-size":12, fill:"#a3aec0"}, sub));
-      var w = Math.max(2, x(val) - barX0);
-      var h = 10, yy = y+34;
-      svg.appendChild(el("rect", {x:barX0, y:yy, width:w, height:h, rx:2, fill:color}));
+    function row(y, it){
+      svg.appendChild(el("text", {x:barX0, y:y+14, "font-size":13, fill:"#e8edf5", "font-weight": it.isNow?"700":"500"}, it.label));
+      var t = el("text", {x:barX0, y:y+30, "font-size":12, fill:"#a3aec0"});
+      it.lines.forEach(function(line, j){
+        t.appendChild(el("tspan", {x:barX0, dy: j===0 ? 0 : 14}, line));
+      });
+      svg.appendChild(t);
+      var w = Math.max(2, x(it.val) - barX0);
+      var h = 10, yy = y + 20 + it.lines.length*14;
+      svg.appendChild(el("rect", {x:barX0, y:yy, width:w, height:h, rx:2, fill:it.color}));
       var lx = barX0 + w + 6;
       var anchor = "start";
       if(lx + 54 > W-4){ lx = barX0 + w - 6; anchor = "end"; }
-      svg.appendChild(el("text", {x:lx, y:yy+h-1, "font-size":13, "font-weight":"700", fill:color, "text-anchor":anchor}, pctSigned(val)));
+      svg.appendChild(el("text", {x:lx, y:yy+h-1, "font-size":13, "font-weight":"700", fill:it.color, "text-anchor":anchor}, pctSigned(it.val)));
     }
-    ev.forEach(function(e,i){
-      var sub = pctSigned(e.change_pct) + " · " + dur(e.calendar_days);
-      row(i, e.name, sub, e.change_pct, e.severe?colBar:colSoft, false);
+    var y = top;
+    items.forEach(function(it){
+      row(y, it);
+      y += it.h;
     });
-    if(hasNow){
-      row(ev.length, "現在本波下跌", pctSigned(now.change_pct)+" · "+dur(now.calendar_days)+" · "+esc(now.period), now.change_pct, colNow, true);
-    }
     box.appendChild(svg);
   }
 

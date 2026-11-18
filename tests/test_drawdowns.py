@@ -288,3 +288,17 @@ def test_home_and_scale_in_links():
     scale = SCALE.read_text(encoding="utf-8")
     assert 'href="../drawdowns/"' in scale
     assert "歷史重大下跌段" in scale or "歷史跌幅" in scale
+
+def test_bar_subtitles_include_period():
+    """橫條圖歷史列副標要跟黃底列一樣帶期間；兩種排序共用，過長時日期可換行。"""
+    html = PAGE.read_text(encoding="utf-8")
+    assert "function subLines" in html
+    assert "e.calendar_days, e.period" in html
+    assert "now.calendar_days, now.period" in html
+    # 歷史列與本波列都走同一套副標（跌幅 · 跌了 N 天 · 期間）
+    assert "pctSigned(pctVal) + \" · \" + dur(days)" in html or 'pctSigned(pctVal) + " · " + dur(days)' in html
+    # 太窄時日期單獨一行
+    assert "return [head, period]" in html
+    assert "tspan" in html
+    # 兩種排序都經過 ordered() 再畫同一套 items，不會只在一種排序顯示期間
+    assert "var ev = ordered(ix)" in html
