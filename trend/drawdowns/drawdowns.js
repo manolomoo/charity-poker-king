@@ -138,9 +138,9 @@ window.DRAWDOWNS_DATA = {
         "source": "Yahoo",
         "source_label": "Yahoo ^NDX 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2021-11-15",
+        "history_from": "2024-11-19",
         "history_covers_after_date": true,
-        "cache_file": "NDX_daily_5y.csv"
+        "cache_file": "NDX_daily_2y.csv"
       },
       "avg_pct": -0.36549358671320653,
       "median_pct": -0.2800505466553102,
@@ -309,9 +309,9 @@ window.DRAWDOWNS_DATA = {
         "source": "Yahoo",
         "source_label": "Yahoo ^GSPC 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2021-11-15",
+        "history_from": "2024-11-19",
         "history_covers_after_date": true,
-        "cache_file": "SPX_daily_5y.csv"
+        "cache_file": "SPX_daily_2y.csv"
       },
       "avg_pct": -0.2903371616918922,
       "median_pct": -0.21582833544922586,
@@ -564,9 +564,9 @@ window.DRAWDOWNS_DATA = {
         "source": "Yahoo",
         "source_label": "Yahoo ^SOX 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2021-11-15",
+        "history_from": "2024-11-19",
         "history_covers_after_date": true,
-        "cache_file": "SOX_daily_5y.csv"
+        "cache_file": "SOX_daily_2y.csv"
       },
       "avg_pct": -0.373936184084408,
       "median_pct": -0.3207992580726752,
@@ -778,9 +778,9 @@ window.DRAWDOWNS_DATA = {
         "source": "TWSE",
         "source_label": "證交所日線盤中高低點",
         "after_date": "2025-04-09",
-        "history_from": "2025-11-05",
-        "history_covers_after_date": false,
-        "cache_file": null
+        "history_from": "2024-09-10",
+        "history_covers_after_date": true,
+        "cache_file": "TWII_daily_2y.csv"
       },
       "avg_pct": -0.32881515236847314,
       "median_pct": -0.28720632175116906,
