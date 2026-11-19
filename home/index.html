@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>慈善撲克王</title>
+<title>慈善撲克王大賽</title>
 <meta name="description" content="慈善撲克王：抄底燈號與 SOX、NDX、SPX、台指走勢觀察。僅供參考，非投資建議。">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,6 +28,10 @@ h1{
   margin:0; color:var(--head); letter-spacing:.06em;
   font-family:"Noto Serif TC","Songti TC","PMingLiU",serif;
   font-size:clamp(30px,8vw,42px); font-weight:700; line-height:1.25;
+}
+.credit{
+  margin:6px 0 0; color:var(--mute); font-size:12px; line-height:1.55;
+  font-weight:400; max-width:36em;
 }
 .asof{margin:6px 0 0; color:var(--mute); font-size:12px; line-height:1.5}
 .stale{margin:8px 0 0; color:var(--near); font-size:12px; line-height:1.5}
@@ -182,7 +186,8 @@ footer .more a:hover{color:var(--accent)}
 <body>
 <div class="wrap">
   <header>
-    <h1>慈善撲克王</h1>
+    <h1>慈善撲克王大賽</h1>
+    <p class="credit">本站內容99%竊取自我大哥Cobb,大哥好人一生平安 股市發財 🙏</p>
     <p class="asof"><span id="asof-lights"></span>行情截至 <span id="asof-px">2026-11-13</span></p>
     <p class="stale" id="trend-stale" role="status" hidden></p>
   </header>

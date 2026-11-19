@@ -86,12 +86,22 @@ def test_branding_titles_are_poker_king():
         if p.name == "index.html" and "home" not in p.parts and "trend" not in str(p) and "yu-backtest" not in str(p) and p.parent == ROOT:
             assert t.startswith("慈善撲克王")
         elif p == HOME:
-            assert "慈善撲克王" in t
+            assert t.strip() == "慈善撲克王大賽"
         else:
             assert "慈善撲克王" in t, f"{p} title={t}"
         # 標題列不再把 COBB我大哥當站名
         assert not t.startswith("COBB我大哥"), p
         assert "｜COBB我大哥" not in t
+
+
+def test_homepage_title_and_credit():
+    html = HOME.read_text(encoding="utf-8")
+    assert "<title>慈善撲克王大賽</title>" in html
+    assert "<h1>慈善撲克王大賽</h1>" in html
+    assert '<p class="credit">本站內容99%竊取自我大哥Cobb,大哥好人一生平安 股市發財 🙏</p>' in html
+    # 極簡：這行小字只出現一次，且在日期列之前
+    assert html.count("本站內容99%竊取自我大哥Cobb") == 1
+    assert html.find("<h1>慈善撲克王大賽</h1>") < html.find('class="credit"') < html.find('class="asof"')
 
 
 def test_cobb_kept_as_method_credit_not_nav_brand():
@@ -119,7 +129,9 @@ def test_build_does_not_emit_legacy_redirects():
     subprocess.run([str(BUILD), str(out)], check=True, cwd=ROOT)
     try:
         root_index = (out / "index.html").read_text(encoding="utf-8")
-        assert "<h1>慈善撲克王</h1>" in root_index
+        assert "<title>慈善撲克王大賽</title>" in root_index
+        assert "<h1>慈善撲克王大賽</h1>" in root_index
+        assert "本站內容99%竊取自我大哥Cobb,大哥好人一生平安 股市發財 🙏" in root_index
         assert "location.replace" not in root_index
         assert 'id="home-nav"' in root_index
 
