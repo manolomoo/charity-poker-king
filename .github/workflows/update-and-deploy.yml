@@ -39,6 +39,15 @@ jobs:
       - name: 安裝相依套件
         run: pip install -r requirements.txt
 
+      # 證交所台指日線快取不進版控；還原後每天只需重抓前月與當月。
+      - name: 還原台指證交所日線快取
+        uses: actions/cache@v4
+        with:
+          path: data/cache/trend/twse
+          key: twse-taiex-${{ github.run_id }}
+          restore-keys: |
+            twse-taiex-
+
       - name: 執行追蹤器（個別來源失敗會沿用上次並標資料過期；整個程式失敗則此步驟失敗）
         env:
           TZ: Asia/Taipei

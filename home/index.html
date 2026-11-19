@@ -377,10 +377,10 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/", {exclude:
   "use strict";
   var D = window.SITE_DATA || {};
   var A = D.analysis, C = D.charts;
-  // 台指（TWII）排在美股三張後面：同一套畫法與型態判定，但交易日各自算，不進 P/E 圖區、燈號與階段頁。
+  // 台指（TWII，證交所）排在美股三張後面：同一套畫法與型態判定，但交易日各自算，不進 P/E 圖區、燈號與階段頁。
   var IDS = ["SOX","NDX","SPX","TWII"];
   var SYM = { TWII:"台指" };                       // 圖卡左上角顯示的名字；沒列的就用代號
-  var FULL = { TWII:"台股加權指數（^TWII）" };     // aria／title 用
+  var FULL = { TWII:"台股加權指數（證交所）" };     // aria／title 用
   var host = document.getElementById("idx");
 
   function esc(s){
@@ -711,9 +711,13 @@ renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/", {exclude:
 
   function drawVbpSvg(id, y, pt, ih, vx, vw, fs, narrow){
     var vbp = A.indices[id] && A.indices[id].volume_by_price;
-    // 用代理量時標出來：SOX 一律是 SOXX；台指只有 ^TWII 視窗沒有量、改用 0050 時才標（看 vbp.proxy）
+    // 用代理量時標出來：SOX 一律是 SOXX；台指只有沒有量、改用 0050 時才標（看 vbp.proxy）。
+    // 台指主來源是證交所成交金額時，標「證交所」。
     var proxy = (id==="SOX") ? "SOXX" : ((vbp && vbp.proxy) || "");
-    var cap = narrow ? (proxy ? proxy+"估" : "估算") : (proxy ? "籌碼（估算·"+proxy+"）" : "籌碼（估算）");
+    var twse = (id==="TWII" && !proxy);
+    var cap = narrow
+      ? (proxy ? proxy+"估" : (twse ? "證交所" : "估算"))
+      : (proxy ? "籌碼（估算·"+proxy+"）" : (twse ? "籌碼（證交所）" : "籌碼（估算）"));
     var label = '<text x="'+(vx+vw)+'" y="'+(pt-7)+'" text-anchor="end" fill="#a3aec0" font-size="'+(fs-2)+'">'+esc(cap)+'</text>';
     if(!vbp || !vbp.available || !vbp.bins || !vbp.bins.length){
       var miss = (vbp && vbp.reason) ? "無量" : "無量";

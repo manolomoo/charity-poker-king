@@ -7,7 +7,7 @@
   2. 抓資料時間、價格截至日、時差說明都由資料算出，不再寫死。
   3. 燈號摘要改讀本 repo 的 data/latest.json 與 rules.json。
 另外補上 home_pattern（首頁型態挑選）與下降直角三角形（v2／COBB 主高點讀法）。
-2026-11-16 另附台指（^TWII，TW_IDS）：同一套畫法與型態判定，但不跟美股三檔比交易日，
+2026-11-16 另附台指（TWII，TW_IDS）：同一套畫法與型態判定，但不跟美股三檔比交易日，
 也不進三指數對照、牛熊階段與估值。
 
 與 11 項燈號規則無關，不會改動燈號或門檻。由 scripts/update_trend.py 呼叫。
@@ -29,11 +29,11 @@ IDS = ["SOX", "NDX", "SPX"]
 # 台股另外一組：交易日、收盤時間都跟美股不同，不參加「三個指數最新交易日要同一天」的檢查，
 # 也不進三指數對照、牛熊階段、估值與燈號摘要。只畫圖、判型態、算籌碼分布。
 TW_IDS = ["TWII"]
-TW_PROXY_CSV = "0050_daily_2y.csv"  # ^TWII 籌碼視窗沒有量時的代理（0050.TW 日線）
+TW_PROXY_CSV = "0050_daily_2y.csv"  # 台指籌碼視窗沒有量時的代理（0050.TW 日線）
 SOURCE = "Yahoo Finance 圖表 API（query1.finance.yahoo.com/v8/finance/chart）"
 SOURCE_TICKERS = {"SOX": "^SOX", "NDX": "^NDX", "SPX": "^GSPC", "TWII": "^TWII"}
 NAMES = {"SOX": "費城半導體指數（SOX, ^SOX）", "NDX": "那斯達克 100（NDX, ^NDX）", "SPX": "標普 500（SPX, ^GSPC）",
-         "TWII": "台股加權指數（台指, ^TWII）"}
+         "TWII": "台股加權指數（台指，證交所）"}
 TZ = timezone(timedelta(hours=8))
 NY = ZoneInfo("America/New_York")
 WEEKDAY_ZH = "一二三四五六日"
@@ -1537,21 +1537,45 @@ def home_pattern(ix: dict):
     return None
 
 
-def tw_volume(daily: pd.DataFrame, proxy_df: pd.DataFrame | None):
+def load_tw_source(data_dir: Path, name: str = "TWII") -> dict:
+    p = Path(data_dir) / f"{name}_source.json"
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def tw_volume(daily: pd.DataFrame, proxy_df: pd.DataFrame | None, price_source: str | None = None):
     """台指籌碼分布要用哪個量。回傳 (volume, source_label, proxy)。
 
-    只看籌碼視窗（最近 VBP_BARS 根已完成日K）的 ^TWII 總量：> 0 就用指數自己的量
+    只看籌碼視窗（最近 VBP_BARS 根已完成日K）自己的總量：> 0 就用指數自己的量
     （單日為 0 不換來源）；總量為 0 才改用 0050.TW 日線量，按日期對齊（比照 SOX 用 SOXX）。
+    price_source：TWSE（量是證交所成交金額，新台幣）或 Yahoo（^TWII 股數，常為 0）。
     """
+    src = (price_source or "").upper()
+    if src == "TWSE":
+        own_ok = "指數日線成交金額（證交所；新台幣）"
+        own_zero = "證交所這段期間成交金額為 0，且沒有 0050.TW 快取，籌碼分布從缺"
+        proxy_lab = "0050.TW（元大台灣50）日線成交量（近似；證交所這段期間成交金額為 0）"
+    elif src == "YAHOO":
+        own_ok = "指數日線成交量（Yahoo ^TWII）"
+        own_zero = "Yahoo ^TWII 這段期間成交量為 0，且沒有 0050.TW 快取，籌碼分布從缺"
+        proxy_lab = "0050.TW（元大台灣50）日線成交量（近似；Yahoo ^TWII 這段期間成交量為 0）"
+    else:
+        own_ok = "指數日線成交量"
+        own_zero = "這段期間成交量為 0，且沒有 0050.TW 快取，籌碼分布從缺"
+        proxy_lab = "0050.TW（元大台灣50）日線成交量（近似；指數這段期間成交量為 0）"
     own = daily["volume"]
     if float(own.tail(MS.VBP_BARS).fillna(0).sum()) > 0:
-        return own, "指數日線成交量（Yahoo ^TWII）", None
+        return own, own_ok, None
     if proxy_df is None:
-        return None, "Yahoo ^TWII 這段期間成交量為 0，且沒有 0050.TW 快取，籌碼分布從缺", None
+        return None, own_zero, None
     pv = proxy_df.set_index(proxy_df["date"].dt.strftime("%Y-%m-%d"))["volume"]
     vol = daily["date"].dt.strftime("%Y-%m-%d").map(pv)
     vol.index = daily.index
-    return vol, "0050.TW（元大台灣50）日線成交量（近似；Yahoo ^TWII 這段期間成交量為 0）", "0050"
+    return vol, proxy_lab, "0050"
 
 
 def analyze_tw(name: str, data_dir: Path) -> dict:
@@ -1560,7 +1584,12 @@ def analyze_tw(name: str, data_dir: Path) -> dict:
     ix["home_pattern"] = home_pattern(ix)
     daily = load_csv(data_dir / f"{name}_daily_2y.csv")
     proxy_path = data_dir / TW_PROXY_CSV
-    vol, vol_src, proxy = tw_volume(daily, load_csv(proxy_path) if proxy_path.exists() else None)
+    src_info = load_tw_source(data_dir, name)
+    vol, vol_src, proxy = tw_volume(
+        daily,
+        load_csv(proxy_path) if proxy_path.exists() else None,
+        price_source=src_info.get("price_source") or None,
+    )
     if vol is None:
         vbp = {"available": False, "reason": vol_src, "source_label": vol_src}
     else:
@@ -1681,6 +1710,17 @@ def build(data_dir: Path, latest_path: Path, rules_path: Path, fetched_at_taipei
     meta["tw_asof"] = tw_asof  # 台股各自的截至日；price_asof 仍是美股
     if tw_skipped:
         meta["tw_skipped"] = tw_skipped
+    tw_source = {}
+    for name in tw_asof:
+        info = load_tw_source(data_dir, name)
+        if info:
+            tw_source[name] = {
+                "price_source": info.get("price_source"),
+                "volume_field": info.get("volume_field"),
+                "volume_note": info.get("volume_note"),
+            }
+    if tw_source:
+        meta["tw_source"] = tw_source
     for key in meta["files"]:
         meta["files"][key] += [f"{n}_{key}.csv" for n in tw_asof]
 

@@ -2,7 +2,7 @@
 """更新 SOX／NDX／SPX 與台指（^TWII）走勢資料（首頁與 /trend/ 用）。與 11 項燈號規則無關。
 
 用法（repo 根目錄）：
-    TZ=Asia/Taipei python scripts/update_trend.py            # 從 Yahoo 抓，再計算
+    TZ=Asia/Taipei python scripts/update_trend.py            # 美股從 Yahoo 抓；台指優先證交所，失敗再退 Yahoo
     TZ=Asia/Taipei python scripts/update_trend.py --offline  # 不連網，用 data/cache/trend/ 的上次行情重算
 
 輸出：
@@ -15,9 +15,9 @@
 結束碼 0（讓燈號更新與 Pages 部署照常進行）。只有程式本身出錯才會非零結束。
 行情原始檔放 data/cache/trend/（.gitignore，不進版控）。
 
-台指（^TWII）另外處理：台股與美股的交易日、收盤時間不同，不跟美股三檔比「最新交易日要同一天」，
-price_asof 與過期檢查仍只看美股。^TWII 抓不到時沿用舊快取，沒有快取就這一輪不出台指圖卡，
-不影響美股三檔的更新。
+台指（TWII）另外處理：台股與美股的交易日、收盤時間不同，不跟美股三檔比「最新交易日要同一天」，
+price_asof 與過期檢查仍只看美股。台指優先用證交所（開高低收 MI_5MINS_HIST、量用 FMTQIK 成交金額），
+失敗再退 Yahoo ^TWII，再不行沿用舊快取；沒有快取就這一輪不出台指圖卡，不影響美股三檔的更新。
 """
 from __future__ import annotations
 
@@ -34,6 +34,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import trend_analyze as T  # noqa: E402
+import twse_taiex as TWSE  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "data" / "cache" / "trend"
@@ -51,7 +52,7 @@ TW_CLOSE_HM = (13, 30)  # 台股 13:30 收盤；之後（含 15:00 排程）當�
 TW_TZ = ZoneInfo("Asia/Taipei")
 # 市場別：(判斷「今天」與收盤的時區, 收盤時分, 週K 星期一時間戳用的時區)
 MARKETS = {"US": (T.NY, US_CLOSE_HM, "America/New_York"), "TW": (TW_TZ, TW_CLOSE_HM, "Asia/Taipei")}
-TW_VOLUME_PROXY = "0050.TW"  # ^TWII 籌碼視窗沒有量時的代理（做法比照 SOX 用 SOXX）
+TW_VOLUME_PROXY = "0050.TW"  # 台指籌碼視窗沒有量時的代理（做法比照 SOX 用 SOXX；證交所成交金額為主時通常用不到）
 MIN_ROWS = {"daily_1y": 200, "daily_2y": 400, "weekly_2y": 60, "weekly_5y": 150}
 COLS = ["date", "timestamp", "open", "high", "low", "close", "adjclose", "volume"]
 
@@ -200,26 +201,103 @@ def validate(name: str, frames: dict):
             raise SourceError(f"{name} {key} 最後週K 收盤 {wc:.2f} 與日線收盤 {dc:.2f} 對不上")
 
 
+def write_tw_source(source: str, asof: str, extra: dict | None = None):
+    payload = {"price_source": source, "asof": asof}
+    if source == "TWSE":
+        payload["volume_field"] = TWSE.VOLUME_FIELD
+        payload["volume_note"] = TWSE.VOLUME_NOTE
+        payload["ohlc_api"] = TWSE.OHLC_URL
+        payload["volume_api"] = TWSE.VOL_URL
+    else:
+        payload["volume_field"] = "yahoo_volume"
+        payload["volume_note"] = "Yahoo ^TWII volume（指數股數；收盤後當天常是 0）"
+    if extra:
+        payload.update(extra)
+    path = CACHE / "TWII_source.json"
+    write_atomic(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+
+
+def _yahoo_tw_frames(name: str) -> tuple[dict, str | None]:
+    tk = T.SOURCE_TICKERS[name]
+    frames = {key: fetch_one(tk, rng, itv) for key, rng, itv in DATASETS}
+    dropped = drop_unfinished_session(frames, market="TW")
+    # Yahoo 的 ^TWII 週線在收盤後常常還沒有當週那一根（或收盤價落後），
+    # 一律用已完成的日K 重組最新交易日所在的那一週。
+    rebuild_week(frames, frames["daily_2y"]["date"].iloc[-1], MARKETS["TW"][2])
+    validate(name, frames)
+    return frames, dropped
+
+
+def _crosscheck_twse_yahoo(twse_daily: pd.DataFrame) -> dict | None:
+    """對重疊區間的收盤價；失敗只記錄，不讓台指更新失敗。"""
+    try:
+        yahoo = fetch_one(T.SOURCE_TICKERS["TWII"], "2y", "1d")
+        frames = {"daily_2y": yahoo}
+        drop_unfinished_session(frames, market="TW")
+        return TWSE.crosscheck_closes(twse_daily, frames["daily_2y"])
+    except Exception as e:
+        return {"error": short_reason(e)}
+
+
 def fetch_tw(market_times: dict, dropped: dict) -> list:
-    """抓台指（^TWII）→ 檢查 → 通過才寫進快取。失敗只記錄：有舊快取就沿用，沒有就這一輪不出台指。"""
+    """抓台指：證交所優先，失敗改 Yahoo，再不行沿用舊快取。失敗不擋美股。"""
     notes = []
     for name in T.TW_IDS:
-        tk = T.SOURCE_TICKERS[name]
+        frames = None
+        source = None
+        report = None
         try:
-            frames = {key: fetch_one(tk, rng, itv) for key, rng, itv in DATASETS}
+            daily, report = TWSE.fetch_history(CACHE)
+            frames = TWSE.build_frames(daily, MARKETS["TW"][2])
             dropped[name] = drop_unfinished_session(frames, market="TW")
-            # Yahoo 的 ^TWII 週線在收盤後常常還沒有當週那一根（或收盤價落後），
-            # 一律用已完成的日K 重組最新交易日所在的那一週。
             rebuild_week(frames, frames["daily_2y"]["date"].iloc[-1], MARKETS["TW"][2])
             validate(name, frames)
-        except SourceError as e:
-            has_cache = all((CACHE / f"{name}_{key}.csv").exists() for key, _, _ in DATASETS)
-            notes.append(f"{name} 抓取失敗（{short_reason(e)}），" + ("沿用舊的快取" if has_cache else "沒有快取，這一輪不出台指圖卡"))
-            continue
+            source = "TWSE"
+        except Exception as e:
+            notes.append(f"{name} 證交所抓取失敗（{short_reason(e)}），改試 Yahoo ^TWII")
+            try:
+                frames, dropped[name] = _yahoo_tw_frames(name)
+                source = "Yahoo"
+            except SourceError as e2:
+                has_cache = all((CACHE / f"{name}_{key}.csv").exists() for key, _, _ in DATASETS)
+                notes.append(
+                    f"{name} Yahoo 也失敗（{short_reason(e2)}），"
+                    + ("沿用舊的快取" if has_cache else "沒有快取，這一輪不出台指圖卡")
+                )
+                continue
+        asof = frames["daily_2y"]["date"].iloc[-1]
+        extra = {}
+        if source == "TWSE":
+            chk = _crosscheck_twse_yahoo(frames["daily_2y"])
+            if chk:
+                extra["crosscheck"] = chk
+                if chk.get("error"):
+                    notes.append(f"{name} 與 Yahoo 收盤對照失敗：{chk['error']}")
+                else:
+                    notes.append(
+                        f"{name} 與 Yahoo 收盤對照：重疊 {chk['overlap']} 天（{chk['first']}～{chk['last']}），"
+                        f"平均差 {chk['mean_abs_diff']:.4f}、最大差 {chk['max_abs_diff']:.4f}，"
+                        f"超過 0.05 點 {chk['mismatch_count']} 天"
+                    )
+            if report:
+                extra["fetch_report"] = {
+                    "months_requested": report.get("months_requested"),
+                    "months_ok": report.get("months_ok"),
+                    "rows": report.get("rows"),
+                    "first": report.get("first"),
+                    "current_month_skipped": report.get("current_month_skipped"),
+                    "mismatches": report.get("mismatches") or [],
+                }
+        write_tw_source(source, asof, extra)
         for key, df in frames.items():
             df[COLS].to_csv(CACHE / f"{name}_{key}.csv", index=False)
-        market_times[name] = market_time_taipei(tk)
-        notes.append(f"{name} 日線 {len(frames['daily_2y'])} 筆，截至 {frames['daily_2y']['date'].iloc[-1]}")
+        if source == "TWSE":
+            market_times[name] = f"證交所 {asof} 收盤"
+        else:
+            market_times[name] = market_time_taipei(T.SOURCE_TICKERS[name])
+        n2 = len(frames["daily_2y"])
+        notes.append(f"{name} 來源={source} 日線 {n2} 筆，截至 {asof}"
+                     + (f"（量=證交所成交金額，單位新台幣）" if source == "TWSE" else ""))
     return notes
 
 
@@ -267,7 +345,7 @@ def fetch_optional_proxies(price_asof: str | None = None):
     except Exception as e:
         notes.append(f"SOXX 抓取失敗（{type(e).__name__}: {e}），SOX 未驗量")
     try:
-        # 台指：只有 ^TWII 籌碼視窗總量為 0 時才會用到（判斷在 trend_analyze.build）
+        # 台指：只有籌碼視窗總量為 0 時才會用到（證交所用成交金額時通常有量；判斷在 trend_analyze.build）
         df = fetch_one(TW_VOLUME_PROXY, "2y", "1d")
         frames = {"daily_2y": df}
         drop_unfinished_session(frames, market="TW")

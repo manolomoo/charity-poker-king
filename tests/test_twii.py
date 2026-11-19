@@ -189,9 +189,9 @@ def test_volume_uses_twii_when_window_has_volume():
     vols[-1] = 0  # 收盤後當日量一度是 0：不可因此整段改用 0050
     daily = _daily(vols)
     proxy = _daily([7] * n)
-    vol, label, proxy_name = T.tw_volume(daily, proxy)
+    vol, label, proxy_name = T.tw_volume(daily, proxy, price_source="TWSE")
     assert proxy_name is None
-    assert "^TWII" in label and "0050" not in label
+    assert "證交所" in label and "0050" not in label
     assert vol.equals(daily["volume"])
 
 
@@ -239,7 +239,8 @@ def test_homepage_draws_twii_after_spx_before_ta_nav():
     assert m, "找不到首頁圖卡的 IDS 清單"
     assert re.findall(r'"(\w+)"', m.group(1)) == ["SOX", "NDX", "SPX", "TWII"]
     assert 'TWII:"台指"' in home
-    assert "台股加權指數（^TWII）" in home
+    assert "台股加權指數（證交所）" in home
+    assert "證交所" in home
     # 圖卡都畫進 #idx，#idx 在 #ta-nav 前面
     assert 0 < home.find('id="idx"') < home.find('id="ta-nav"') < home.find('id="pe-charts"')
     assert "目前不構成典型形態" in home

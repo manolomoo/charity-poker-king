@@ -182,7 +182,7 @@ a{color:var(--edge)}
 
 <footer id="disclaimer">
   <h2>免責聲明</h2>
-  <p>本頁只整理公開行情與既有燈號狀態，不是投資建議，也不保證任何報酬。技術形態與趨勢判斷可能失敗，市場有虧損本金的風險。數字會過時；燈號規則與維持天數以<a href="../signals/">燈號詳情</a>為準。行情來自 Yahoo Finance 圖表 API，來源與截至日寫在本頁開頭。</p>
+  <p>本頁只整理公開行情與既有燈號狀態，不是投資建議，也不保證任何報酬。技術形態與趨勢判斷可能失敗，市場有虧損本金的風險。數字會過時；燈號規則與維持天數以<a href="../signals/">燈號詳情</a>為準。美股行情來自 Yahoo Finance 圖表 API，台指優先來自臺灣證券交易所；來源與截至日寫在本頁開頭。</p>
   <p><a href="../">← 首頁</a></p>
 </footer>
 </div>
@@ -211,10 +211,15 @@ a{color:var(--edge)}
   const mktTimes = IDS.filter(id=>(meta.regular_market_time_taipei||{})[id])
     .map(id=>id+" "+meta.regular_market_time_taipei[id]).join("、");
   document.getElementById("src-line").innerHTML =
-    "行情來源：Yahoo Finance 圖表 API（^SOX、^NDX、^GSPC；另附台指 ^TWII）。"+
+    "行情來源：Yahoo Finance 圖表 API（^SOX、^NDX、^GSPC）。"+
     "抓資料時間（台北時間 UTC+8）："+esc(String(meta.fetched_at_taipei||"").slice(0,16).replace("T"," "))+"。"+
     "價格截至：美股 <strong>"+esc(meta.price_asof)+(meta.price_asof_weekday?"（"+esc(meta.price_asof_weekday)+"）":"")+"收盤</strong>。"+
-    ((meta.tw_asof||{}).TWII ? "台指截至台股 "+esc(meta.tw_asof.TWII)+" 收盤（交易日與美股分開算）。" : "")+
+    ((meta.tw_asof||{}).TWII ? (function(){
+      var src=((meta.tw_source||{}).TWII||{}).price_source;
+      var from=src==="Yahoo"?"Yahoo ^TWII":"臺灣證券交易所（證交所）";
+      var vol=src==="Yahoo"?"量來自 Yahoo，當天常為 0。":"量為證交所成交金額，單位新台幣，與 Yahoo 指數股數不同。";
+      return "台指（發行量加權股價指數）來自"+from+"，截至台股 "+esc(meta.tw_asof.TWII)+" 收盤（交易日與美股分開算；"+vol+"）";
+    })() : "")+
     (mktTimes ? "Yahoo 時間戳轉台北時間："+esc(mktTimes)+"。" : "")+"<br>"+
     "燈號來源：<a href=\""+esc(cobb.data_url)+"\">latest.json</a>，規則 "+esc(cobb.rules_version)+"，查詢時間 "+esc(cobb.queried_at)+"。<br>"+
     esc(cobb.note_timing);
