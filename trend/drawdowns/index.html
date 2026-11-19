@@ -50,6 +50,11 @@ section{margin:28px 0 36px}
 .nowbox{border-color:#5c4b1f;background:#1c1a12}
 .nowbox .v{color:var(--amber)}
 .nowbox .d{color:var(--muted);font-size:12px;line-height:1.55;margin:6px 0 0}
+.nowbox .asof{color:var(--amber);font-size:12px;font-weight:700;line-height:1.5;margin:6px 0 0}
+.nowbox .v.ok{color:var(--green);font-size:clamp(18px,4vw,22px)}
+.nowbox .asof span{display:block}
+@media (max-width:560px){ .sum .nowbox{grid-column:1/-1} }
+td .asof{display:block;color:var(--muted);font-size:11px;font-weight:400;line-height:1.45;margin-top:2px}
 .sort{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
 .sort button{
   font:inherit;font-size:12px;color:var(--muted);
@@ -88,7 +93,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 <header>
   <h1>歷史重大下跌段</h1>
   <p class="sub">過去每次大跌，跌了多少、跌了多久</p>
-  <p class="lede">依使用者提供的 Excel 下跌段表做成網頁。表內高低點是 TradingView 日線的盤中最高價與最低價，不是收盤價。事件序列已重新由 1 編號（與完整表的編號不同）。黃底的「現在本波下跌」是表上的靜態快照，不是本站自動更新；若之後再創新低，數字會變動，也不計入平均與中位數。</p>
+  <p class="lede">依使用者提供的 Excel 下跌段表做成網頁。表內高低點是 TradingView 日線的盤中最高價與最低價，不是收盤價。事件序列已重新由 1 編號（與完整表的編號不同）。歷史各列仍來自 Excel／TradingView。黃底的「現在本波下跌」改由本站日線的盤中高低點自動計算（台指用證交所、美股用 Yahoo），口徑與歷史列相同：從上一段歷史下跌的低點之後的最高點，算到該高點以來的最低點，結束日是低點那天，並標出資料截至日。若之後再創新低，數字會變動；本波不計入平均與中位數。</p>
 </header>
 <nav class="top">
   <a href="../../">首頁</a>
@@ -111,7 +116,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
       <li><span class="sw"></span>跌幅達 20% 以上</li>
       <li><span class="sw soft"></span>跌幅不到 20%</li>
       <li><span class="sw avg"></span>平均跌幅</li>
-      <li><span class="sw now"></span>現在本波下跌（表上的黃底列）</li>
+      <li><span class="sw now"></span>現在本波下跌（黃底列，本站日線自動計算，不計入平均）</li>
     </ul>
     <div class="sort" id="sort">
       <button type="button" data-sort="size" class="on">依跌幅（深的在上）</button>
@@ -128,7 +133,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 
 <section id="table-sec">
   <h2>明細表</h2>
-  <p class="note">紅底＝跌幅達 20% 以上；黃底＝現在本波下跌（不計入平均與中位數）。手機可左右滑動。</p>
+  <p class="note">紅底＝跌幅達 20% 以上；黃底＝現在本波下跌（本站日線自動計算，事件欄寫資料截至日與來源；不計入平均與中位數）。手機可左右滑動。</p>
   <div class="scroll">
     <table>
       <thead>
@@ -157,7 +162,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 </div>
 
 <footer>
-  <p>過去的下跌段不能預測未來，非投資建議。依使用者提供的 Excel 下跌段表做成網頁版，公式（期間、日曆天、漲跌幅）已重新計算並對過 Excel 快取。</p>
+  <p>過去的下跌段不能預測未來，非投資建議。依使用者提供的 Excel 下跌段表做成網頁版，公式（期間、日曆天、漲跌幅）已重新計算並對過 Excel 快取。「現在本波下跌」隨每日走勢資料自動更新（台指證交所、美股 Yahoo）。</p>
   <p><a href="../../">← 首頁</a>　<a href="../">走勢觀察</a>　<a href="../scale-in/">分批計算</a>　<a href="../left-side-fix/">左側修正</a></p>
 </footer>
 </div>
@@ -210,6 +215,23 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     if(Math.abs(x-Math.round(x))<1e-9) return String(Math.round(x));
     return String(Math.round(x*10)/10);
   }
+  // 進行中的本波下跌；已創新高（recovered）或沒有資料時回傳 null
+  function waveOf(ix){
+    var c = ix && ix.current;
+    if(!c || c.recovered || c.change_pct==null) return null;
+    return c;
+  }
+  function asofLine(c){
+    if(!c) return "";
+    var s = c.asof ? "資料截至 " + isoToYmd(c.asof) : "Excel 表上的快照";
+    if(c.source_label) s += "・" + c.source_label;
+    return s;
+  }
+  function asofHtml(c){
+    if(!c) return "";
+    var a = c.asof ? "資料截至 " + isoToYmd(c.asof) : "Excel 表上的快照";
+    return "<span>"+esc(a)+"</span>" + (c.source_label ? "<span>"+esc(c.source_label)+"</span>" : "");
+  }
   function yahooDD(id){
     var D = window.SITE_DATA || {};
     var ix = D.analysis && D.analysis.indices && D.analysis.indices[id];
@@ -252,9 +274,15 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     html += card("平均跌幅", pctSigned(ix.avg_pct), "neg", "", "平均 "+daysNum(ix.avg_calendar_days)+" 天／"+daysNum(ix.avg_trading_days)+" 個交易日（不含本波）");
     html += card("中位數跌幅", pctSigned(ix.median_pct), "neg", "", "中位數 "+daysNum(ix.median_calendar_days)+" 天／"+daysNum(ix.median_trading_days)+" 個交易日");
     html += card("跌超過 20%", sev + " 次");
+    var cur = ix.current;
     if(wave){
       html += '<div class="card nowbox"><p class="k">現在本波下跌</p><p class="v">'+pctSigned(wave.change_pct)+'</p>'
-        + '<p class="d">'+esc(wave.period)+"，跌了 "+wave.calendar_days+" 天（"+wave.trading_days+" 個交易日）。這是 Excel 表上的靜態快照（TradingView 盤中高低點），不是自動更新；不計入左邊的平均與中位數。</p></div>";
+        + '<p class="d">'+esc(wave.period)+"，跌了 "+wave.calendar_days+" 天（"+wave.trading_days+" 個交易日）。結束日是低點日；不計入左邊的平均與中位數。</p>"
+        + '<p class="asof">'+asofHtml(wave)+'</p></div>';
+    } else if(cur && cur.recovered){
+      html += '<div class="card nowbox"><p class="k">現在本波下跌</p><p class="v ok">已創新高</p>'
+        + '<p class="d">目前沒有進行中的下跌段（最高點 '+isoToYmd(cur.high_date)+'）。</p>'
+        + '<p class="asof">'+asofHtml(cur)+'</p></div>';
     }
     $("sum").innerHTML = html;
   }
@@ -440,11 +468,11 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     box.appendChild(svg);
   }
 
-  function rowHtml(e, cls){
+  function rowHtml(e, cls, sub){
     return "<tr class='"+cls+"'>"
       + "<td class='rowh'>"+esc(String(e.seq))+"</td>"
       + "<td>"+esc(e.period)+"</td>"
-      + "<td class='name'>"+esc(e.name)+"</td>"
+      + "<td class='name'>"+esc(e.name)+(sub?"<span class='asof'>"+esc(sub)+"</span>":"")+"</td>"
       + "<td>"+e.calendar_days+"</td>"
       + "<td>"+e.trading_days+"</td>"
       + "<td class='neg'>"+pts(e.change_pts)+"</td>"
@@ -459,8 +487,11 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     ix.events.forEach(function(e){
       h += rowHtml(e, e.severe?"severe":"");
     });
-    if(ix.current){
-      h += rowHtml(ix.current, "current");
+    var wave = waveOf(ix);
+    if(wave){
+      h += rowHtml(wave, "current", asofLine(wave));
+    } else if(ix.current && ix.current.recovered){
+      h += "<tr class='current'><td class='rowh'>現在</td><td></td><td class='name' colspan='9'>已創新高，目前沒有進行中的下跌段<span class='asof'>"+esc(asofLine(ix.current))+"</span></td></tr>";
     }
     h += "<tr><td></td><td></td><td class='name'>下跌段平均</td><td>"+daysNum(ix.avg_calendar_days)+"</td><td>"+daysNum(ix.avg_trading_days)+"</td><td></td><td class='neg'>"+pctSigned(ix.avg_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
     h += "<tr><td></td><td></td><td class='name'>下跌段中位數</td><td>"+daysNum(ix.median_calendar_days)+"</td><td>"+daysNum(ix.median_trading_days)+"</td><td></td><td class='neg'>"+pctSigned(ix.median_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
@@ -473,7 +504,9 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     var deep = ev[0];
     var sev = ev.filter(function(e){return e.severe;}).length;
     if(wave){
-      $("compare").textContent = "本波 "+pctSigned(wave.change_pct)+"、跌了 "+wave.calendar_days+" 天（"+wave.trading_days+" 個交易日）；歷史平均 "+pctSigned(ix.avg_pct)+"、平均 "+daysNum(ix.avg_calendar_days)+" 天（"+daysNum(ix.avg_trading_days)+" 個交易日）。這是表上的靜態快照，不是自動更新。";
+      $("compare").textContent = "本波 "+pctSigned(wave.change_pct)+"（"+wave.period+"）、跌了 "+wave.calendar_days+" 天（"+wave.trading_days+" 個交易日）；歷史平均 "+pctSigned(ix.avg_pct)+"、平均 "+daysNum(ix.avg_calendar_days)+" 天（"+daysNum(ix.avg_trading_days)+" 個交易日）。本波由本站日線盤中高低點自動計算，"+asofLine(wave)+"，不計入平均與中位數。";
+    } else if(ix.current && ix.current.recovered){
+      $("compare").textContent = "已創新高，目前沒有進行中的下跌段（"+asofLine(ix.current)+"）。歷史平均 "+pctSigned(ix.avg_pct)+"、平均 "+daysNum(ix.avg_calendar_days)+" 天。";
     } else {
       $("compare").textContent = "";
     }
@@ -482,19 +515,19 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     var yn = $("yahoo-note");
     if(yahoo){
       yn.hidden = false;
-      yn.textContent = "對照：本站 Yahoo 收盤相對 52 週高點約 "+pctSigned(yahoo.vsHigh)+"（截至 "+yahoo.asof+"），口徑不同，不是表上的「現在本波」。";
+      yn.textContent = "對照：本站收盤相對 52 週高點約 "+pctSigned(yahoo.vsHigh)+"（截至 "+yahoo.asof+"）。這是收盤價、52 週視窗，與上面用盤中高低點算的「現在本波下跌」口徑不同。";
     } else {
       yn.hidden = true;
       yn.textContent = "";
     }
-    $("take-time").textContent = "下面這張圖用時間來看：每一次下跌佔了哪一段年份、當時跌得多深。黃色塊是表上的「現在本波下跌」。色塊愈長代表跌得愈久，愈往下代表跌得愈深。";
+    $("take-time").textContent = "下面這張圖用時間來看：每一次下跌佔了哪一段年份、當時跌得多深。" + (wave ? "黃色塊是「現在本波下跌」（本站日線自動計算）。" : "") + "色塊愈長代表跌得愈久，愈往下代表跌得愈深。";
   }
 
   function paint(){
     var ix = idxById(curId);
     if(!ix) return;
     $("idx-title").textContent = ix.title;
-    var wave = ix.current || null;
+    var wave = waveOf(ix);
     var yahoo = yahooDD(ix.id);
     paintTabs();
     paintSummary(ix, wave);

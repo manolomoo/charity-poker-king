@@ -65,6 +65,8 @@ jobs:
           git add -A data reports
           # 只收走勢的產生檔；trend/index.html、trend/ta-book 不在每日自動 commit 範圍
           git add -f trend/data.json trend/data.js trend/status.json
+          # 歷史跌幅頁的「現在本波下跌」由 update_trend.py 刷新；只收這兩個產生檔，不收 index.html
+          git add -f trend/drawdowns/drawdowns.json trend/drawdowns/drawdowns.js
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else

@@ -8,6 +8,7 @@
 輸出：
     trend/data.json    {analysis, charts}（成功才覆寫）
     trend/data.js      window.SITE_DATA = …;（由同一份 JSON 產生，成功才覆寫）
+    trend/drawdowns/drawdowns.json／.js  data.json 成功寫出後，刷新「現在本波下跌」（scripts/drawdowns_current.py）
     trend/status.json  每次都寫：{ok, stale, fetched_at_taipei, price_asof, error,
                                   last_good_asof, last_good_fetched_at}
 
@@ -477,7 +478,23 @@ def main() -> int:
     for line in VP.summarize(analysis.get("valuation") or {}):
         print(f"  估值 {line}")
     print(f"[trend] 已寫 trend/data.json、trend/data.js、trend/status.json")
+    refresh_drawdowns()
     return 0
+
+
+def refresh_drawdowns():
+    """data.json 成功寫出後（快取日線也是這一輪的新資料），刷新 /trend/drawdowns/ 的「現在本波下跌」。
+
+    更新失敗、沿用舊 data.json 時 main() 已提早 return，不會走到這裡。刷新本身失敗只記錄，不讓走勢更新失敗。"""
+    try:
+        import drawdowns_current as DC
+
+        report = DC.refresh_files(ROOT)
+        for name, line in report.items():
+            print(f"[trend] 本波下跌 {name}：{line}")
+        print("[trend] 已寫 trend/drawdowns/drawdowns.json、trend/drawdowns/drawdowns.js")
+    except Exception as e:
+        print(f"[trend] 本波下跌刷新失敗（{short_reason(e)}），drawdowns 沿用上次")
 
 
 if __name__ == "__main__":

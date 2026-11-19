@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""從 tests/fixtures/historical_drawdowns.xlsx 重算公式，寫出 trend/drawdowns/ 的資料檔。不碰燈號規則。"""
+"""從 tests/fixtures/historical_drawdowns.xlsx 重算公式，寫出 trend/drawdowns/ 的資料檔。不碰燈號規則。
+
+歷史 events、平均與中位數來自 Excel；「現在本波下跌」若找得到本站走勢日線（trend/data.json 與
+data/cache/trend/），改由 scripts/drawdowns_current.py 以同一口徑自動計算並覆寫（current_is_snapshot=false）。
+"""
 from __future__ import annotations
 
 import json
@@ -182,27 +186,36 @@ def build() -> dict:
 
 
 def main() -> None:
+    import drawdowns_current as DC  # 延後 import：drawdowns_current 會 import 本檔的 excel_period／calendar_days
+
     data = build()
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    raw = json.dumps(data, ensure_ascii=False, indent=2)
-    (OUT_DIR / "drawdowns.json").write_text(raw + "\n", encoding="utf-8")
-    (OUT_DIR / "drawdowns.js").write_text(
-        "window.DRAWDOWNS_DATA = " + raw + ";\n", encoding="utf-8"
-    )
-    print("wrote", OUT_DIR / "drawdowns.json", "indices", [i["id"] for i in data["indices"]])
+    site = DC.load_site()
+    if site:
+        report = DC.apply_current(data, site)
+    else:
+        report = {}
+        print("找不到 trend/data.json，本波沿用 Excel 快照")
+    DC.write_payload(data, OUT_DIR)
+    print("wrote", OUT_DIR / "drawdowns.json", "indices", [i["id"] for i in data["indices"]],
+          "current_is_snapshot", data["current_is_snapshot"])
     for i in data["indices"]:
         n = len(i["events"])
         sev = sum(1 for e in i["events"] if e["severe"])
         cur = i.get("current")
         cur_s = ""
-        if cur:
-            cur_s = f" | 現在 {cur['period']} {cur['change_pct']*100:.2f}% / {cur['calendar_days']}天 / {cur['trading_days']}交易日"
+        if cur and cur.get("recovered"):
+            cur_s = f" | 現在 已創新高（截至 {cur.get('asof')}）"
+        elif cur:
+            cur_s = (f" | 現在 {cur['period']} {cur['change_pct']*100:.2f}% / {cur['calendar_days']}天 / "
+                     f"{cur['trading_days']}交易日（截至 {cur.get('asof', 'Excel 快照')}）")
         print(
             f"  {i['id']}: {n} events, {sev} ≥20%, "
             f"avg={i['avg_pct']*100:.2f}% {i['avg_calendar_days']:.1f}天 {i['avg_trading_days']:.1f}交易日, "
             f"med={i['median_pct']*100:.2f}% {i['median_calendar_days']:.1f}天 {i['median_trading_days']:.1f}交易日"
             + cur_s
         )
+        if i["id"] in report:
+            print(f"      本波：{report[i['id']]}")
 
 
 if __name__ == "__main__":
