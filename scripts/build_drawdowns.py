@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from statistics import mean, median
+from statistics import mean, median, stdev
 
 import openpyxl
 
@@ -92,9 +92,13 @@ def parse_leg(ws, r: int, seq) -> dict:
     }
 
 
-def parse_rebound(ws, r: int, low_date, low_px: float) -> dict | None:
+def parse_rebound(ws, r: int, low_date, low_px: float, high_px: float) -> dict | None:
     """L~Q：起點＝該次下跌的低點（K 欄，盤中最低價），終點＝轉多日的日K收盤價（M 欄）。
-    反彈交易日（O 欄）是 K 棒根數差，直接讀；其餘由公式重算。"""
+    反彈交易日（O 欄）是 K 棒根數差，直接讀；其餘由公式重算。
+    另算（點數口徑，同一段高低點）：
+      retrace_pct     ＝(轉多收盤−低點)／(高點−低點)，轉多確認時收回了跌幅的幾成；
+      gap_to_high_pct ＝轉多收盤／高點−1，轉多確認時距前高還差多少（負值＝還在前高之下）。
+    不用「反彈%÷|跌幅%|」：兩個 % 分母不同（低點 vs 高點），深跌時會誇大。"""
     turn, turn_px, td = ws.cell(r, COL_TURN_DATE).value, ws.cell(r, COL_TURN_PX).value, ws.cell(r, COL_REB_TD).value
     if turn is None and turn_px is None and td is None:
         return None
@@ -108,7 +112,14 @@ def parse_rebound(ws, r: int, low_date, low_px: float) -> dict | None:
         "trading_days": int(td),
         "change_pts": turn_px - low_px,
         "change_pct": turn_px / low_px - 1,
+        "retrace_pct": (turn_px - low_px) / (high_px - low_px),
+        "gap_to_high_pct": turn_px / high_px - 1,
     }
+
+
+def sample_stdev(xs: list) -> float | None:
+    """樣本標準差（n−1，statistics.stdev）；n<2 時為 None。"""
+    return stdev(xs) if len(xs) >= 2 else None
 
 
 def is_rebound_footnote(text: str) -> bool:
@@ -125,14 +136,14 @@ def parse_sheet(ws) -> dict:
         if is_current_row(ws, r):
             cur = parse_leg(ws, r, "現在")
             cur.pop("severe", None)
-            if parse_rebound(ws, r, ws.cell(r, 9).value, cur["end_px"]) is not None:
+            if parse_rebound(ws, r, ws.cell(r, 9).value, cur["end_px"], cur["start_px"]) is not None:
                 # 轉多日是 Cobb 的主觀判斷；Excel 沒給就不推算，給了也要先人工確認再接進來
                 raise ValueError(f"{ws.title} 「現在本波下跌」列出現反彈資料，請先確認再改程式")
             current = cur
             continue
         if isinstance(a, int) or (isinstance(a, float) and a == int(a)):
             ev = parse_leg(ws, r, int(a))
-            reb = parse_rebound(ws, r, ws.cell(r, 9).value, ev["end_px"])
+            reb = parse_rebound(ws, r, ws.cell(r, 9).value, ev["end_px"], ev["start_px"])
             if reb is None:
                 raise ValueError(f"{ws.title} 第 {r} 列（事件 {int(a)}）缺反彈資料")
             ev["rebound"] = reb
@@ -146,6 +157,8 @@ def parse_sheet(ws) -> dict:
     r_pcts = [e["rebound"]["change_pct"] for e in events]
     r_days = [e["rebound"]["calendar_days"] for e in events]
     r_tdays = [e["rebound"]["trading_days"] for e in events]
+    r_retr = [e["rebound"]["retrace_pct"] for e in events]
+    r_gap = [e["rebound"]["gap_to_high_pct"] for e in events]
     return {
         "title": title,
         "events": events,
@@ -162,6 +175,14 @@ def parse_sheet(ws) -> dict:
         "rebound_median_calendar_days": median(r_days) if r_days else None,
         "rebound_avg_trading_days": mean(r_tdays) if r_tdays else None,
         "rebound_median_trading_days": median(r_tdays) if r_tdays else None,
+        "rebound_std_calendar_days": sample_stdev(r_days),
+        "rebound_count": len(events),
+        "retrace_avg_pct": mean(r_retr) if r_retr else None,
+        "retrace_std_pct": sample_stdev(r_retr),
+        "retrace_median_pct": median(r_retr) if r_retr else None,
+        "gap_to_high_avg_pct": mean(r_gap) if r_gap else None,
+        "gap_to_high_std_pct": sample_stdev(r_gap),
+        "gap_to_high_median_pct": median(r_gap) if r_gap else None,
         "footnotes": footnotes,
         "rebound_footnotes": [f for f in footnotes if is_rebound_footnote(f)],
     }
@@ -245,6 +266,14 @@ def build() -> dict:
             "rebound_median_calendar_days": parsed["rebound_median_calendar_days"],
             "rebound_avg_trading_days": parsed["rebound_avg_trading_days"],
             "rebound_median_trading_days": parsed["rebound_median_trading_days"],
+            "rebound_std_calendar_days": parsed["rebound_std_calendar_days"],
+            "rebound_count": parsed["rebound_count"],
+            "retrace_avg_pct": parsed["retrace_avg_pct"],
+            "retrace_std_pct": parsed["retrace_std_pct"],
+            "retrace_median_pct": parsed["retrace_median_pct"],
+            "gap_to_high_avg_pct": parsed["gap_to_high_avg_pct"],
+            "gap_to_high_std_pct": parsed["gap_to_high_std_pct"],
+            "gap_to_high_median_pct": parsed["gap_to_high_median_pct"],
             "footnotes": parsed["footnotes"],
             "rebound_footnotes": parsed["rebound_footnotes"],
         })
@@ -253,6 +282,8 @@ def build() -> dict:
         "rebound_method": (
             "反彈起點＝該次下跌的低點（盤中最低價），終點＝轉多日的日K收盤價；轉多日是 Cobb 在 TradingView 框選的"
             "主觀判斷（方法來源：COBB我大哥），不自動推算。反彈交易日＝K 棒根數差；反彈平均與中位數只計歷史下跌段。"
+            "回血比例（retrace_pct）＝(轉多收盤−低點)／(高點−低點)，點數口徑；距前高（gap_to_high_pct）＝轉多收盤／高點−1。"
+            "標準差一律是樣本標準差（n−1）；本波沒有轉多確認，不填回血數字。"
         ),
         "generated_by": "scripts/build_drawdowns.py",
         "current_is_snapshot": True,
@@ -293,6 +324,13 @@ def main() -> None:
             f"      反彈 avg={i['rebound_avg_pct']*100:.2f}% {i['rebound_avg_calendar_days']:.1f}天 "
             f"{i['rebound_avg_trading_days']:.1f}交易日, med={i['rebound_median_pct']*100:.2f}% "
             f"{i['rebound_median_calendar_days']:.1f}天 {i['rebound_median_trading_days']:.1f}交易日"
+        )
+        std = lambda x, k=1: "—" if x is None else f"{x:.{k}f}"
+        print(
+            f"      回血 avg={i['retrace_avg_pct']*100:.1f}% ± {std(i['retrace_std_pct'] and i['retrace_std_pct']*100)}% "
+            f"med={i['retrace_median_pct']*100:.1f}% | 天數 {i['rebound_avg_calendar_days']:.1f} ± "
+            f"{std(i['rebound_std_calendar_days'])} med={i['rebound_median_calendar_days']:g} | "
+            f"距前高 med={i['gap_to_high_median_pct']*100:.1f}% (n={i['rebound_count']})"
         )
         if i["id"] in report:
             print(f"      本波：{report[i['id']]}")

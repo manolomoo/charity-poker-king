@@ -121,6 +121,10 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 .leg2 .days{color:var(--ink);font-size:12.5px;white-space:nowrap;margin-right:8px}
 .leg2 .dt{display:inline-block}
 .leg2 .none{color:var(--muted);font-size:12.5px}
+.rb-retr{margin:6px 0 0;padding-top:5px;border-top:1px dashed var(--line);color:var(--muted);font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+.rb-retr b{color:var(--reb-ink);font-weight:700;white-space:nowrap}
+.rb-retr .sep{margin:0 4px;color:#4a5a7a}
+.rb-retr .seg{display:inline-block}
 @media (max-width:420px){ .rb-list{grid-template-columns:1fr} }
 </style>
 </head>
@@ -224,6 +228,8 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
   <ul class="notes">
     <li>同一指數的所有條（跌、彈、平均、中位數）共用同一個尺度，所以反彈條通常比跌條短很多，這是照實畫的。</li>
     <li>口徑不同：跌段是盤中最高價到盤中最低價；反彈起點是該次下跌的低點（盤中最低價），終點是轉多日的日K收盤價（不是盤中高點）。跌幅以高點為分母、反彈以低點為分母，兩個 % 不能直接相減或相除（例如反彈 +40% 不代表收回了四成跌幅）。</li>
+    <li>回血比例用點數算，不用 %÷%：<b>收回跌幅（點數）＝(轉多日收盤−低點)÷(高點−低點)</b>；<b>距前高＝轉多日收盤÷高點−1</b>。高點、低點、轉多日收盤都取自 Excel 同一列。不用「反彈%÷|跌幅%|」是因為兩個 % 的分母不同（反彈用低點、跌幅用高點），跌得愈深誇大得愈多<span id="rb-ex"></span>。這只描述 Cobb 確認轉多那一天的位置，不保證之後會收回更多。</li>
+    <li>摘要裡的「±」是樣本標準差（n−1），只計歷史下跌段。樣本只有十來筆，平均容易被單一事件拉動，中位數通常較穩。</li>
     <li>反彈歷時＝轉多日−低點日的日曆天；反彈交易日＝兩根日K之間的 K 棒根數差；反彈平均與中位數只計歷史下跌段，不含「現在本波下跌」。</li>
     <li>轉多確認點是 Cobb 的主觀判斷（方法來源：COBB我大哥）。過去的反彈不能預測未來，也不代表下一次會在同樣位置轉多。非投資建議。</li>
   </ul>
@@ -615,6 +621,19 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
       + '<div class="track"><span class="bar" style="width:'+w.toFixed(2)+'%"></span></div></div>'
       + '<p class="det"><span class="days">'+days+'</span>'+(det ? '<span class="dt">'+det+'</span>' : '')+'</p></div>';
   }
+  function pct1(x){ return (Math.round(x*1000)/10).toFixed(1) + "%"; }
+  // 距前高：負值＝還在前高之下（寫「還差 Y%」）；正值＝已高於前高
+  function gapText(g){
+    if(g == null || !isFinite(g)) return "距前高 —";
+    if(g < 0) return "距前高還差 " + pct1(-g);
+    return "已高於前高 " + pct1(g);
+  }
+  // 每張歷史事件卡：轉多確認時收回了跌幅的幾成（點數）、距前高還差多少；只讀該事件的 rebound，本波不呼叫
+  function retrLine(r){
+    if(!r || r.retrace_pct == null || r.gap_to_high_pct == null) return "";
+    return '<p class="rb-retr">轉多確認時：<span class="seg">收回跌幅 <b>'+pct1(r.retrace_pct)+'</b>（點數）</span>'
+      + '<span class="sep">｜</span><span class="seg">'+gapText(r.gap_to_high_pct).replace(/([0-9.]+%)$/, "<b>$1</b>")+'</span></p>';
+  }
   function paintRebound(ix, wave){
     var title = $("rb-title");
     if(!title) return;
@@ -668,6 +687,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
                 "高點 "+isoToYmd(e.start_date)+" → 低點 "+isoToYmd(e.end_date)+"（"+pts(e.end_px)+"）")
         + rbBar("up", "彈", f(r.change_pct, r.calendar_days), pctSigned(r.change_pct), tdays(r.calendar_days, r.trading_days),
                 "低點 "+isoToYmd(e.end_date)+" → 轉多 "+isoToYmd(r.turn_date)+"（收盤 "+pts(r.turn_px)+"）")
+        + retrLine(r)
         + '</div>';
     });
     var cur = ix.current;
@@ -683,11 +703,37 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     list.innerHTML = h;
 
     var top = ev.slice().sort(function(a,b){ return b.rebound.change_pct - a.rebound.change_pct; })[0];
-    $("rb-take").textContent = ev.length + " 次歷史下跌，Cobb 確認轉多時，從低點平均已反彈 " + pctSigned(ix.rebound_avg_pct)
-      + "，平均 " + tdays(ix.rebound_avg_calendar_days, ix.rebound_avg_trading_days)
-      + "；中位數 " + pctSigned(ix.rebound_median_pct) + "、" + tdays(ix.rebound_median_calendar_days, ix.rebound_median_trading_days)
-      + "。反彈最大的是「" + top.name + "」" + pctSigned(top.rebound.change_pct) + "（" + top.rebound.calendar_days + " 天）。"
-      + "對照跌段平均 " + pctSigned(ix.avg_pct) + "、" + daysNum(ix.avg_calendar_days) + " 天。";
+    var n = ix.rebound_count != null ? ix.rebound_count : ev.length;
+    function pm(avg, sd, fmt){ return fmt(avg) + (sd != null ? " ± " + fmt(sd) : ""); }
+    var take = "";
+    if(ix.retrace_avg_pct != null){
+      take += "Cobb 確認轉多時，平均已收回跌幅的 " + pm(ix.retrace_avg_pct, ix.retrace_std_pct, pct1)
+        + "（點數；" + (ix.retrace_std_pct != null ? "樣本標準差，" : "") + "n=" + n + "；中位數 " + pct1(ix.retrace_median_pct) + "）"
+        + "，從低點起平均 " + pm(ix.rebound_avg_calendar_days, ix.rebound_std_calendar_days, daysNum) + " 天"
+        + "（中位數 " + daysNum(ix.rebound_median_calendar_days) + " 天）"
+        + "，" + gapText(ix.gap_to_high_median_pct).replace(/^距前高/, "距前高中位數") + "。";
+      // 平均天數被單一長段拉高時（最長一段遠大於平均），提醒中位數較穩
+      var longest = ev.slice().sort(function(a,b){ return b.rebound.calendar_days - a.rebound.calendar_days; })[0];
+      var avgD = ix.rebound_avg_calendar_days, medD = ix.rebound_median_calendar_days;
+      if(longest && avgD > 0 && longest.rebound.calendar_days >= 3 * avgD){
+        take += "平均天數被「" + longest.name + "」的 " + longest.rebound.calendar_days + " 天拉高，中位數 "
+          + daysNum(medD) + " 天較穩。";
+      }
+      take += "樣本不大；轉多日是 Cobb 的主觀判斷。這是確認轉多那一天的位置，不是反彈終點，也不代表下一次會一樣。";
+    }
+    take += "補充：以 % 計，從低點平均已反彈 " + pctSigned(ix.rebound_avg_pct)
+      + "（中位數 " + pctSigned(ix.rebound_median_pct) + "），反彈最大的是「" + top.name + "」" + pctSigned(top.rebound.change_pct)
+      + "（" + top.rebound.calendar_days + " 天）；對照跌段平均 " + pctSigned(ix.avg_pct) + "、" + daysNum(ix.avg_calendar_days) + " 天。";
+    $("rb-take").textContent = take;
+    // 註記裡的例子：該指數跌最深的一段，「反彈%÷|跌幅%|」對照點數回血（皆由資料算）
+    var deep = ev.slice().sort(function(a,b){ return a.change_pct - b.change_pct; })[0];
+    var exEl = $("rb-ex");
+    if(exEl){
+      exEl.textContent = (deep && deep.rebound.retrace_pct != null)
+        ? "（例如 " + shortTitle(ix) + "「" + deep.name + "」反彈 " + pctSigned(deep.rebound.change_pct) + "、跌幅 " + pctSigned(deep.change_pct)
+          + "，相除約 " + pct1(deep.rebound.change_pct / Math.abs(deep.change_pct)) + "，但點數只收回 " + pct1(deep.rebound.retrace_pct) + "）"
+        : "";
+    }
     $("rb-footnotes").innerHTML = (ix.rebound_footnotes || []).map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
   }
 

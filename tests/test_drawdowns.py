@@ -5,7 +5,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from statistics import mean, median
+from statistics import mean, median, stdev
 
 import sys
 
@@ -28,7 +28,8 @@ SCALE = ROOT / "trend" / "scale-in" / "index.html"
 SHEET_IDS = {"NDX": "NDX", "SPX": "SPX", "SOX": "SOX", "台灣加權": "TWII"}
 AVG_LABELS = ("下跌段平均", "下跌段平均跌幅(%)")
 MED_LABELS = ("下跌段中位數", "下跌段跌幅中位數(%)")
-REBOUND_KEYS = ("turn_date", "turn_px", "calendar_days", "trading_days", "change_pts", "change_pct")
+REBOUND_KEYS = ("turn_date", "turn_px", "calendar_days", "trading_days", "change_pts", "change_pct",
+                "retrace_pct", "gap_to_high_pct")
 
 
 def excel_period(start, end) -> str:
@@ -325,6 +326,8 @@ def test_apply_current_keeps_rebound_and_never_adds_to_current(payload, tmp_path
         assert a["rebound_footnotes"] == b["rebound_footnotes"]
         assert all(f in a["footnotes"] for f in a["rebound_footnotes"])
         assert "rebound" not in a["current"]
+        for k in RETRACE_INDEX_KEYS:
+            assert a[k] == b[k], k
 
 
 def test_build_rejects_rebound_on_current_row(tmp_path, monkeypatch):
@@ -739,3 +742,119 @@ def test_workflow_adds_drawdowns_generated_files():
     step = wf[wf.index("檢查是否有資料變更"):wf.index("Commit 並推送")]
     assert "git add -f trend/drawdowns/drawdowns.json trend/drawdowns/drawdowns.js" in step
     assert "trend/drawdowns/index.html" not in step
+
+
+# ---------------- 點數回血比例與距前高（跌段與反彈對照） ----------------
+RETRACE_INDEX_KEYS = (
+    "retrace_avg_pct", "retrace_std_pct", "retrace_median_pct",
+    "gap_to_high_avg_pct", "gap_to_high_std_pct", "gap_to_high_median_pct",
+    "rebound_std_calendar_days", "rebound_count",
+)
+
+
+def test_rebound_retrace_and_gap_per_event(payload):
+    """每個歷史 rebound：回血＝(轉多收盤−低點)/(高點−低點)，距前高＝轉多收盤/高點−1，用 Excel 的高低點重算。"""
+    for ix in payload["indices"]:
+        for e in ix["events"]:
+            r = e["rebound"]
+            hi, lo, turn = e["start_px"], e["end_px"], r["turn_px"]
+            assert r["retrace_pct"] == pytest.approx((turn - lo) / (hi - lo), rel=0, abs=1e-12), (ix["id"], e["seq"])
+            assert r["gap_to_high_pct"] == pytest.approx(turn / hi - 1, rel=0, abs=1e-12), (ix["id"], e["seq"])
+            # 不是「反彈%÷|跌幅%|」（分母不同；跌得深時差很多）
+            ratio = r["change_pct"] / abs(e["change_pct"])
+            assert r["retrace_pct"] == pytest.approx(ratio * (1 + e["change_pct"]), rel=1e-9)
+
+
+def test_rebound_retrace_index_stats_use_sample_stdev(payload):
+    for ix in payload["indices"]:
+        ev = ix["events"]
+        retr = [e["rebound"]["retrace_pct"] for e in ev]
+        gap = [e["rebound"]["gap_to_high_pct"] for e in ev]
+        days = [e["rebound"]["calendar_days"] for e in ev]
+        assert ix["rebound_count"] == len(ev) >= 2
+        assert ix["retrace_avg_pct"] == pytest.approx(mean(retr), rel=0, abs=1e-15)
+        assert ix["retrace_median_pct"] == pytest.approx(median(retr), rel=0, abs=1e-15)
+        assert ix["retrace_std_pct"] == pytest.approx(stdev(retr), rel=0, abs=1e-15)  # 樣本（n−1）
+        assert ix["gap_to_high_avg_pct"] == pytest.approx(mean(gap), rel=0, abs=1e-15)
+        assert ix["gap_to_high_median_pct"] == pytest.approx(median(gap), rel=0, abs=1e-15)
+        assert ix["gap_to_high_std_pct"] == pytest.approx(stdev(gap), rel=0, abs=1e-15)
+        assert ix["rebound_std_calendar_days"] == pytest.approx(stdev(days), rel=0, abs=1e-12)
+        # 明確是樣本標準差，不是母體 pstdev
+        from statistics import pstdev
+        assert ix["retrace_std_pct"] > pstdev(retr)
+
+
+def test_sample_stdev_none_when_n_lt_2():
+    import build_drawdowns as BD
+    assert BD.sample_stdev([]) is None
+    assert BD.sample_stdev([0.3]) is None
+    assert BD.sample_stdev([0.1, 0.3]) == pytest.approx(stdev([0.1, 0.3]))
+
+
+def test_rebound_retrace_known_values(payload):
+    by = {x["id"]: x for x in payload["indices"]}
+    tw = by["TWII"]
+    assert tw["rebound_count"] == 12
+    assert tw["retrace_avg_pct"] == pytest.approx(0.340, abs=5e-4)
+    assert tw["retrace_std_pct"] == pytest.approx(0.111, abs=5e-4)
+    assert tw["retrace_median_pct"] == pytest.approx(0.371, abs=5e-4)
+    assert tw["gap_to_high_median_pct"] == pytest.approx(-0.176, abs=5e-4)
+    assert tw["rebound_avg_calendar_days"] == pytest.approx(30.9, abs=0.05)
+    assert tw["rebound_std_calendar_days"] == pytest.approx(15.8, abs=0.05)
+    assert tw["rebound_median_calendar_days"] == 27
+    ndx = {e["name"]: e["rebound"] for e in by["NDX"]["events"]}[".COM泡沫破裂+911事件"]
+    assert ndx["retrace_pct"] == pytest.approx(0.080, abs=5e-4)
+    assert ndx["gap_to_high_pct"] == pytest.approx(-0.768, abs=5e-4)
+    sox = {e["name"]: e["rebound"] for e in by["SOX"]["events"]}[".COM泡沫破裂+911事件"]
+    assert sox["change_pct"] == pytest.approx(0.745, abs=5e-4)
+    assert sox["retrace_pct"] == pytest.approx(0.135, abs=5e-4)
+    # SPX：平均天數被 .COM 194 天拉高，中位數只有 17 天
+    spx = by["SPX"]
+    assert max(e["rebound"]["calendar_days"] for e in spx["events"]) == 194
+    assert spx["rebound_median_calendar_days"] == 17
+    assert 194 >= 3 * spx["rebound_avg_calendar_days"]
+    # 其他三個指數不會觸發「最長一段遠大於平均」的提醒
+    for i in ("NDX", "SOX", "TWII"):
+        assert max(e["rebound"]["calendar_days"] for e in by[i]["events"]) < 3 * by[i]["rebound_avg_calendar_days"]
+
+
+def test_current_wave_has_no_retrace(payload):
+    for ix in payload["indices"]:
+        cur = ix["current"]
+        assert "rebound" not in cur and "retrace_pct" not in cur and "gap_to_high_pct" not in cur
+        assert not any("retrace" in k or "gap_to_high" in k for k in cur)
+
+
+def test_page_rebound_retrace_section():
+    html = PAGE.read_text(encoding="utf-8")
+    sec = html.index('<section id="rebound"')
+    body = html[sec:html.index("</section>", sec)]
+    assert "收回跌幅（點數）＝(轉多日收盤−低點)÷(高點−低點)" in body
+    assert "距前高＝轉多日收盤÷高點−1" in body
+    assert "不用 %÷%" in body and "分母不同" in body
+    assert "樣本標準差" in body and 'id="rb-ex"' in body
+    js = html[html.index("function paintRebound"):html.index("function paint()")]
+    helpers = html[html.index("function pct1"):html.index("function paintRebound")]
+    assert "轉多確認時：" in helpers and "收回跌幅 " in helpers and "（點數）" in helpers and "距前高還差 " in helpers
+    assert "r.retrace_pct" in helpers and "r.gap_to_high_pct" in helpers
+    # 摘要句由 JSON 算：回血 mean±std、樣本標準差、天數 mean±std、中位數、距前高中位數
+    for k in ("ix.retrace_avg_pct", "ix.retrace_std_pct", "ix.retrace_median_pct", "ix.rebound_std_calendar_days",
+              "ix.rebound_median_calendar_days", "ix.gap_to_high_median_pct"):
+        assert k in js, k
+    assert "樣本標準差" in js and "中位數" in js and "較穩" in js
+    assert "不是反彈終點" in js and "主觀判斷" in js
+    # 數字不寫死
+    for lit in ("34.0%", "11.1%", "30.9", "15.8", "17.6%", "194"):
+        assert lit not in js, lit
+    # 回血只出現在歷史事件卡；本波卡維持「尚無轉多確認」，不呼叫 retrLine、不用平均去填
+    now = js[js.index("if(wave){"):js.index("list.innerHTML = h;")]
+    assert "尚無轉多確認（不推算反彈）" in now
+    assert "retrLine" not in now and "retrace" not in now and "gap_to_high" not in now
+    assert "retrLine(r)" in js
+    # 舊區塊文案未動
+    assert "<h1>歷史重大下跌段</h1>" in html
+    assert "依使用者提供的 Excel 下跌段表做成網頁。表內高低點是 TradingView 日線的盤中最高價與最低價，不是收盤價。" in html
+    for i in ('id="bars"', 'id="timeline"', 'id="tbody"', 'id="sum"'):
+        assert i in html
+    old = html[:sec]
+    assert "收回跌幅" not in old and "retrace" not in old
