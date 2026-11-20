@@ -100,6 +100,12 @@ a{color:var(--edge)}
 .vbp-bars b{flex:1;background:#3a4d72;border-radius:3px 3px 0 0;display:block;min-height:2px;position:relative}
 .vbp-bars b.poc{background:var(--amber)}
 .vbp-bars b.last{outline:1px solid var(--navy)}
+.mg-sub{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--text);margin:0 0 10px}
+.mg-sub b{color:var(--ink);font-weight:700}
+.mg-tag{display:inline-block;font-size:12px;line-height:1;padding:3px 7px;border-radius:999px;border:1px solid var(--amber);color:var(--amber);background:#2b2412;vertical-align:middle}
+.mg-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin:0 0 6px}
+.mg-legend i{display:inline-block;width:16px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
+#margin-chart svg{display:block;width:100%;height:auto}
 .vbp-scale{flex:0 0 64px;display:flex;flex-direction:column;justify-content:space-between;font-size:11px;color:var(--muted);text-align:right}
 
 </style>
@@ -123,6 +129,7 @@ a{color:var(--edge)}
   <a href="#ndx">NDX</a>
   <a href="#spx">SPX</a>
   <a href="#twii">台指</a>
+  <a href="#margin">融資餘額</a>
   <a href="#tabook">技術分析圖解</a>
   <a href="#disclaimer">免責</a>
 </nav>
@@ -166,6 +173,17 @@ a{color:var(--edge)}
 <section id="ndx"></section>
 <section id="spx"></section>
 <section id="twii"></section>
+<!-- 上市融資餘額：走勢頁參考圖表，與 11 項燈號（規則 v3.0）無關；資料由 scripts/twse_margin.py 產生，沒有資料時整段隱藏 -->
+<section id="margin" hidden>
+  <h2>上市融資餘額</h2>
+  <div class="price-row" id="margin-head"></div>
+  <div class="mg-sub" id="margin-sub"></div>
+  <div class="card" style="padding:10px 10px 8px">
+    <div class="mg-legend" id="margin-legend"></div>
+    <div id="margin-chart"></div>
+  </div>
+  <p class="note" id="margin-note">資料：證交所（今日餘額為初值）</p>
+</section>
 
 <section id="tabook">
   <h2>技術分析圖解</h2>
@@ -742,6 +760,89 @@ a{color:var(--edge)}
   // 另附台指：同一套 renderIndex。不進三指數對照，也不進牛熊階段卡片（沒有台指的恐慌門檻）。
   if(A.indices.TWII && C.indices.TWII) renderIndex("twii","TWII");
   else document.getElementById("twii").hidden = true;
+
+  /* ---------- 上市融資餘額（與燈號無關；資料 analysis.margin＋charts.margin） ---------- */
+  function renderMargin(){
+    const sec=document.getElementById("margin");
+    const M=A.margin, S=C.margin;
+    if(!M||!S||!M.latest||!S.dates||!S.dates.length){ sec.hidden=true; return; }
+    const L=M.latest;
+    const chgTxt = L.chg_yi==null ? "—" :
+      (L.chg_yi>0?"+":"")+num(L.chg_yi,2)+" 億（"+pct(L.chg_pct)+"）";
+    document.getElementById("margin-head").innerHTML =
+      `<span class="big">${esc(num(L.margin_amt_yi,2))} 億</span>`+
+      `<span class="${chgClass(L.chg_yi)}">${esc(chgTxt)}</span>`+
+      `<span class="note">${esc(L.date)} 今日餘額${L.provisional?"　<span class=\"mg-tag\">初值</span>":""}　日變化對前一交易日確定值</span>`;
+    document.getElementById("margin-sub").innerHTML =
+      `<span>融資 <b>${esc(num(L.margin_shares,0))}</b> 張</span>`+
+      `<span>融券 <b>${esc(num(L.short_shares,0))}</b> 張</span>`+
+      `<span>券資比 <b>${esc(L.short_to_margin_pct==null?"—":num(L.short_to_margin_pct,2)+"%")}</b></span>`;
+    const hasTw = Array.isArray(S.twii_close) && S.twii_close.some(v=>v!=null);
+    document.getElementById("margin-legend").innerHTML =
+      `<span><i style="border-color:#f2b552"></i>融資餘額（億元，左軸）</span>`+
+      (hasTw?`<span><i style="border-color:#a9c1f5;opacity:.6"></i>台指收盤（點，右軸）</span>`:"");
+    document.getElementById("margin-note").textContent =
+      "資料：證交所（今日餘額為初值）。上市融資金額，億元＝仟元／100000；次一交易日公布的前日餘額才是確定值，本站拿到後就改用它。"+
+      "區間 "+S.dates[0]+"～"+S.dates[S.dates.length-1]+"。這是參考圖表，與 11 項燈號無關。";
+    sec.hidden=false;
+    const box=document.getElementById("margin-chart");
+    function draw(){
+      const W=Math.max(300, Math.min(960, Math.round(box.clientWidth||960)));
+      const H=W<560?240:300, pl=W<560?44:56, pr=hasTw?(W<560?44:56):12, pt=12, pb=26;
+      const iw=W-pl-pr, ih=H-pt-pb;
+      const ds=S.dates, ys=S.margin_amt_yi, N=ds.length;
+      const t0=Date.parse(ds[0]), t1=Date.parse(ds[N-1]);
+      const x=i=>pl+(N<2?iw/2:(Date.parse(ds[i])-t0)/((t1-t0)||1)*iw);
+      function scale(arr){
+        let lo=Infinity,hi=-Infinity; arr.forEach(v=>{ if(v!=null){ lo=Math.min(lo,v); hi=Math.max(hi,v); } });
+        const pad=(hi-lo)*0.05||Math.abs(hi)*0.02||1;
+        const sc=niceTicks(lo-pad,hi+pad,W<560?4:5);
+        return {sc, y:v=>pt+(sc.max-v)/(sc.max-sc.min)*ih};
+      }
+      function path(arr,y){
+        let d="", pen=false;
+        for(let i=0;i<N;i++){ const v=arr[i]; if(v==null){ pen=false; continue; }
+          d+=(pen?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1); pen=true; }
+        return d;
+      }
+      const lm=scale(ys);
+      let g="";
+      lm.sc.ticks.forEach(v=>{
+        g+=`<line x1="${pl}" x2="${W-pr}" y1="${lm.y(v)}" y2="${lm.y(v)}" stroke="#2b3850" stroke-width="1"/>`+
+           `<text x="${pl-6}" y="${lm.y(v)+4}" text-anchor="end" fill="#a3aec0" font-size="11">${esc(num(v,0))}</text>`;
+      });
+      let tw="";
+      if(hasTw){
+        const rm=scale(S.twii_close);
+        rm.sc.ticks.forEach(v=>{
+          g+=`<text x="${W-pr+6}" y="${rm.y(v)+4}" text-anchor="start" fill="#7f8ba0" font-size="11">${esc(num(v,0))}</text>`;
+        });
+        tw=`<path d="${path(S.twii_close,rm.y)}" fill="none" stroke="#a9c1f5" stroke-width="1.2" opacity="0.55"/>`;
+      }
+      // X 軸：年-月，依寬度挑月份間隔
+      const months=(t1-t0)/(30.44*86400000);
+      const maxLbl=Math.max(2,Math.floor(iw/60));
+      const step=[1,2,3,6,12,24].find(s=>months/s<=maxLbl)||24;
+      let lastKey=null;
+      for(let i=0;i<N;i++){
+        const yy=+ds[i].slice(0,4), mm=+ds[i].slice(5,7), key=ds[i].slice(0,7);
+        if(key===lastKey) continue; lastKey=key;
+        if(i===0 || ((yy*12+mm-1)%step)!==0) continue;
+        const xi=x(i);
+        if(xi<pl+24||xi>W-pr-24) continue;
+        g+=`<line x1="${xi}" x2="${xi}" y1="${pt+ih}" y2="${pt+ih+4}" stroke="#3a4a66"/>`+
+           `<text x="${xi}" y="${H-8}" text-anchor="middle" fill="#a3aec0" font-size="11">${esc(key)}</text>`;
+      }
+      const li=N-1, lx=x(li), ly=lm.y(ys[li]);
+      const dot = `<circle cx="${lx}" cy="${ly}" r="3.5" fill="${L.provisional?"#0f1724":"#f2b552"}" stroke="#f2b552" stroke-width="1.5"/>`;
+      box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="上市融資餘額走勢（億元）${hasTw?"，疊台指收盤":""}">`+
+        g+tw+`<path d="${path(ys,lm.y)}" fill="none" stroke="#f2b552" stroke-width="1.6"/>`+dot+`</svg>`;
+    }
+    draw();
+    let tmr=null, lastW=box.clientWidth;
+    window.addEventListener("resize",()=>{ clearTimeout(tmr); tmr=setTimeout(()=>{ if(box.clientWidth!==lastW){ lastW=box.clientWidth; draw(); } },150); });
+  }
+  try{ renderMargin(); }catch(e){ document.getElementById("margin").hidden=true; }
   /* ---------- 走勢資料過期提醒（不擋圖；規則同首頁） ----------
      status.json 說更新失敗，或資料本身太舊（抓取時間超過 3 天、行情截至日超過 5 天）就提醒。 */
   (function(){

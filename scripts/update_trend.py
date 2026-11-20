@@ -9,6 +9,8 @@
     trend/data.json    {analysis, charts}（成功才覆寫）
     trend/data.js      window.SITE_DATA = …;（由同一份 JSON 產生，成功才覆寫）
     trend/drawdowns/drawdowns.json／.js  data.json 成功寫出後，刷新「現在本波下跌」（scripts/drawdowns_current.py）
+    trend/data.json 的 analysis.margin／charts.margin：證交所上市融資餘額（scripts/twse_margin.py），
+                       只給走勢頁圖表用，與 11 項燈號無關；抓不到就沿用上次，失敗不影響整次更新。
     trend/status.json  每次都寫：{ok, stale, fetched_at_taipei, price_asof, error,
                                   last_good_asof, last_good_fetched_at}
 
@@ -24,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import sys
 import time
@@ -36,6 +39,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import trend_analyze as T  # noqa: E402
 import twse_taiex as TWSE  # noqa: E402
+import twse_margin as MARGIN  # noqa: E402  上市融資餘額圖表（與燈號無關）
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "data" / "cache" / "trend"
@@ -444,6 +448,10 @@ def main() -> int:
               f"已寫 {STATUS_JSON.relative_to(ROOT)}（stale=true）。")
         return 0
 
+    margin_line = attach_margin(site, prev_site_margin(), offline=args.offline)
+    print(f"[trend] 融資餘額：{margin_line}")
+    text = json.dumps(site, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+
     write_atomic(DATA_JSON, text + "\n")
     write_atomic(DATA_JS, "window.SITE_DATA = " + text + ";\n")
     T.write_markdown(analysis, CACHE / "analysis.md")
@@ -480,6 +488,74 @@ def main() -> int:
     print(f"[trend] 已寫 trend/data.json、trend/data.js、trend/status.json")
     refresh_drawdowns()
     return 0
+
+
+# ---------------- 上市融資餘額（走勢頁圖表；與 11 項燈號無關） ----------------
+# 燈號第 6、7 項的融資資料由 run.sh／run.py 另外抓，規則 v3.0 不讀這裡的任何東西。
+# 這裡任何失敗都只印一行 log：沿用上次 data.json 的 margin，連舊的都沒有就省略（頁面隱藏該區塊）。
+def prev_site_margin() -> dict | None:
+    """上次成功的 data.json 裡的 margin（{analysis, charts}）；沒有回 None。"""
+    try:
+        old = json.loads(DATA_JSON.read_text(encoding="utf-8"))
+        a, c = old["analysis"].get("margin"), old["charts"].get("margin")
+        return {"analysis": a, "charts": c} if a and c else None
+    except Exception:
+        return None
+
+
+def twii_closes_for_margin(charts: dict) -> tuple[dict, str | None]:
+    """台指收盤 {date: close} 給融資圖右軸疊圖：證交所五年日線快取優先，再用本輪 chart_daily_1y 補。"""
+    closes, src = {}, None
+    try:
+        hist = TWSE.load_history(CACHE)
+        if hist is not None:
+            closes.update({str(d)[:10]: round(float(c), 2) for d, c in zip(hist["date"], hist["close"])
+                           if c is not None and math.isfinite(float(c))})
+            src = "證交所發行量加權股價指數日線"
+    except Exception:
+        pass
+    try:
+        ch = charts["indices"]["TWII"]["chart_daily_1y"]
+        added = 0
+        for d, c in zip(ch["dates"], ch["close"]):
+            if d not in closes and c is not None and math.isfinite(float(c)):
+                closes[d] = round(float(c), 2)
+                added += 1
+        if added and not src:
+            src = "本頁台指日線（近一年）"
+    except Exception:
+        pass
+    return closes, src
+
+
+def attach_margin(site: dict, prev: dict | None, offline: bool = False) -> str:
+    """把融資餘額放進 site（analysis.margin、charts.margin），回傳一行 log。不丟例外。"""
+    try:
+        res = MARGIN.update(CACHE, prev_site_margin=(prev or {}).get("charts"), fetch=not offline)
+        closes, src = twii_closes_for_margin(site["charts"])
+        a, c = MARGIN.site_payload(res, site["analysis"]["meta"].get("fetched_at_taipei"), closes, src)
+        site["analysis"]["margin"], site["charts"]["margin"] = a, c
+        rep = res["report"]
+        lt = a["latest"]
+        extra = []
+        if rep["ok"]:
+            extra.append("新抓 " + "、".join(rep["ok"]))
+        if rep["unpublished"]:
+            extra.append("尚未公布／無資料 " + "、".join(rep["unpublished"]))
+        if rep["errors"]:
+            extra.append("抓取失敗（用快取）" + "；".join(short_reason(Exception(e)) for e in rep["errors"]))
+        return (f"截至 {lt['date']}　{lt['margin_amt_yi']:,.2f} 億"
+                f"{'（初值）' if lt['provisional'] else ''}"
+                f"　日變化 {format(lt['chg_yi'], '+,.2f') if lt['chg_yi'] is not None else '—'} 億"
+                f"（{format(lt['chg_pct'], '+.2f') if lt['chg_pct'] is not None else '—'}%）"
+                f"　序列 {a['count']} 筆（{a['first']} 起）" + ("　" + "；".join(extra) if extra else ""))
+    except Exception as e:
+        if prev:
+            site["analysis"]["margin"], site["charts"]["margin"] = prev["analysis"], prev["charts"]
+            return f"更新失敗（{short_reason(e)}），沿用上次（截至 {prev['analysis'].get('asof')}）"
+        site["analysis"].pop("margin", None)
+        site["charts"].pop("margin", None)
+        return f"更新失敗（{short_reason(e)}），也沒有上次的資料，這一輪不出融資圖"
 
 
 def refresh_drawdowns():
