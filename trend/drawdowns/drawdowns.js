@@ -219,9 +219,9 @@ window.DRAWDOWNS_DATA = {
         "source": "Yahoo",
         "source_label": "Yahoo ^NDX 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2021-11-15",
+        "history_from": "2024-11-20",
         "history_covers_after_date": true,
-        "cache_file": "NDX_daily_5y.csv"
+        "cache_file": "NDX_daily_2y.csv"
       },
       "avg_pct": -0.36549358671320653,
       "median_pct": -0.2800505466553102,
@@ -500,9 +500,9 @@ window.DRAWDOWNS_DATA = {
         "source": "Yahoo",
         "source_label": "Yahoo ^GSPC 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2021-11-15",
+        "history_from": "2024-11-20",
         "history_covers_after_date": true,
-        "cache_file": "SPX_daily_5y.csv"
+        "cache_file": "SPX_daily_2y.csv"
       },
       "avg_pct": -0.2903371616918922,
       "median_pct": -0.21582833544922586,
@@ -925,9 +925,9 @@ window.DRAWDOWNS_DATA = {
         "source": "Yahoo",
         "source_label": "Yahoo ^SOX 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2021-11-15",
+        "history_from": "2024-11-20",
         "history_covers_after_date": true,
-        "cache_file": "SOX_daily_5y.csv"
+        "cache_file": "SOX_daily_2y.csv"
       },
       "avg_pct": -0.373936184084408,
       "median_pct": -0.3207992580726752,
@@ -1264,22 +1264,22 @@ window.DRAWDOWNS_DATA = {
       ],
       "current": {
         "seq": "現在",
-        "period": "2026/10/6~2026/11/6",
+        "period": "2026/10/6~2026/11/20",
         "name": "現在本波下跌",
-        "calendar_days": 31,
-        "trading_days": 20,
-        "change_pts": -12131.869999999995,
-        "change_pct": -0.24278831721798266,
+        "calendar_days": 45,
+        "trading_days": 30,
+        "change_pts": -14230.239999999998,
+        "change_pct": -0.2847818203795479,
         "start_date": "2026-10-06",
-        "end_date": "2026-11-06",
+        "end_date": "2026-11-20",
         "start_px": 49968.92,
-        "end_px": 37837.05,
+        "end_px": 35738.68,
         "recovered": false,
-        "asof": "2026-11-19",
+        "asof": "2026-11-20",
         "source": "TWSE",
         "source_label": "證交所日線盤中高低點",
         "after_date": "2025-04-09",
-        "history_from": "2024-09-10",
+        "history_from": "2024-09-11",
         "history_covers_after_date": true,
         "cache_file": "TWII_daily_2y.csv"
       },
@@ -1316,7 +1316,7 @@ window.DRAWDOWNS_DATA = {
         "交易日以台灣開市日計算。",
         "反彈區段（L~Q 欄，藍綠色）：依您在 TradingView 畫的藍綠色框整理。起點是該次下跌的低點（K 欄），終點是您框選的轉多日的日K收盤價；反彈交易日＝K棒根數差。",
         "轉多日收盤價已逐一與 TradingView 日K收盤價核對（2026/11/20）。反彈平均與中位數計入全部下跌段；「現在本波下跌」尚無反彈資料。",
-        "「現在本波下跌」（黃底列）：從上一段歷史下跌的低點（2025/4/9）之後的盤中最高點，算到該高點以來的盤中最低點；結束日是低點日。資料截至 2026/11/19；若之後再創新低，數字會變動。由本站日線自動計算（來源：證交所日線盤中高低點），隨每日資料自動更新。此列不計入上方的平均與中位數。"
+        "「現在本波下跌」（黃底列）：從上一段歷史下跌的低點（2025/4/9）之後的盤中最高點，算到該高點以來的盤中最低點；結束日是低點日。資料截至 2026/11/20；若之後再創新低，數字會變動。由本站日線自動計算（來源：證交所日線盤中高低點），隨每日資料自動更新。此列不計入上方的平均與中位數。"
       ],
       "rebound_footnotes": [
         "反彈區段（L~Q 欄，藍綠色）：依您在 TradingView 畫的藍綠色框整理。起點是該次下跌的低點（K 欄），終點是您框選的轉多日的日K收盤價；反彈交易日＝K棒根數差。",
