@@ -54,6 +54,468 @@ def yf_src(tk):
 MKT = {"^TWII": ("台灣加權指數", TPE, (14, 30)), "^NDX": ("NDX", NY, (16, 15)), "^SOX": ("SOX", NY, (16, 15))}
 
 # ---------------- 1. ETF 資金流 ----------------
+ETF_CACHE = os.path.join(DATA, "cache", "etf")
+INVESCO_HEADERS = {
+    "User-Agent": "vgi-etf-invesco/0.2.2",
+    "Referer": "https://www.invesco.com/",
+}
+SOXX_JSON_URL = (
+    "https://www.ishares.com/varnish-api/blk-one01-product-data/product-data/api/v2/get-product-data"
+    "?appSubType=ISHARES&appType=PRODUCT_PAGE&component=fundDownload&locale=en_US"
+    "&portfolioId=239705&targetSite=us-ishares&userType=individual&excludeContent=true"
+)
+SOXX_XLS_URL = (
+    "https://www.blackrock.com/varnish-api/blk-one01-product-data/product-data/api/v1/get-fund-document"
+    "?appType=PRODUCT_PAGE&appSubType=ISHARES&targetSite=us-ishares&locale=en_US"
+    "&portfolioId=239705&component=fundDownload&userType=individual"
+)
+SOXX_PAGE_URL = "https://www.ishares.com/us/products/239705/ishares-semiconductor-etf"
+QQQ_NAVS_URL = "https://dng-api.invesco.com/cache/v1/accounts/en_US/shareclasses/QQQ/navs?idType=ticker&productType=ETF"
+QQQ_DETAILS_URL = "https://dng-api.invesco.com/cache/v1/accounts/en_US/shareclasses/QQQ?idType=ticker&productType=ETF&variationType=fundDetails"
+QQQ_PAGE_URL = "https://www.invesco.com/qqq-etf/en/about.html"
+SMH_XLSX_URL = "https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/downloads/fundhistoprices/"
+SMH_PAGE_URL = "https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/"
+
+
+class EtfDataError(Exception):
+    """官方檔抓不到、內容不是預期格式，或歷史不足以計算 5／21 日窗口。"""
+
+
+def looks_like_html(raw):
+    if raw is None:
+        return False
+    b = raw if isinstance(raw, (bytes, bytearray)) else str(raw).encode("utf-8", "replace")
+    head = b.lstrip()[:200].lower()
+    return head.startswith(b"<!doctype html") or head.startswith(b"<html") or head.startswith(b"<head")
+
+
+def round_shares(val):
+    """正數四捨五入到整數股（不用銀行家捨入）。缺值保持 NA。"""
+    if isinstance(val, pd.Series):
+        out = pd.Series(np.floor(pd.to_numeric(val, errors="coerce") + 0.5), index=val.index)
+        return out
+    if val is None or (isinstance(val, float) and (val != val)):
+        return val
+    return int(np.floor(float(val) + 0.5))
+
+
+def drop_unchanged_rows(x, cols=("NAV", "SO")):
+    """去掉 NAV 與流通股數都與上一列完全相同的重複列（週末／假日補列）。
+
+    真實交易日即使沒有申贖，NAV 通常仍會變，會被保留，零流量日仍計入 5／21 日窗口。
+    不把缺列補 0。
+    """
+    y = x.dropna(subset=list(cols)).sort_index()
+    y = y[~y.index.duplicated(keep="last")]
+    if y.empty:
+        return y
+    keep = [True]
+    prev = y.iloc[0]
+    for i in range(1, len(y)):
+        cur = y.iloc[i]
+        same = all(cur[c] == prev[c] for c in cols if c in y.columns)
+        keep.append(not same)
+        if not same:
+            prev = cur
+    return y.loc[y.index[np.asarray(keep, dtype=bool)]]
+
+
+def etf_flow_frame(x, p):
+    """x：DatetimeIndex，欄位 NAV、SO、TNA。不足 month_days+1 筆則失敗，絕不把缺漏當 0。"""
+    y = drop_unchanged_rows(x, ("NAV", "SO"))
+    need = int(p["month_days"]) + 1
+    if len(y) < need:
+        raise EtfDataError(f"交易日觀測只有 {len(y)} 筆，不足 {need} 筆（近一月 {p['month_days']} 日 + 期初）")
+    f = y["SO"].diff() * y["NAV"]
+    def win(n):
+        fl = f.iloc[-n:].sum()
+        aum0 = y["TNA"].iloc[-n - 1]
+        if aum0 == 0 or pd.isna(aum0):
+            raise EtfDataError("期初 AUM 為空或 0，不計算流量百分比")
+        return float(fl), float(fl / aum0 * 100)
+    wf, wp = win(p["week_days"])
+    mf, mp = win(p["month_days"])
+    last = y.index[-1].strftime("%Y-%m-%d")
+    red_dates = []
+    for i in range(p["month_days"] + 1, len(y)):
+        wflow = f.iloc[i - p["week_days"] + 1:i + 1].sum()
+        wbase = y["TNA"].iloc[i - p["week_days"]]
+        mflow = f.iloc[i - p["month_days"] + 1:i + 1].sum()
+        mbase = y["TNA"].iloc[i - p["month_days"]]
+        if not wbase or not mbase or pd.isna(wbase) or pd.isna(mbase):
+            continue
+        if mflow / mbase * 100 <= p["m_trigger"] or wflow / wbase * 100 <= p["w_trigger"]:
+            red_dates.append(y.index[i].strftime("%Y-%m-%d"))
+    aum_chg = None
+    if len(y) > p["month_days"]:
+        base = y["TNA"].iloc[-p["month_days"] - 1]
+        if base:
+            aum_chg = (y["TNA"].iloc[-1] / base - 1) * 100
+    return dict(week_flow_usd=wf, week_pct=wp, month_flow_usd=mf, month_pct=mp,
+                aum=float(y["TNA"].iloc[-1]), shares=float(y["SO"].iloc[-1]),
+                aum_change_1m_pct=aum_chg, obs_date=last, red_dates=red_dates, n_obs=int(len(y)),
+                frame=y)
+
+
+def etf_cache_path(name):
+    return os.path.join(ETF_CACHE, name)
+
+
+def write_etf_cache(name, content, binary=False):
+    os.makedirs(ETF_CACHE, exist_ok=True)
+    path = etf_cache_path(name)
+    tmp = path + ".tmp"
+    if binary:
+        with open(tmp, "wb") as fh:
+            fh.write(content)
+    else:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            fh.write(content)
+    os.replace(tmp, path)
+    return path
+
+
+def read_etf_cache(name, binary=False):
+    path = etf_cache_path(name)
+    if not os.path.exists(path):
+        return None
+    if binary:
+        with open(path, "rb") as fh:
+            return fh.read()
+    with open(path, "r", encoding="utf-8") as fh:
+        return fh.read()
+
+
+def fetch_bytes(url, headers=None, retries=4, timeout=60, sleep=1.0):
+    """帶重試的 GET。回傳 (content_bytes, content_type, status_code)。"""
+    last = None
+    hdrs = dict(headers or {})
+    for i in range(retries):
+        try:
+            r = get(url, headers=hdrs, timeout=timeout)
+            return r.content, (r.headers.get("Content-Type") or ""), r.status_code
+        except Exception as e:
+            last = e
+            if i < retries - 1:
+                time.sleep(sleep * (2 ** i))
+    raise EtfDataError(f"抓取失敗（{url}）：{last}")
+
+
+def parse_ishares_funddownload_json(raw):
+    if looks_like_html(raw):
+        raise EtfDataError("iShares fundDownload JSON 實際是 HTML，拒絕解析")
+    if isinstance(raw, (bytes, bytearray)):
+        raw = raw.decode("utf-8")
+    try:
+        j = json.loads(raw)
+    except Exception as e:
+        raise EtfDataError(f"iShares fundDownload 不是合法 JSON：{e}") from e
+    try:
+        dp = j["componentsByNameMap"]["fundDownload"]["containersByNameMap"]["historical"]["dataPointsByNameMap"]
+        asof, nav, so = dp["asof"]["value"], dp["nav"]["value"], dp["sharesOutstanding"]["value"]
+    except Exception as e:
+        raise EtfDataError(f"iShares fundDownload JSON 缺少 historical 流通股數／NAV：{e}") from e
+    if not asof or not nav or not so or len(asof) != len(nav) or len(asof) != len(so):
+        raise EtfDataError("iShares fundDownload 欄位長度不一致或為空")
+    rows = []
+    for a, n, s in zip(asof, nav, so):
+        if a is None or n is None or s is None:
+            continue
+        try:
+            d = pd.Timestamp(dt.datetime.strptime(str(int(a)), "%Y%m%d"))
+            rows.append((d, float(n), float(s)))
+        except Exception:
+            continue
+    if not rows:
+        raise EtfDataError("iShares fundDownload 沒有可解析的日期列")
+    x = pd.DataFrame(rows, columns=["Date", "NAV", "SO"]).drop_duplicates("Date").set_index("Date").sort_index()
+    x["TNA"] = x["SO"] * x["NAV"]
+    return x
+
+
+def parse_ishares_fund_xls(raw):
+    """SpreadsheetML（.xls）備援。若 body 其實是 HTML，直接拒絕。"""
+    if looks_like_html(raw):
+        raise EtfDataError("iShares 歷史 xls 實際是 HTML，拒絕當成試算表")
+    b = raw if isinstance(raw, (bytes, bytearray)) else raw.encode("utf-8")
+    head = b.lstrip()[:80]
+    if not (head.startswith(b"<?xml") or b"ss:Workbook" in b[:400] or b"<Workbook" in b[:400]):
+        raise EtfDataError("iShares 歷史檔不是 SpreadsheetML")
+    import xml.etree.ElementTree as ET
+    ns = {"ss": "urn:schemas-microsoft-com:office:spreadsheet"}
+    try:
+        root = ET.fromstring(b)
+    except Exception as e:
+        raise EtfDataError(f"iShares xls XML 解析失敗：{e}") from e
+    target = None
+    for ws in root.findall("ss:Worksheet", ns):
+        name = ws.get("{urn:schemas-microsoft-com:office:spreadsheet}Name") or ""
+        if name.lower() in ("historical", "historical navs"):
+            target = ws
+            break
+    if target is None:
+        sheets = root.findall("ss:Worksheet", ns)
+        target = sheets[0] if sheets else None
+    if target is None:
+        raise EtfDataError("iShares xls 沒有工作表")
+    rows = []
+    for row in target.findall(".//ss:Row", ns):
+        vals = []
+        for cell in row.findall("ss:Cell", ns):
+            data = cell.find("ss:Data", ns)
+            vals.append("" if data is None or data.text is None else data.text)
+        rows.append(vals)
+    if not rows:
+        raise EtfDataError("iShares xls 沒有列")
+    header_i, mapping = None, {}
+    for i, vals in enumerate(rows[:20]):
+        low = [v.strip().lower() for v in vals]
+        def col(*names):
+            for n in names:
+                if n in low:
+                    return low.index(n)
+            return None
+        di, ni, si = col("as of", "asof", "date"), col("nav per share", "nav"), col("shares outstanding", "sharesoutstanding")
+        if di is not None and ni is not None and si is not None:
+            header_i, mapping = i, dict(date=di, nav=ni, so=si)
+            break
+    if header_i is None:
+        raise EtfDataError("iShares xls 找不到 As Of／NAV／Shares Outstanding 欄")
+    out = []
+    for vals in rows[header_i + 1:]:
+        if max(mapping.values(), default=0) >= len(vals):
+            continue
+        ds, ns, ss = vals[mapping["date"]], vals[mapping["nav"]], vals[mapping["so"]]
+        d = pd.to_datetime(ds, errors="coerce")
+        try:
+            n, s = float(str(ns).replace(",", "")), float(str(ss).replace(",", ""))
+        except Exception:
+            continue
+        if pd.isna(d) or not n:
+            continue
+        out.append((d, n, s))
+    if not out:
+        raise EtfDataError("iShares xls Historical 沒有可解析的列")
+    x = pd.DataFrame(out, columns=["Date", "NAV", "SO"]).drop_duplicates("Date").set_index("Date").sort_index()
+    x["TNA"] = x["SO"] * x["NAV"]
+    return x
+
+
+def parse_invesco_navs(raw):
+    if looks_like_html(raw):
+        raise EtfDataError("Invesco navs 實際是 HTML，拒絕解析")
+    if isinstance(raw, (bytes, bytearray)):
+        raw = raw.decode("utf-8")
+    try:
+        data = json.loads(raw)
+    except Exception as e:
+        raise EtfDataError(f"Invesco navs 不是合法 JSON：{e}") from e
+    if not isinstance(data, list) or not data:
+        raise EtfDataError("Invesco navs 不是非空陣列")
+    rows = []
+    for rec in data:
+        d = pd.to_datetime(rec.get("effectiveDate"), errors="coerce")
+        nav = rec.get("netAssetValue")
+        tna = rec.get("shareclassTotalNetAssets")
+        if tna is None:
+            tna = rec.get("totalNetAssets")
+        if pd.isna(d) or nav is None or tna is None:
+            continue
+        try:
+            nav, tna = float(nav), float(tna)
+        except Exception:
+            continue
+        if not nav:
+            continue
+        rows.append((d, nav, tna))
+    if not rows:
+        raise EtfDataError("Invesco navs 沒有可解析的日期列")
+    x = pd.DataFrame(rows, columns=["Date", "NAV", "TNA"]).drop_duplicates("Date").set_index("Date").sort_index()
+    x["SO"] = round_shares(x["TNA"] / x["NAV"])
+    return x
+
+
+def parse_invesco_fund_details(raw):
+    if looks_like_html(raw):
+        raise EtfDataError("Invesco fundDetails 實際是 HTML，拒絕解析")
+    if isinstance(raw, (bytes, bytearray)):
+        raw = raw.decode("utf-8")
+    try:
+        j = json.loads(raw)
+    except Exception as e:
+        raise EtfDataError(f"Invesco fundDetails 不是合法 JSON：{e}") from e
+    so, asof = j.get("sharesOutstanding"), j.get("effectiveDate") or j.get("effectiveBusinessDate")
+    if so is None:
+        raise EtfDataError("Invesco fundDetails 沒有 sharesOutstanding")
+    return dict(shares=int(round_shares(so)), asof=str(asof) if asof else None, nav=j.get("nav"), tna=j.get("shareclassTotalNetAssets"))
+
+
+def parse_vaneck_histoprices(raw):
+    if looks_like_html(raw):
+        raise EtfDataError("VanEck fundhistoprices 實際是 HTML，拒絕當成 xlsx")
+    b = raw if isinstance(raw, (bytes, bytearray)) else raw.encode("utf-8")
+    if not b.startswith(b"PK"):
+        raise EtfDataError("VanEck fundhistoprices 不是 xlsx（缺少 ZIP 檔頭）")
+    try:
+        df = pd.read_excel(io.BytesIO(b), header=1)
+    except Exception as e:
+        raise EtfDataError(f"VanEck xlsx 解析失敗：{e}") from e
+    cols = {str(c).strip().lower(): c for c in df.columns}
+    if "date" not in cols or "nav" not in cols or "aum" not in cols:
+        raise EtfDataError(f"VanEck xlsx 缺少 Date／NAV／AUM 欄，實際欄位：{list(df.columns)}")
+    x = pd.DataFrame({
+        "Date": pd.to_datetime(df[cols["date"]], errors="coerce"),
+        "NAV": pd.to_numeric(df[cols["nav"]].astype(str).str.replace(",", ""), errors="coerce"),
+        "TNA": pd.to_numeric(df[cols["aum"]].astype(str).str.replace(",", ""), errors="coerce"),
+    }).dropna(subset=["Date", "NAV", "TNA"])
+    x = x[x["NAV"] != 0].drop_duplicates("Date").set_index("Date").sort_index()
+    if x.empty:
+        raise EtfDataError("VanEck xlsx 沒有可解析的列")
+    x["SO"] = round_shares(x["TNA"] / x["NAV"])
+    return x
+
+
+def _sig1_status(wp, mp, p):
+    if mp <= p["m_trigger"] or wp <= p["w_trigger"]:
+        return RED
+    if mp <= p["m_near"] or wp <= p["w_near"]:
+        return YEL
+    return WHT
+
+
+def _sig1_value_text(fl):
+    return (f"近1週 {fl['week_flow_usd']/1e9:+.2f}B 美元（{fl['week_pct']:+.2f}% AUM）；"
+            f"近1月 {fl['month_flow_usd']/1e9:+.2f}B（{fl['month_pct']:+.2f}% AUM）；"
+            f"AUM {fl['aum']/1e9:.1f}B；流通股數 {fl['shares']/1e6:.2f}M")
+
+
+def _sig1_row(target, fl, sources, note, stale=False, stale_reason=""):
+    p = P("1")
+    extra = dict(week_flow_usd=fl["week_flow_usd"], week_pct=fl["week_pct"],
+                 month_flow_usd=fl["month_flow_usd"], month_pct=fl["month_pct"],
+                 aum=fl["aum"], shares=fl["shares"], aum_change_1m_pct=fl["aum_change_1m_pct"],
+                 obs_date=fl["obs_date"], red_dates=fl["red_dates"], n_obs=fl["n_obs"])
+    r = row("1", target, _sig1_value_text(fl), RULES["signals"]["1"]["trigger"],
+            _sig1_status(fl["week_pct"], fl["month_pct"], p), fl["obs_date"], sources, note, extra)
+    if stale:
+        r["stale"] = True
+        r["stale_since"] = fl["obs_date"]
+        r["stale_reason"] = stale_reason
+    return r
+
+
+def _load_soxx_history():
+    """回傳 (frame, sources, note_src, stale, err_detail)。優先官方 JSON，xls 備援，再退快取。"""
+    errors = []
+    sources = [SOXX_JSON_URL, SOXX_XLS_URL, SOXX_PAGE_URL]
+    # JSON
+    try:
+        raw, ctype, _ = fetch_bytes(SOXX_JSON_URL)
+        if looks_like_html(raw):
+            raise EtfDataError(f"JSON 端點回了 HTML（Content-Type={ctype}）")
+        x = parse_ishares_funddownload_json(raw)
+        write_etf_cache("soxx_funddownload.json", raw if isinstance(raw, (bytes, bytearray)) else raw.encode("utf-8"), True)
+        return x, sources, "以 iShares 官方 fundDownload JSON 的每日流通股數 × NAV 推算", False, ""
+    except Exception as e:
+        errors.append(f"JSON：{e}")
+    # xls 備援
+    try:
+        raw, ctype, _ = fetch_bytes(SOXX_XLS_URL)
+        if looks_like_html(raw):
+            raise EtfDataError(f"xls 端點回了 HTML（Content-Type={ctype}）")
+        x = parse_ishares_fund_xls(raw)
+        write_etf_cache("soxx_fund.xls", raw if isinstance(raw, (bytes, bytearray)) else raw.encode("utf-8"), True)
+        return x, sources, "以 iShares 官方 fundDownload xls（JSON 失敗後的備援）每日流通股數 × NAV 推算", False, ""
+    except Exception as e:
+        errors.append(f"xls：{e}")
+    # 快取
+    cached = read_etf_cache("soxx_funddownload.json", True)
+    if cached:
+        try:
+            x = parse_ishares_funddownload_json(cached)
+            why = "；".join(errors)
+            return x, sources, "以 iShares 官方 fundDownload JSON 快取的每日流通股數 × NAV 推算", True, why
+        except Exception as e:
+            errors.append(f"JSON快取：{e}")
+    cached = read_etf_cache("soxx_fund.xls", True)
+    if cached:
+        try:
+            x = parse_ishares_fund_xls(cached)
+            why = "；".join(errors)
+            return x, sources, "以 iShares 官方 fundDownload xls 快取的每日流通股數 × NAV 推算", True, why
+        except Exception as e:
+            errors.append(f"xls快取：{e}")
+    raise EtfDataError("；".join(errors) or "SOXX 無資料")
+
+
+def _load_qqq_history():
+    sources = [QQQ_NAVS_URL, QQQ_DETAILS_URL, QQQ_PAGE_URL]
+    errors = []
+    x = None
+    stale = False
+    note_src = "以 Invesco 官方每日 NAV 與總資產（TNA÷NAV，四捨五入為整數股）推算流通股數再 × NAV"
+    try:
+        raw, ctype, _ = fetch_bytes(QQQ_NAVS_URL, headers=INVESCO_HEADERS, retries=4, sleep=1.0)
+        if looks_like_html(raw):
+            raise EtfDataError(f"navs 端點回了 HTML（Content-Type={ctype}）")
+        x = parse_invesco_navs(raw)
+        write_etf_cache("qqq_navs.json", raw if isinstance(raw, (bytes, bytearray)) else raw.encode("utf-8"), True)
+    except Exception as e:
+        errors.append(f"navs：{e}")
+        cached = read_etf_cache("qqq_navs.json", True)
+        if cached:
+            try:
+                x = parse_invesco_navs(cached)
+            except Exception as e2:
+                errors.append(f"navs快取：{e2}")
+                raise EtfDataError("；".join(errors)) from e2
+            stale = True
+            note_src = "以 Invesco 官方 navs 快取的每日 NAV 與總資產推算流通股數再 × NAV"
+        else:
+            raise EtfDataError("；".join(errors) or "QQQ 無資料") from e
+    # fundDetails 交叉核對（失敗只加註，不擋計算、不把缺漏當 0）
+    cross = ""
+    try:
+        draw, _, _ = fetch_bytes(QQQ_DETAILS_URL, headers=INVESCO_HEADERS, retries=3, sleep=1.0)
+        det = parse_invesco_fund_details(draw)
+        last_so = int(x["SO"].iloc[-1])
+        official = det["shares"]
+        asof = det.get("asof") or ""
+        if official is not None:
+            diff = abs(last_so - official)
+            if diff <= 1:
+                cross = f"fundDetails 當日官方流通股數 {official:,.0f}（{asof or '日期未標'}）與 TNA÷NAV 推算值一致。"
+            else:
+                cross = (f"fundDetails 當日官方流通股數 {official:,.0f}（{asof or '日期未標'}）"
+                         f"與序列末日推算值 {last_so:,.0f} 相差 {diff:,.0f} 股；流量仍用 TNA÷NAV 序列，未改寫。")
+    except Exception as e:
+        cross = f"fundDetails 交叉核對本次未成功（{e}），不影響以 navs 序列計算的流量。"
+    return x, sources, note_src, stale, "；".join(errors), cross
+
+
+def _load_smh_history():
+    sources = [SMH_XLSX_URL, SMH_PAGE_URL]
+    errors = []
+    try:
+        raw, ctype, _ = fetch_bytes(SMH_XLSX_URL)
+        if looks_like_html(raw):
+            raise EtfDataError(f"xlsx 端點回了 HTML（Content-Type={ctype}）")
+        x = parse_vaneck_histoprices(raw)
+        write_etf_cache("smh_fundhistoprices.xlsx", raw if isinstance(raw, (bytes, bytearray)) else raw.encode("utf-8"), True)
+        return x, sources, "以 VanEck 官方 fundhistoprices 每日 NAV 與 AUM 推算流通股數（四捨五入為整數股）再 × NAV", False, ""
+    except Exception as e:
+        errors.append(str(e))
+    cached = read_etf_cache("smh_fundhistoprices.xlsx", True)
+    if cached:
+        try:
+            x = parse_vaneck_histoprices(cached)
+        except Exception as e2:
+            errors.append(f"xlsx快取：{e2}")
+            raise EtfDataError("；".join(errors)) from e2
+        return x, sources, "以 VanEck 官方 fundhistoprices 快取的每日 NAV 與 AUM 推算流通股數（四捨五入為整數股）再 × NAV", True, "；".join(errors)
+    raise EtfDataError("；".join(errors) or "SMH 無資料")
+
+
 def sig1():
     rows = []; p = P("1")
     # SPY: SSGA NAV history（含流通股數）
@@ -86,41 +548,55 @@ def sig1():
                  aum_change_1m_pct=(x["TNA"].iloc[-1]/x["TNA"].iloc[-22]-1)*100, obs_date=last, red_dates=red_dates)))
     except Exception as e:
         rows.append(row("1", "SPY", None, RULES["signals"]["1"]["trigger"], UNK, None, [url], f"抓取失敗：{e}"))
-    # SOXX：iShares 頁面僅有當日流通股數（無歷史）→ 存快照，未來累積後可計算
-    soxx_url = "https://www.ishares.com/us/products/239705/ishares-semiconductor-etf"
-    snap = {}
+
+    # SOXX：iShares 官方 fundDownload 歷史（JSON 為主、xls 備援；失敗用快取）
     try:
-        import html as _html; h = _html.unescape(get(soxx_url).text)
-        m = re.search(r'Shares Outstanding","formattedValue":"([\d,]+)".{0,80}?"formattedAsOfDate":"([^"]+)"', h)
-        a = re.search(r'"totalNetAssetsFundLevel":\{.{0,120}?"formattedValue":"([\d,]+)".{0,200}?"formattedAsOfDate":"([^"]+)"', h)
-        if m: snap["SOXX"] = dict(shares=int(m.group(1).replace(",", "")), asof=m.group(2), aum=int(a.group(1).replace(",", "")) if a else None)
+        x, sources, note_src, stale, err = _load_soxx_history()
+        fl = etf_flow_frame(x, p)
+        note = f"{note_src}；資料截至 {fl['obs_date']}。"
+        stale_reason = ""
+        if stale:
+            note += f"資料過期：本次抓取失敗（{err[:160]}），沿用 data/cache/etf 舊序列，未把缺漏當 0。"
+            stale_reason = f"{STALE_PREFIX}：本次查詢（{RUN_TS}）抓取失敗（{err[:160]}），沿用快取序列，資料截至 {fl['obs_date']}。"
+        rows.append(_sig1_row("SOXX", fl, sources, note, stale=stale, stale_reason=stale_reason))
     except Exception as e:
-        snap["SOXX_err"] = str(e)
-    # 快照累積
-    sp = os.path.join(DATA, "etf_shares_snapshots.csv")
-    if "SOXX" in snap:
-        try:
-            s = snap["SOXX"]; iso = dt.datetime.strptime(s["asof"], "%b %d, %Y").strftime("%Y-%m-%d")
-            new = not os.path.exists(sp)
-            dup = (not new) and any(l.split(",")[1:3] == ["SOXX", iso] for l in open(sp).read().splitlines()[1:])
-            if not dup:
-                with open(sp, "a") as fh:
-                    if new: fh.write("queried_at,ticker,asof,shares,aum\n")
-                    fh.write(f"{RUN_TS},SOXX,{iso},{s['shares']},{s['aum']}\n")
-        except Exception as e:
-            snap.pop("SOXX", None); snap["SOXX_err"] = str(e)
-    s = snap.get("SOXX")
-    rows.append(row("1", "SOXX", (f"流通股數 {s['shares']/1e6:.2f}M、AUM {s['aum']/1e9:.2f}B（{s['asof']}）；近1週／近1月淨流量：無歷史資料" if s else None),
-        RULES["signals"]["1"]["trigger"], UNK, s["asof"] if s else None, [soxx_url],
-        "iShares 官網只公開當日流通股數，歷史下載檔以程式讀取失敗；已開始每日存快照（data/etf_shares_snapshots.csv），累積 22 個交易日後即可依規則計算。",
-        dict(red_dates=[])))
-    rows.append(row("1", "QQQ", None, RULES["signals"]["1"]["trigger"], UNK, None, ["https://www.invesco.com/qqq-etf/en/about.html"],
-        "Invesco 資料 API 拒絕程式存取（HTTP 406），未取得每日流通股數；不以資產規模縮水代替資金外流。",
-        dict(red_dates=[])))
-    rows.append(row("1", "SMH", None, RULES["signals"]["1"]["trigger"], UNK, None, ["https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/"],
-        "VanEck 官網需 Cookie／瀏覽器，程式讀取被導向錯誤頁；未取得每日流通股數。",
-        dict(red_dates=[])))
+        rows.append(row("1", "SOXX", None, RULES["signals"]["1"]["trigger"], UNK, None,
+                        [SOXX_JSON_URL, SOXX_XLS_URL, SOXX_PAGE_URL],
+                        f"抓取失敗：{e}；不以資產規模縮水代替資金外流，也不把缺漏當 0。"))
+
+    # QQQ：Invesco navs（TNA÷NAV），fundDetails 交叉核對
+    try:
+        x, sources, note_src, stale, err, cross = _load_qqq_history()
+        fl = etf_flow_frame(x, p)
+        note = f"{note_src}；資料截至 {fl['obs_date']}。"
+        if cross:
+            note += cross
+        stale_reason = ""
+        if stale:
+            note += f"資料過期：本次抓取失敗（{err[:160]}），沿用 data/cache/etf 舊序列，未把缺漏當 0。"
+            stale_reason = f"{STALE_PREFIX}：本次查詢（{RUN_TS}）抓取失敗（{err[:160]}），沿用快取序列，資料截至 {fl['obs_date']}。"
+        rows.append(_sig1_row("QQQ", fl, sources, note, stale=stale, stale_reason=stale_reason))
+    except Exception as e:
+        rows.append(row("1", "QQQ", None, RULES["signals"]["1"]["trigger"], UNK, None,
+                        [QQQ_NAVS_URL, QQQ_DETAILS_URL, QQQ_PAGE_URL],
+                        f"抓取失敗：{e}；不以資產規模縮水代替資金外流，也不把缺漏當 0。"))
+
+    # SMH：VanEck 官方 fundhistoprices
+    try:
+        x, sources, note_src, stale, err = _load_smh_history()
+        fl = etf_flow_frame(x, p)
+        note = f"{note_src}；資料截至 {fl['obs_date']}。"
+        stale_reason = ""
+        if stale:
+            note += f"資料過期：本次抓取失敗（{err[:160]}），沿用 data/cache/etf 舊序列，未把缺漏當 0。"
+            stale_reason = f"{STALE_PREFIX}：本次查詢（{RUN_TS}）抓取失敗（{err[:160]}），沿用快取序列，資料截至 {fl['obs_date']}。"
+        rows.append(_sig1_row("SMH", fl, sources, note, stale=stale, stale_reason=stale_reason))
+    except Exception as e:
+        rows.append(row("1", "SMH", None, RULES["signals"]["1"]["trigger"], UNK, None,
+                        [SMH_XLSX_URL, SMH_PAGE_URL],
+                        f"抓取失敗：{e}；不以資產規模縮水代替資金外流，也不把缺漏當 0。"))
     return rows
+
 
 # ---------------- 2. CNN F&G ----------------
 def sig2():
@@ -558,6 +1034,11 @@ def apply_stale_fallback(rows, prev, failed_signals):
             out.append(mk(old, r_.get("note") or "未知錯誤")); failed_here[r_["signal"]] = r_.get("note") or "未知錯誤"
         else:
             out.append(r_)
+            # 來源改走快取、列上已標 stale 時，也列入本次 stale_rows，讓頁面顯示「資料過期」
+            if r_.get("stale"):
+                key = f"{r_['signal']}｜{r_['target']}"
+                if key not in stale:
+                    stale.append(key)
     # 同一訊號有列抓取失敗時，上次有、這次卻沒產生的分項列（例如上市／上櫃參考列）也沿用並標過期
     present = {(x["signal"], x["target"]) for x in out}
     for o in prev.get("rows", []):

@@ -2,6 +2,16 @@
 
 這裡只記走勢頁與首頁圖表的資料與站務變動。11 項燈號的規則與門檻不在這裡，請看 `rules.md`。
 
+## 2026-11-21 燈號 #1 補上 QQQ／SOXX／SMH 官方資金流歷史（燈號規則未改，仍是 v3.0）
+
+- 燈號第 1 項「指數 ETF 資金外流」的 QQQ、SOXX、SMH 改接發行商官方每日 NAV／流通股數（或官方 TNA÷NAV 推算整數股），依既有公式用流通股數變動 × 當日 NAV 計算近 1 週（5 個交易日）與近 1 月（21 個交易日）淨流量占期初 AUM 的百分比。規則、門檻與 `rules.json`、`margin_ratio.py`、`signals_v2.py` 都沒動。
+- SOXX：主來源是 iShares `fundDownload` JSON（`sharesOutstanding`＋NAV），xls 當備援。會檢查內容，避免把回傳的 HTML 當成試算表（這是先前歷史檔讀取失敗的原因）。
+- QQQ：抓 Invesco `navs`（每日 NAV 與 TNA），流通股數＝TNA÷NAV 後四捨五入為整數股；再用 `fundDetails` 的官方 `sharesOutstanding` 交叉核對。請求帶非瀏覽器 User-Agent 與 `Referer: https://www.invesco.com/`，並重試，以降低 HTTP 406。
+- SMH：抓 VanEck `fundhistoprices` xlsx 的官方 Date／NAV／AUM，流通股數同樣四捨五入後再差分。
+- 週末與假日的重複列會先去掉，再取最近 5／21 個交易觀測；歷史不足或期初 AUM 為空時維持資料不足，不把缺漏當 0。歷史快取在 `data/cache/etf/`（不進版控；GitHub Actions 另存 cache）。上游失敗時沿用快取序列並標「資料過期」；快取也沒有才交給既有的 `latest.json` 過期機制。
+- 卡片說明寫清資料來源與截至日期。首頁沒有改。
+- 原因：這三檔先前因缺少歷史流通股數顯示「資料不足」；使用者同意改接發行商官方歷史並部署。
+
 ## 2026-11-20 燈號頁收合卡片顯示目前數值（燈號規則未改，仍是 v3.0）
 
 - `/signals/`（repo 根目錄 `index.html`）的燈號卡收合時，第 6 項「台股融資維持率太低（扣除ETF）」在狀態晶片下方加一行目前數值，例如「目前：121.48%（11/20，自算）｜門檻 < 130%」，並附一行灰色小字「自算值通常比玩股網高約 0.5～3.3 個百分點」。數字從 `data/latest.json` 判定列的 `extra.value`（兩位小數）與 `data_date` 讀出，不寫死。門檻取該列 `threshold` 去掉「接近」子句，仍是規則既有的「< 130%」。

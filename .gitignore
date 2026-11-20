@@ -8,3 +8,6 @@ node_modules/
 
 # 走勢頁的行情原始檔（scripts/update_trend.py 的快取，不進版控）
 data/cache/trend/
+
+# ETF 發行商官方資金流歷史（scripts/run.py sig1 快取，不進版控；CI 用 actions/cache）
+data/cache/etf/
