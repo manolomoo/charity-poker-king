@@ -296,6 +296,88 @@
     return wrap;
   }
 
+  // 收合卡片上看得到的「目前」一行。只讀 latest.json 既有欄位，不改燈號規則。
+  function isJudgingRow(row) {
+    var thr = (row && row.threshold) || "";
+    if (thr.indexOf("不參與") !== -1 || thr.indexOf("不納入") !== -1) return false;
+    if (((row && row.target) || "").indexOf("參考") !== -1) return false;
+    return true;
+  }
+
+  function judgingRows(rows) {
+    return (rows || []).filter(isJudgingRow);
+  }
+
+  function shortMd(iso) {
+    if (!iso) return "";
+    var m = String(iso).match(/(\d{4})-(\d{2})-(\d{2})/) || String(iso).match(/(\d{4})(\d{2})(\d{2})/);
+    if (!m) return "";
+    return parseInt(m[2], 10) + "/" + parseInt(m[3], 10);
+  }
+
+  function fmtFixed(n, digits) {
+    if (n == null || n === "") return null;
+    var x = Number(n);
+    if (!isFinite(x)) return null;
+    return x.toFixed(digits);
+  }
+
+  function compactThreshold(thr) {
+    if (!thr) return "";
+    return String(thr).replace(/（接近：[^）]*）/g, "").replace(/\s+/g, " ").trim();
+  }
+
+  function currentSnapshot(id, rows) {
+    var js = judgingRows(rows);
+    if (!js.length) return null;
+    var row = js[0];
+    var ex = row.extra || {};
+    var date = shortMd(row.data_date || ex.obs_date || ex.last_date);
+    var line = null;
+    var note = null;
+    if (String(id) === "6" && ex.value != null) {
+      var pct = fmtFixed(ex.value, 2);
+      if (!pct) return null;
+      var head = "目前：" + pct + "%";
+      var paren = [];
+      if (date) paren.push(date);
+      if ((row.target || "").indexOf("自算") !== -1) paren.push("自算");
+      if (paren.length) head += "（" + paren.join("，") + "）";
+      var thr = compactThreshold(row.threshold);
+      line = thr ? (head + "｜門檻 " + thr) : head;
+      note = "自算值通常比玩股網高約 0.5～3.3 個百分點";
+    } else if (String(id) === "2" && (ex.last_close != null || ex.score_live != null)) {
+      var score = fmtFixed(ex.last_close != null ? ex.last_close : ex.score_live, 1);
+      if (!score) return null;
+      line = "目前：" + score + (date ? "（" + date + "）" : "");
+    } else if (String(id) === "5") {
+      var parts = [];
+      js.forEach(function (r) {
+        if (r.extra == null || r.extra.close == null) return;
+        var v = fmtFixed(r.extra.close, 2);
+        if (!v) return;
+        var name = (r.target || "").replace(/（.*?）/g, "").trim() || "指數";
+        parts.push(name + " " + v);
+      });
+      if (!parts.length) return null;
+      var d5 = date || shortMd((js[0].extra || {}).obs_date);
+      line = "目前：" + parts.join("、") + (d5 ? "（" + d5 + "）" : "");
+    } else if (String(id) === "7" && ex.total_100m != null) {
+      var yi = fmtFixed(ex.total_100m, 0);
+      if (!yi) return null;
+      var yiShow = formatNum(Number(yi));
+      var head7 = "目前：" + yiShow + " 億" + (date ? "（" + date + "）" : "");
+      if (ex.dd_pct != null && isFinite(Number(ex.dd_pct))) {
+        var dd = Number(ex.dd_pct);
+        var ddTxt = (dd > 0 ? "+" : "") + dd.toFixed(1) + "%";
+        head7 += "｜較 120 日高點 " + ddTxt;
+      }
+      line = head7;
+    }
+    if (!line) return null;
+    return { line: line, note: note };
+  }
+
   function buildSignalCard(id, summaryItem, rulesSignal, rows) {
     var cls = S.statusClass(summaryItem.status);
     var details = S.el("details", { class: "signal-card " + cls, id: "signal-" + id });
@@ -316,21 +398,31 @@
     if (holdLabel) {
       summaryEl.appendChild(S.el("span", { class: "badge-hold", text: holdLabel }));
     }
-    var seenTrig = {};
-    (rows || []).forEach(function (row) {
-      var thr = row.threshold || "";
-      if (thr.indexOf("不參與") !== -1 || thr.indexOf("不納入") !== -1) return;
-      if ((row.target || "").indexOf("參考") !== -1) return;
-      var info = row.extra && row.extra.last_trigger_info;
-      var line = (!info || !info.date) ? "最近一次觸發日：無" : ("最近一次觸發日：" + info.date + (info.phrase ? "（" + info.phrase + "）" : ""));
-      if (seenTrig[line]) return;
-      seenTrig[line] = true;
-      summaryEl.appendChild(S.el("span", { class: "by-market", text: line }));
-    });
     if ((rows || []).some(function (row) { return row.stale; })) {
       summaryEl.appendChild(S.el("span", { class: "badge-stale" }, ["資料過期"]));
     }
     summaryEl.appendChild(S.el("span", { class: "chev", "aria-hidden": "true", text: "▸" }));
+    var snap = currentSnapshot(id, rows);
+    if (snap) {
+      var now = S.el("div", { class: "sig-now" });
+      var lineEl = S.el("div", { class: "sig-now-line" });
+      var parts = snap.line.split("｜");
+      lineEl.appendChild(document.createTextNode(parts[0]));
+      for (var i = 1; i < parts.length; i++) {
+        lineEl.appendChild(S.el("span", { class: "sig-now-thr", text: "｜" + parts[i] }));
+      }
+      now.appendChild(lineEl);
+      if (snap.note) now.appendChild(S.el("div", { class: "sig-now-note", text: snap.note }));
+      summaryEl.appendChild(now);
+    }
+    var seenTrig = {};
+    judgingRows(rows).forEach(function (row) {
+      var info = row.extra && row.extra.last_trigger_info;
+      var line = (!info || !info.date) ? "最近一次觸發日：無" : ("最近一次觸發日：" + info.date + (info.phrase ? "（" + info.phrase + "）" : ""));
+      if (seenTrig[line]) return;
+      seenTrig[line] = true;
+      summaryEl.appendChild(S.el("span", { class: "by-market sig-trig", text: line }));
+    });
     details.appendChild(summaryEl);
 
     var body = S.el("div", { class: "signal-body" });

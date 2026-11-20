@@ -322,7 +322,30 @@ header.page-header .subtitle {
   font-size: 0.82rem;
   color: var(--ink-soft);
 }
+.signal-card summary .sig-now {
+  flex: 1 1 100%;
+  margin: 2px 0 0;
+  padding-right: 0;
+}
+.signal-card summary .sig-now-line {
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--ink);
+  line-height: 1.45;
+}
+.signal-card summary .sig-now-thr { white-space: nowrap; }
+.signal-card summary .sig-now-note {
+  margin-top: 3px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--ink-faint);
+  line-height: 1.45;
+}
+.signal-card summary .sig-trig {
+  flex: 1 1 100%;
+}
 .signal-card summary .chev {
+
   color: var(--ink-faint);
   transition: transform 0.15s ease;
   font-size: 0.8rem;
