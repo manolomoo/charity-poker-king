@@ -1,9 +1,9 @@
 {
   "ok": true,
   "stale": false,
-  "fetched_at_taipei": "2026-11-20T22:03:02+08:00",
+  "fetched_at_taipei": "2026-11-20T22:51:55+08:00",
   "price_asof": "2026-11-19",
   "error": null,
   "last_good_asof": "2026-11-19",
-  "last_good_fetched_at": "2026-11-20T22:03:02+08:00"
+  "last_good_fetched_at": "2026-11-20T22:51:55+08:00"
 }
