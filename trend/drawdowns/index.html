@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>慈善撲克王｜歷史重大下跌段</title>
-<meta name="description" content="NDX、SPX、SOX、台灣加權的歷史重大下跌段：跌了多少、跌了多久。過去跌幅不能預測未來，非投資建議。">
+<title>慈善撲克王｜歷史跌幅（與反彈）</title>
+<meta name="description" content="NDX、SPX、SOX、台灣加權的歷史重大下跌段：跌了多少、跌了多久；以及 Cobb 主觀確認轉多後反彈了多少、幾天。過去不能預測未來，非投資建議。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
@@ -86,6 +86,42 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 .sw.soft{background:var(--bar-soft)}
 .sw.now{background:var(--now)}
 .sw.avg{width:16px;height:0;border-top:2px dashed var(--avg)}
+/* ---- 跌段與反彈對照（新區塊） ---- */
+#rebound{--reb:#00838f;--reb-ink:#5fd0da;border-top:1px solid var(--line);padding-top:24px}
+#rebound .subj{background:#10262b;border:1px solid #1f5a61;border-radius:10px;padding:10px 12px;margin:0 0 12px;color:var(--ink);font-size:14px;line-height:1.65}
+#rebound .subj b{color:var(--reb-ink)}
+.sw.reb{background:var(--reb)}
+.rb-ctl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:0 0 10px}
+.rb-ctl .lbl{color:var(--muted);font-size:12px}
+.rb-ctl .sort{margin:0}
+.rb-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.rb-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px 9px;margin:0;min-width:0}
+.rb-card.ref{border-style:dashed;border-color:#4a5a7a;background:#141d2e}
+.rb-card.now{border-color:#5c4b1f;background:#1c1a12}
+.rb-card h3{font-family:var(--sans);font-size:14px;font-weight:700;color:var(--ink);margin:0 0 6px;line-height:1.45}
+.rb-card h3 .per{font-size:11px;font-weight:400;color:var(--muted)}
+.rb-card h3 .seq{color:var(--muted);font-weight:400;margin-right:4px}
+.leg2{margin:0 0 6px}
+.leg2:last-child{margin-bottom:0}
+.leg2 .row{display:grid;grid-template-columns:1.9em 4.4em minmax(0,1fr);gap:6px;align-items:center}
+.leg2 .tag{font-size:12px;font-weight:700;text-align:center;border-radius:4px;line-height:1.5;padding:0 2px}
+.leg2.dn .tag{color:#ffd3d8;background:#4a2229}
+.leg2.up .tag{color:#d4f6f8;background:#0f3d43}
+.leg2.cur .tag{color:#2a2414;background:var(--now)}
+.leg2 .track{min-width:0;height:12px;background:rgba(255,255,255,.035);border-radius:2px}
+.leg2 .bar{display:block;height:12px;border-radius:2px;min-width:3px}
+.leg2.dn .bar{background:var(--bar)}
+.leg2.up .bar{background:var(--reb)}
+.leg2.cur .bar{background:var(--now)}
+.leg2 .val{font-weight:700;font-size:14px;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.leg2.dn .val{color:var(--red)}
+.leg2.up .val{color:var(--reb-ink)}
+.leg2.cur .val{color:var(--amber)}
+.leg2 .det{color:var(--muted);font-size:11.5px;line-height:1.5;margin:1px 0 0 calc(1.9em + 6px)}
+.leg2 .days{color:var(--ink);font-size:12.5px;white-space:nowrap;margin-right:8px}
+.leg2 .dt{display:inline-block}
+.leg2 .none{color:var(--muted);font-size:12.5px}
+@media (max-width:420px){ .rb-list{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -157,6 +193,43 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
   <ul class="notes" id="footnotes"></ul>
 </section>
 
+<section id="rebound" aria-labelledby="rb-h">
+  <h2 id="rb-h">跌段與反彈對照</h2>
+  <p class="sub">每次大跌跌了多少、幾天；Cobb 確認轉多後，從低點反彈了多少、幾天</p>
+  <p class="subj"><b>轉多確認點是 Cobb 的主觀判斷</b>（方法來源：COBB我大哥）：是他在 TradingView 日線上框選的轉多日，不是公式算出來的訊號。本站只照 Excel 表上的日期與收盤價呈現，不會替「現在本波下跌」或之後的下跌自己推算轉多日。</p>
+  <div class="tabs" role="tablist" aria-label="指數（反彈對照）" id="rb-tabs"></div>
+  <h3 class="sub" id="rb-title" style="margin:0 0 6px">—</h3>
+  <p class="take" id="rb-take"></p>
+  <ul class="leg">
+    <li><span class="sw"></span>跌段：盤中高點 → 盤中低點</li>
+    <li><span class="sw reb"></span>反彈：下跌低點（盤中最低價）→ Cobb 主觀確認的轉多日收盤價</li>
+    <li><span class="sw now"></span>現在本波下跌（尚無轉多確認，不畫反彈）</li>
+  </ul>
+  <div class="rb-ctl">
+    <span class="lbl">條長代表</span>
+    <div class="sort" id="rb-mode">
+      <button type="button" data-mode="pct" class="on">幅度（%）</button>
+      <button type="button" data-mode="days">天數（日曆天）</button>
+    </div>
+    <span class="lbl">排序</span>
+    <div class="sort" id="rb-sort">
+      <button type="button" data-sort="time" class="on">依時間</button>
+      <button type="button" data-sort="size">依跌幅</button>
+      <button type="button" data-sort="reb">依反彈</button>
+    </div>
+  </div>
+  <p class="note" id="rb-scale"></p>
+  <div class="rb-list" id="rb-ref"></div>
+  <div class="rb-list" id="rb-list" style="margin-top:10px"></div>
+  <ul class="notes">
+    <li>同一指數的所有條（跌、彈、平均、中位數）共用同一個尺度，所以反彈條通常比跌條短很多，這是照實畫的。</li>
+    <li>口徑不同：跌段是盤中最高價到盤中最低價；反彈起點是該次下跌的低點（盤中最低價），終點是轉多日的日K收盤價（不是盤中高點）。跌幅以高點為分母、反彈以低點為分母，兩個 % 不能直接相減或相除（例如反彈 +40% 不代表收回了四成跌幅）。</li>
+    <li>反彈歷時＝轉多日−低點日的日曆天；反彈交易日＝兩根日K之間的 K 棒根數差；反彈平均與中位數只計歷史下跌段，不含「現在本波下跌」。</li>
+    <li>轉多確認點是 Cobb 的主觀判斷（方法來源：COBB我大哥）。過去的反彈不能預測未來，也不代表下一次會在同樣位置轉多。非投資建議。</li>
+  </ul>
+  <ul class="notes" id="rb-footnotes"></ul>
+</section>
+
 <div class="box-o">
   <p style="margin:0">過去的下跌段不能預測未來也會跌多少，也不是下一次一定會跌一樣深。非投資建議。</p>
 </div>
@@ -175,6 +248,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
   var NS = "http://www.w3.org/2000/svg";
   var curId = (DATA.indices[0] && DATA.indices[0].id) || "NDX";
   var sortBy = "size";
+  var rbSort = "time", rbMode = "pct";
 
   function $(id){ return document.getElementById(id); }
   function idxById(id){ return DATA.indices.filter(function(x){return x.id===id;})[0]; }
@@ -251,7 +325,11 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
   function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 
   function paintTabs(){
-    var box = $("tabs");
+    paintTabsInto($("tabs"));
+    paintTabsInto($("rb-tabs"));
+  }
+  function paintTabsInto(box){
+    if(!box) return;
     box.innerHTML = "";
     DATA.indices.forEach(function(ix){
       var b = document.createElement("button");
@@ -496,7 +574,8 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     h += "<tr><td></td><td></td><td class='name'>下跌段平均</td><td>"+daysNum(ix.avg_calendar_days)+"</td><td>"+daysNum(ix.avg_trading_days)+"</td><td></td><td class='neg'>"+pctSigned(ix.avg_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
     h += "<tr><td></td><td></td><td class='name'>下跌段中位數</td><td>"+daysNum(ix.median_calendar_days)+"</td><td>"+daysNum(ix.median_trading_days)+"</td><td></td><td class='neg'>"+pctSigned(ix.median_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
     $("tbody").innerHTML = h;
-    $("footnotes").innerHTML = ix.footnotes.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
+    var rbNotes = ix.rebound_footnotes || [];
+    $("footnotes").innerHTML = ix.footnotes.filter(function(t){ return rbNotes.indexOf(t)<0; }).map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
   }
 
   function takeaways(ix, wave, yahoo){
@@ -523,6 +602,95 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     $("take-time").textContent = "下面這張圖用時間來看：每一次下跌佔了哪一段年份、當時跌得多深。" + (wave ? "黃色塊是「現在本波下跌」（本站日線自動計算）。" : "") + "色塊愈長代表跌得愈久，愈往下代表跌得愈深。";
   }
 
+
+  // ---------------- 跌段與反彈對照（新區塊） ----------------
+  // 反彈只用 Excel 給的 rebound（Cobb 主觀確認的轉多日）；本波沒有 rebound，不推算。
+  function shortTitle(ix){ return String(ix.title||ix.id).split("｜")[0].trim(); }
+  function tdays(cal, td){ return daysNum(cal) + " 天（" + daysNum(td) + " 個交易日）"; }
+  // 一段（跌或彈）：第一行 標籤｜數字｜條（同一指數共用尺度、同一條左基線）；第二行 天數與日期
+  function rbBar(kind, tag, frac, val, days, det){
+    var w = Math.max(0, Math.min(1, frac)) * 100;
+    return '<div class="leg2 '+kind+'"><div class="row"><span class="tag">'+tag+'</span>'
+      + '<span class="val">'+val+'</span>'
+      + '<div class="track"><span class="bar" style="width:'+w.toFixed(2)+'%"></span></div></div>'
+      + '<p class="det"><span class="days">'+days+'</span>'+(det ? '<span class="dt">'+det+'</span>' : '')+'</p></div>';
+  }
+  function paintRebound(ix, wave){
+    var title = $("rb-title");
+    if(!title) return;
+    title.textContent = shortTitle(ix);
+    var ev = ix.events.filter(function(e){ return e.rebound; });
+    var hasReb = ev.length > 0 && ix.rebound_avg_pct != null;
+    var list = $("rb-list"), ref = $("rb-ref");
+    if(!hasReb){
+      ref.innerHTML = ""; list.innerHTML = "";
+      $("rb-take").textContent = "這個指數還沒有反彈資料。";
+      $("rb-scale").textContent = "";
+      $("rb-footnotes").innerHTML = "";
+      return;
+    }
+    var byPct = rbMode === "pct";
+    // 同一指數共用尺度：跌與彈取絕對值，含平均、中位數與本波
+    var maxV = 0;
+    function mag(pctV, daysV){ return byPct ? Math.abs(pctV) : daysV; }
+    ev.forEach(function(e){
+      maxV = Math.max(maxV, mag(e.change_pct, e.calendar_days), mag(e.rebound.change_pct, e.rebound.calendar_days));
+    });
+    maxV = Math.max(maxV, mag(ix.avg_pct, ix.avg_calendar_days), mag(ix.rebound_avg_pct, ix.rebound_avg_calendar_days));
+    if(wave) maxV = Math.max(maxV, mag(wave.change_pct, wave.calendar_days));
+    if(!(maxV > 0)) maxV = 1;
+    function f(pctV, daysV){ return mag(pctV, daysV) / maxV; }
+    $("rb-scale").textContent = byPct
+      ? "條長＝幅度（%）。最長的條代表 " + pct(maxV, 1) + "。"
+      : "條長＝日曆天。最長的條代表 " + daysNum(maxV) + " 天。";
+
+    // 平均／中位數（只計歷史下跌段）
+    function refCard(label, dPct, dCal, dTd, rPct, rCal, rTd){
+      return '<div class="rb-card ref"><h3>'+label+'<span class="per">（'+ev.length+' 次歷史下跌，不含本波）</span></h3>'
+        + rbBar("dn", "跌", f(dPct, dCal), pctSigned(dPct), tdays(dCal, dTd))
+        + rbBar("up", "彈", f(rPct, rCal), pctSigned(rPct), tdays(rCal, rTd))
+        + '</div>';
+    }
+    ref.innerHTML = refCard("平均", ix.avg_pct, ix.avg_calendar_days, ix.avg_trading_days,
+                            ix.rebound_avg_pct, ix.rebound_avg_calendar_days, ix.rebound_avg_trading_days)
+      + refCard("中位數", ix.median_pct, ix.median_calendar_days, ix.median_trading_days,
+                ix.rebound_median_pct, ix.rebound_median_calendar_days, ix.rebound_median_trading_days);
+
+    var rows = ev.slice();
+    if(rbSort === "size") rows.sort(function(a,b){ return a.change_pct - b.change_pct; });
+    else if(rbSort === "reb") rows.sort(function(a,b){ return b.rebound.change_pct - a.rebound.change_pct; });
+    else rows.sort(function(a,b){ return a.start_date < b.start_date ? -1 : 1; });
+    var h = "";
+    rows.forEach(function(e){
+      var r = e.rebound;
+      h += '<div class="rb-card"><h3><span class="seq">'+esc(String(e.seq))+'</span>'+esc(e.name)+'<span class="per">（'+esc(e.period)+'）</span></h3>'
+        + rbBar("dn", "跌", f(e.change_pct, e.calendar_days), pctSigned(e.change_pct), tdays(e.calendar_days, e.trading_days),
+                "高點 "+isoToYmd(e.start_date)+" → 低點 "+isoToYmd(e.end_date)+"（"+pts(e.end_px)+"）")
+        + rbBar("up", "彈", f(r.change_pct, r.calendar_days), pctSigned(r.change_pct), tdays(r.calendar_days, r.trading_days),
+                "低點 "+isoToYmd(e.end_date)+" → 轉多 "+isoToYmd(r.turn_date)+"（收盤 "+pts(r.turn_px)+"）")
+        + '</div>';
+    });
+    var cur = ix.current;
+    if(wave){
+      h += '<div class="rb-card now"><h3>現在本波下跌<span class="per">（'+esc(wave.period)+'）</span></h3>'
+        + rbBar("cur", "跌", f(wave.change_pct, wave.calendar_days), pctSigned(wave.change_pct), tdays(wave.calendar_days, wave.trading_days),
+                esc(asofLine(wave))+"；不計入平均與中位數")
+        + '<div class="leg2 up"><div class="row" style="grid-template-columns:1.9em minmax(0,1fr)"><span class="tag">彈</span><span class="none">尚無轉多確認（不推算反彈）</span></div></div>'
+        + '</div>';
+    } else if(cur && cur.recovered){
+      h += '<div class="rb-card now"><h3>現在本波下跌</h3><p class="note" style="margin:0">已創新高，目前沒有進行中的下跌段（'+esc(asofLine(cur))+'）。</p></div>';
+    }
+    list.innerHTML = h;
+
+    var top = ev.slice().sort(function(a,b){ return b.rebound.change_pct - a.rebound.change_pct; })[0];
+    $("rb-take").textContent = ev.length + " 次歷史下跌，Cobb 確認轉多時，從低點平均已反彈 " + pctSigned(ix.rebound_avg_pct)
+      + "，平均 " + tdays(ix.rebound_avg_calendar_days, ix.rebound_avg_trading_days)
+      + "；中位數 " + pctSigned(ix.rebound_median_pct) + "、" + tdays(ix.rebound_median_calendar_days, ix.rebound_median_trading_days)
+      + "。反彈最大的是「" + top.name + "」" + pctSigned(top.rebound.change_pct) + "（" + top.rebound.calendar_days + " 天）。"
+      + "對照跌段平均 " + pctSigned(ix.avg_pct) + "、" + daysNum(ix.avg_calendar_days) + " 天。";
+    $("rb-footnotes").innerHTML = (ix.rebound_footnotes || []).map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
+  }
+
   function paint(){
     var ix = idxById(curId);
     if(!ix) return;
@@ -535,6 +703,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     paintBars(ix, wave);
     paintTimeline(ix, wave);
     paintTable(ix);
+    paintRebound(ix, wave);
   }
 
   document.getElementById("sort").addEventListener("click", function(ev){
@@ -546,6 +715,19 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     });
     paint();
   });
+  function bindToggle(boxId, attr, set){
+    var box = document.getElementById(boxId);
+    if(!box) return;
+    box.addEventListener("click", function(ev){
+      var b = ev.target.closest("button");
+      if(!b) return;
+      set(b.getAttribute(attr));
+      Array.prototype.forEach.call(box.querySelectorAll("button"), function(x){ x.classList.toggle("on", x===b); });
+      paint();
+    });
+  }
+  bindToggle("rb-sort", "data-sort", function(v){ rbSort = v; });
+  bindToggle("rb-mode", "data-mode", function(v){ rbMode = v; });
   var rz=null;
   window.addEventListener("resize", function(){
     clearTimeout(rz); rz=setTimeout(paint, 120);

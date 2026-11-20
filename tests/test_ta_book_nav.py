@@ -92,7 +92,7 @@ def test_homepage_nav_grouped():
     assert [m.group(1) for m in re.finditer(r'<a href="([^"]+)">', now)] == [
         "./signals/", "./trend/", "./trend/stage/", "./trend/valuation/", "./trend/drawdowns/",
     ]
-    assert "訊號詳情" in now and "走勢" in now and "階段現況" in now and "估值" in now and "歷史跌幅" in now
+    assert "訊號詳情" in now and "走勢" in now and "階段現況" in now and "估值" in now and "歷史跌幅（與反彈）" in now
 
     tools = _group_nav(home, "工具與研究")
     assert [m.group(1) for m in re.finditer(r'<a href="([^"]+)">', tools)] == [

@@ -126,7 +126,7 @@ def test_home_inner_nav_complete():
         "./trend/": "走勢",
         "./trend/stage/": "階段現況",
         "./trend/valuation/": "估值",
-        "./trend/drawdowns/": "歷史跌幅",
+        "./trend/drawdowns/": "歷史跌幅（與反彈）",
     }
     expected_tools = {
         "./trend/scale-in/": "分批計算",

@@ -1,5 +1,6 @@
 {
-  "source": "使用者提供的 Excel 歷史下跌段表",
+  "source": "使用者提供的 Excel 歷史下跌段表（2026-11-20 改版，含反彈段 L~Q 欄）",
+  "rebound_method": "反彈起點＝該次下跌的低點（盤中最低價），終點＝轉多日的日K收盤價；轉多日是 Cobb 在 TradingView 框選的主觀判斷（方法來源：COBB我大哥），不自動推算。反彈交易日＝K 棒根數差；反彈平均與中位數只計歷史下跌段。",
   "generated_by": "scripts/build_drawdowns.py",
   "current_is_snapshot": false,
   "indices": [
@@ -20,7 +21,15 @@
           "end_date": "2002-10-08",
           "start_px": 4816.35,
           "end_px": 795.25,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2002-11-21",
+            "turn_px": 1118.14,
+            "calendar_days": 44,
+            "trading_days": 32,
+            "change_pts": 322.8900000000001,
+            "change_pct": 0.40602326312480375
+          }
         },
         {
           "seq": 2,
@@ -34,7 +43,15 @@
           "end_date": "2008-11-21",
           "start_px": 2239.23,
           "end_px": 1018.86,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2009-01-02",
+            "turn_px": 1263.7,
+            "calendar_days": 42,
+            "trading_days": 27,
+            "change_pts": 244.84000000000003,
+            "change_pct": 0.24030779498655352
+          }
         },
         {
           "seq": 3,
@@ -48,7 +65,15 @@
           "end_date": "2015-08-24",
           "start_px": 4694.13,
           "end_px": 3787.23,
-          "severe": false
+          "severe": false,
+          "rebound": {
+            "turn_date": "2015-10-19",
+            "turn_px": 4462.07,
+            "calendar_days": 56,
+            "trading_days": 39,
+            "change_pts": 674.8399999999997,
+            "change_pct": 0.17818828008861343
+          }
         },
         {
           "seq": 4,
@@ -62,7 +87,15 @@
           "end_date": "2016-02-08",
           "start_px": 4737.11,
           "end_px": 3888.78,
-          "severe": false
+          "severe": false,
+          "rebound": {
+            "turn_date": "2016-03-01",
+            "turn_px": 4333.61,
+            "calendar_days": 22,
+            "trading_days": 15,
+            "change_pts": 444.8299999999995,
+            "change_pct": 0.11438806000853718
+          }
         },
         {
           "seq": 5,
@@ -76,7 +109,15 @@
           "end_date": "2018-12-24",
           "start_px": 7700.56,
           "end_px": 5895.12,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2019-01-04",
+            "turn_px": 6422.67,
+            "calendar_days": 11,
+            "trading_days": 7,
+            "change_pts": 527.5500000000002,
+            "change_pct": 0.08948927248300298
+          }
         },
         {
           "seq": 6,
@@ -90,7 +131,15 @@
           "end_date": "2020-03-23",
           "start_px": 9736.57,
           "end_px": 6771.91,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2020-04-06",
+            "turn_px": 8081.66,
+            "calendar_days": 14,
+            "trading_days": 10,
+            "change_pts": 1309.75,
+            "change_pct": 0.1934092449545255
+          }
         },
         {
           "seq": 7,
@@ -104,7 +153,15 @@
           "end_date": "2022-10-13",
           "start_px": 16764.86,
           "end_px": 10440.64,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2022-11-11",
+            "turn_px": 11817.01,
+            "calendar_days": 29,
+            "trading_days": 21,
+            "change_pts": 1376.3700000000008,
+            "change_pct": 0.131828125478898
+          }
         },
         {
           "seq": 8,
@@ -118,7 +175,15 @@
           "end_date": "2025-04-07",
           "start_px": 22222.61,
           "end_px": 16542.2,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2025-04-24",
+            "turn_px": 19214.4,
+            "calendar_days": 17,
+            "trading_days": 12,
+            "change_pts": 2672.2000000000007,
+            "change_pct": 0.1615383685362286
+          }
         }
       ],
       "current": {
@@ -138,9 +203,9 @@
         "source": "Yahoo",
         "source_label": "Yahoo ^NDX 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2024-11-20",
+        "history_from": "2021-11-15",
         "history_covers_after_date": true,
-        "cache_file": "NDX_daily_2y.csv"
+        "cache_file": "NDX_daily_5y.csv"
       },
       "avg_pct": -0.36549358671320653,
       "median_pct": -0.2800505466553102,
@@ -148,6 +213,12 @@
       "median_calendar_days": 90.0,
       "avg_trading_days": 166.375,
       "median_trading_days": 61.0,
+      "rebound_avg_pct": 0.18939655120764537,
+      "rebound_median_pct": 0.16986332431242102,
+      "rebound_avg_calendar_days": 29.375,
+      "rebound_median_calendar_days": 25.5,
+      "rebound_avg_trading_days": 20.375,
+      "rebound_median_trading_days": 18.0,
       "footnotes": [
         "只列下跌段，事件序列重新由 1 編號（與完整表的編號不同）。資料來源：TradingView 日線 NASDAQ:NDX，取盤中最高價與最低價（非收盤價）。",
         "歷經交易日＝起訖兩根日K之間的K棒根數差，與 TradingView 粉色量測框顯示的根數相同。",
@@ -157,7 +228,13 @@
         "表格下方的平均與中位數只計入下跌段（紅字列），涵蓋日曆天、交易日、漲跌幅(%)。",
         "上漲段中沒有跌幅達 20% 的回檔（最大為 2006 年的 -17.9%），故無新增事件。",
         "事件7 漲跌幅原表寫 -37.22%，經您確認為筆誤，已更正為 -37.72%。",
+        "反彈區段（L~Q 欄，藍綠色）：依您在 TradingView 畫的藍綠色框整理。起點是該次下跌的低點（K 欄），終點是您框選的轉多日的日K收盤價；反彈交易日＝K棒根數差。",
+        "轉多日收盤價已逐一與 TradingView 日K收盤價核對（2026/11/20）。反彈平均與中位數計入全部下跌段；「現在本波下跌」尚無反彈資料。",
         "「現在本波下跌」（黃底列）：從上一段歷史下跌的低點（2025/4/7）之後的盤中最高點，算到該高點以來的盤中最低點；結束日是低點日。資料截至 2026/11/19；若之後再創新低，數字會變動。由本站日線自動計算（來源：Yahoo ^NDX 日線盤中高低點），隨每日資料自動更新。此列不計入上方的平均與中位數。"
+      ],
+      "rebound_footnotes": [
+        "反彈區段（L~Q 欄，藍綠色）：依您在 TradingView 畫的藍綠色框整理。起點是該次下跌的低點（K 欄），終點是您框選的轉多日的日K收盤價；反彈交易日＝K棒根數差。",
+        "轉多日收盤價已逐一與 TradingView 日K收盤價核對（2026/11/20）。反彈平均與中位數計入全部下跌段；「現在本波下跌」尚無反彈資料。"
       ]
     },
     {
@@ -177,7 +254,15 @@
           "end_date": "2002-10-10",
           "start_px": 1552.87,
           "end_px": 768.63,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2003-04-22",
+            "turn_px": 911.37,
+            "calendar_days": 194,
+            "trading_days": 132,
+            "change_pts": 142.74,
+            "change_pct": 0.18570703719605008
+          }
         },
         {
           "seq": 2,
@@ -191,7 +276,15 @@
           "end_date": "2009-03-06",
           "start_px": 1576.09,
           "end_px": 666.79,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2009-05-04",
+            "turn_px": 907.24,
+            "calendar_days": 59,
+            "trading_days": 40,
+            "change_pts": 240.45000000000005,
+            "change_pct": 0.36060828746681883
+          }
         },
         {
           "seq": 3,
@@ -205,7 +298,15 @@
           "end_date": "2011-10-04",
           "start_px": 1370.58,
           "end_px": 1074.77,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2011-10-21",
+            "turn_px": 1238.25,
+            "calendar_days": 17,
+            "trading_days": 13,
+            "change_pts": 163.48000000000002,
+            "change_pct": 0.15210696241986654
+          }
         },
         {
           "seq": 4,
@@ -219,7 +320,15 @@
           "end_date": "2015-08-24",
           "start_px": 2134.72,
           "end_px": 1867.01,
-          "severe": false
+          "severe": false,
+          "rebound": {
+            "turn_date": "2015-10-15",
+            "turn_px": 2023.86,
+            "calendar_days": 52,
+            "trading_days": 37,
+            "change_pts": 156.8499999999999,
+            "change_pct": 0.08401133362970725
+          }
         },
         {
           "seq": 5,
@@ -233,7 +342,15 @@
           "end_date": "2016-02-11",
           "start_px": 2116.48,
           "end_px": 1810.1,
-          "severe": false
+          "severe": false,
+          "rebound": {
+            "turn_date": "2016-02-25",
+            "turn_px": 1951.7,
+            "calendar_days": 14,
+            "trading_days": 9,
+            "change_pts": 141.60000000000014,
+            "change_pct": 0.0782277222252914
+          }
         },
         {
           "seq": 6,
@@ -247,7 +364,15 @@
           "end_date": "2018-12-26",
           "start_px": 2940.91,
           "end_px": 2346.58,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2019-01-04",
+            "turn_px": 2531.94,
+            "calendar_days": 9,
+            "trading_days": 6,
+            "change_pts": 185.36000000000013,
+            "change_pct": 0.07899155366533428
+          }
         },
         {
           "seq": 7,
@@ -261,7 +386,15 @@
           "end_date": "2020-03-23",
           "start_px": 3393.52,
           "end_px": 2191.86,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2020-04-06",
+            "turn_px": 2663.68,
+            "calendar_days": 14,
+            "trading_days": 10,
+            "change_pts": 471.8199999999997,
+            "change_pct": 0.21526009872893326
+          }
         },
         {
           "seq": 8,
@@ -275,7 +408,15 @@
           "end_date": "2022-10-13",
           "start_px": 4818.62,
           "end_px": 3491.58,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2022-10-25",
+            "turn_px": 3859.1,
+            "calendar_days": 12,
+            "trading_days": 8,
+            "change_pts": 367.52,
+            "change_pct": 0.10525893721467061
+          }
         },
         {
           "seq": 9,
@@ -289,7 +430,15 @@
           "end_date": "2025-04-07",
           "start_px": 6147.43,
           "end_px": 4835.04,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2025-04-24",
+            "turn_px": 5484.78,
+            "calendar_days": 17,
+            "trading_days": 12,
+            "change_pts": 649.7399999999998,
+            "change_pct": 0.1343815149409311
+          }
         }
       ],
       "current": {
@@ -309,9 +458,9 @@
         "source": "Yahoo",
         "source_label": "Yahoo ^GSPC 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2024-11-20",
+        "history_from": "2021-11-15",
         "history_covers_after_date": true,
-        "cache_file": "SPX_daily_2y.csv"
+        "cache_file": "SPX_daily_5y.csv"
       },
       "avg_pct": -0.2903371616918922,
       "median_pct": -0.21582833544922586,
@@ -319,6 +468,12 @@
       "median_calendar_days": 100,
       "avg_trading_days": 172.11111111111111,
       "median_trading_days": 68,
+      "rebound_avg_pct": 0.15495038305417816,
+      "rebound_median_pct": 0.1343815149409311,
+      "rebound_avg_calendar_days": 43.111111111111114,
+      "rebound_median_calendar_days": 17,
+      "rebound_avg_trading_days": 29.666666666666668,
+      "rebound_median_trading_days": 12,
       "footnotes": [
         "只列下跌段，事件序列重新由 1 編號（與完整表的編號不同）。資料來源：TradingView 日線 SP:SPX，取盤中最高價與最低價（非收盤價）。",
         "歷經交易日＝起訖兩根日K之間的K棒根數差，與 TradingView 粉色量測框顯示的根數相同。",
@@ -328,7 +483,13 @@
         "表格下方的平均與中位數只計入下跌段（紅字列），涵蓋日曆天、交易日、漲跌幅(%)。",
         "事件3（2011 年，-21.58%）為新增的跌幅達 20% 事件。",
         "事件2 低點取 SPX 自己的最低點 2009/3/6（NDX 為 2008/11/21）。",
+        "反彈區段（L~Q 欄，藍綠色）：依您在 TradingView 畫的藍綠色框整理。起點是該次下跌的低點（K 欄），終點是您框選的轉多日的日K收盤價；反彈交易日＝K棒根數差。",
+        "轉多日收盤價已逐一與 TradingView 日K收盤價核對（2026/11/20）。反彈平均與中位數計入全部下跌段；「現在本波下跌」尚無反彈資料。",
         "「現在本波下跌」（黃底列）：從上一段歷史下跌的低點（2025/4/7）之後的盤中最高點，算到該高點以來的盤中最低點；結束日是低點日。資料截至 2026/11/19；若之後再創新低，數字會變動。由本站日線自動計算（來源：Yahoo ^GSPC 日線盤中高低點），隨每日資料自動更新。此列不計入上方的平均與中位數。"
+      ],
+      "rebound_footnotes": [
+        "反彈區段（L~Q 欄，藍綠色）：依您在 TradingView 畫的藍綠色框整理。起點是該次下跌的低點（K 欄），終點是您框選的轉多日的日K收盤價；反彈交易日＝K棒根數差。",
+        "轉多日收盤價已逐一與 TradingView 日K收盤價核對（2026/11/20）。反彈平均與中位數計入全部下跌段；「現在本波下跌」尚無反彈資料。"
       ]
     },
     {
@@ -348,7 +509,15 @@
           "end_date": "2002-10-08",
           "start_px": 1362.1,
           "end_px": 209.35,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2002-11-21",
+            "turn_px": 365.3,
+            "calendar_days": 44,
+            "trading_days": 32,
+            "change_pts": 155.95000000000002,
+            "change_pct": 0.7449247671363746
+          }
         },
         {
           "seq": 2,
@@ -362,7 +531,15 @@
           "end_date": "2003-02-10",
           "start_px": 393.79,
           "end_px": 258.56,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2003-03-13",
+            "turn_px": 310.39,
+            "calendar_days": 31,
+            "trading_days": 22,
+            "change_pts": 51.829999999999984,
+            "change_pct": 0.20045637376237613
+          }
         },
         {
           "seq": 3,
@@ -376,7 +553,15 @@
           "end_date": "2004-09-08",
           "start_px": 560.68,
           "end_px": 350.91,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2004-09-21",
+            "turn_px": 403.75,
+            "calendar_days": 13,
+            "trading_days": 9,
+            "change_pts": 52.839999999999975,
+            "change_pct": 0.15057992077740723
+          }
         },
         {
           "seq": 4,
@@ -390,7 +575,15 @@
           "end_date": "2006-07-21",
           "start_px": 559.6,
           "end_px": 384.28,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2006-08-30",
+            "turn_px": 453.77,
+            "calendar_days": 40,
+            "trading_days": 28,
+            "change_pts": 69.49000000000001,
+            "change_pct": 0.1808316852295202
+          }
         },
         {
           "seq": 5,
@@ -404,7 +597,15 @@
           "end_date": "2008-11-21",
           "start_px": 549.39,
           "end_px": 167.55,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2008-12-16",
+            "turn_px": 221.51,
+            "calendar_days": 25,
+            "trading_days": 16,
+            "change_pts": 53.95999999999998,
+            "change_pct": 0.32205311847209783
+          }
         },
         {
           "seq": 6,
@@ -418,7 +619,15 @@
           "end_date": "2009-03-03",
           "start_px": 236.12,
           "end_px": 188.21,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2009-03-18",
+            "turn_px": 228.52,
+            "calendar_days": 15,
+            "trading_days": 11,
+            "change_pts": 40.31,
+            "change_pct": 0.2141756548536209
+          }
         },
         {
           "seq": 7,
@@ -432,7 +641,15 @@
           "end_date": "2010-08-31",
           "start_px": 404.7,
           "end_px": 305.79,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2010-09-24",
+            "turn_px": 346.14,
+            "calendar_days": 24,
+            "trading_days": 17,
+            "change_pts": 40.349999999999966,
+            "change_pct": 0.13195330128519567
+          }
         },
         {
           "seq": 8,
@@ -446,7 +663,15 @@
           "end_date": "2011-10-04",
           "start_px": 474.44,
           "end_px": 322.24,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2011-10-27",
+            "turn_px": 395.74,
+            "calendar_days": 23,
+            "trading_days": 17,
+            "change_pts": 73.5,
+            "change_pct": 0.22809086395233358
+          }
         },
         {
           "seq": 9,
@@ -460,7 +685,15 @@
           "end_date": "2012-07-17",
           "start_px": 444.96,
           "end_px": 345.5,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2012-08-06",
+            "turn_px": 392.08,
+            "calendar_days": 20,
+            "trading_days": 14,
+            "change_pts": 46.579999999999984,
+            "change_pct": 0.13481910274963815
+          }
         },
         {
           "seq": 10,
@@ -474,7 +707,15 @@
           "end_date": "2015-08-24",
           "start_px": 751.21,
           "end_px": 543.03,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2015-10-08",
+            "turn_px": 634.81,
+            "calendar_days": 45,
+            "trading_days": 32,
+            "change_pts": 91.77999999999997,
+            "change_pct": 0.16901460324475615
+          }
         },
         {
           "seq": 11,
@@ -488,7 +729,15 @@
           "end_date": "2016-02-11",
           "start_px": 693.13,
           "end_px": 552.26,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2016-02-25",
+            "turn_px": 621.07,
+            "calendar_days": 14,
+            "trading_days": 9,
+            "change_pts": 68.81000000000006,
+            "change_pct": 0.12459711005685747
+          }
         },
         {
           "seq": 12,
@@ -502,7 +751,15 @@
           "end_date": "2018-12-26",
           "start_px": 1464.61,
           "end_px": 1066.39,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2019-02-01",
+            "turn_px": 1287.4,
+            "calendar_days": 37,
+            "trading_days": 25,
+            "change_pts": 221.01,
+            "change_pct": 0.2072506306323203
+          }
         },
         {
           "seq": 13,
@@ -516,7 +773,15 @@
           "end_date": "2020-03-18",
           "start_px": 1983.71,
           "end_px": 1233.97,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2020-04-06",
+            "turn_px": 1592.88,
+            "calendar_days": 19,
+            "trading_days": 13,
+            "change_pts": 358.9100000000001,
+            "change_pct": 0.2908579625112442
+          }
         },
         {
           "seq": 14,
@@ -530,7 +795,15 @@
           "end_date": "2022-10-13",
           "start_px": 4068.15,
           "end_px": 2089.82,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2022-11-10",
+            "turn_px": 2672.5,
+            "calendar_days": 28,
+            "trading_days": 20,
+            "change_pts": 582.6799999999998,
+            "change_pct": 0.2788182714300753
+          }
         },
         {
           "seq": 15,
@@ -544,7 +817,15 @@
           "end_date": "2025-04-07",
           "start_px": 5931.83,
           "end_px": 3388.62,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2025-05-02",
+            "turn_px": 4397.05,
+            "calendar_days": 25,
+            "trading_days": 18,
+            "change_pts": 1008.4300000000003,
+            "change_pct": 0.29759312050333175
+          }
         }
       ],
       "current": {
@@ -564,9 +845,9 @@
         "source": "Yahoo",
         "source_label": "Yahoo ^SOX 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2024-11-20",
+        "history_from": "2021-11-15",
         "history_covers_after_date": true,
-        "cache_file": "SOX_daily_2y.csv"
+        "cache_file": "SOX_daily_5y.csv"
       },
       "avg_pct": -0.373936184084408,
       "median_pct": -0.3207992580726752,
@@ -574,6 +855,12 @@
       "median_calendar_days": 175,
       "avg_trading_days": 159.2,
       "median_trading_days": 121,
+      "rebound_avg_pct": 0.2450677657731433,
+      "rebound_median_pct": 0.2072506306323203,
+      "rebound_avg_calendar_days": 26.866666666666667,
+      "rebound_median_calendar_days": 25,
+      "rebound_avg_trading_days": 18.866666666666667,
+      "rebound_median_trading_days": 17,
       "footnotes": [
         "只列下跌段，事件序列重新由 1 編號（與完整表的編號不同）。資料來源：TradingView 日線 NASDAQ:SOX，取盤中最高價與最低價（非收盤價）。",
         "歷經交易日＝起訖兩根日K之間的K棒根數差，與 TradingView 粉色量測框顯示的根數相同。",
@@ -584,7 +871,13 @@
         "新增 7 段跌幅達 20% 的回檔：事件2、3、4、6、7、8、9。",
         "事件5（金融海嘯）高點取 2007/7/17；2004/1/12 的高點 560.68 已獨立列為事件3 的起點。",
         "事件12 高點取 2018/3/13、事件15 高點取 2024/7/11，皆為該次低點之前 SOX 自己的最高點（離 NDX 的事件時間較遠）。",
+        "反彈區段（L~Q 欄，藍綠色）：依您在 TradingView 畫的藍綠色框整理。起點是該次下跌的低點（K 欄），終點是您框選的轉多日的日K收盤價；反彈交易日＝K棒根數差。",
+        "轉多日收盤價已逐一與 TradingView 日K收盤價核對（2026/11/20）。反彈平均與中位數計入全部下跌段；「現在本波下跌」尚無反彈資料。",
         "「現在本波下跌」（黃底列）：從上一段歷史下跌的低點（2025/4/7）之後的盤中最高點，算到該高點以來的盤中最低點；結束日是低點日。資料截至 2026/11/19；若之後再創新低，數字會變動。由本站日線自動計算（來源：Yahoo ^SOX 日線盤中高低點），隨每日資料自動更新。此列不計入上方的平均與中位數。"
+      ],
+      "rebound_footnotes": [
+        "反彈區段（L~Q 欄，藍綠色）：依您在 TradingView 畫的藍綠色框整理。起點是該次下跌的低點（K 欄），終點是您框選的轉多日的日K收盤價；反彈交易日＝K棒根數差。",
+        "轉多日收盤價已逐一與 TradingView 日K收盤價核對（2026/11/20）。反彈平均與中位數計入全部下跌段；「現在本波下跌」尚無反彈資料。"
       ]
     },
     {
@@ -604,7 +897,15 @@
           "end_date": "2001-09-26",
           "start_px": 10393.6,
           "end_px": 3411.6,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2001-12-04",
+            "turn_px": 4766.4,
+            "calendar_days": 69,
+            "trading_days": 44,
+            "change_pts": 1354.7999999999997,
+            "change_pct": 0.39711572282799845
+          }
         },
         {
           "seq": 2,
@@ -618,7 +919,15 @@
           "end_date": "2002-10-11",
           "start_px": 6484.9,
           "end_px": 3845.7,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2002-11-06",
+            "turn_px": 4725.3,
+            "calendar_days": 26,
+            "trading_days": 17,
+            "change_pts": 879.6000000000004,
+            "change_pct": 0.22872298931273893
+          }
         },
         {
           "seq": 3,
@@ -632,7 +941,15 @@
           "end_date": "2003-04-28",
           "start_px": 5141.8,
           "end_px": 4044.7,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2003-05-26",
+            "turn_px": 4465.6,
+            "calendar_days": 28,
+            "trading_days": 19,
+            "change_pts": 420.90000000000055,
+            "change_pct": 0.10406210596583199
+          }
         },
         {
           "seq": 4,
@@ -646,7 +963,15 @@
           "end_date": "2004-08-05",
           "start_px": 7135.0,
           "end_px": 5255.06,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2004-09-13",
+            "turn_px": 5928.22,
+            "calendar_days": 39,
+            "trading_days": 25,
+            "change_pts": 673.1599999999999,
+            "change_pct": 0.12809749079934374
+          }
         },
         {
           "seq": 5,
@@ -660,7 +985,15 @@
           "end_date": "2008-11-21",
           "start_px": 9859.65,
           "end_px": 3955.43,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2008-12-10",
+            "turn_px": 4658.87,
+            "calendar_days": 19,
+            "trading_days": 13,
+            "change_pts": 703.44,
+            "change_pct": 0.17784160002831562
+          }
         },
         {
           "seq": 6,
@@ -674,7 +1007,15 @@
           "end_date": "2011-12-19",
           "start_px": 9220.69,
           "end_px": 6609.11,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2012-01-30",
+            "turn_px": 7407.41,
+            "calendar_days": 42,
+            "trading_days": 23,
+            "change_pts": 798.3000000000002,
+            "change_pct": 0.12078782165828694
+          }
         },
         {
           "seq": 7,
@@ -688,7 +1029,15 @@
           "end_date": "2015-08-24",
           "start_px": 10014.28,
           "end_px": 7203.07,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2015-09-09",
+            "turn_px": 8286.92,
+            "calendar_days": 16,
+            "trading_days": 12,
+            "change_pts": 1083.8500000000004,
+            "change_pct": 0.15047056324594932
+          }
         },
         {
           "seq": 8,
@@ -702,7 +1051,15 @@
           "end_date": "2016-01-18",
           "start_px": 8871.87,
           "end_px": 7627.89,
-          "severe": false
+          "severe": false,
+          "rebound": {
+            "turn_date": "2016-02-16",
+            "turn_px": 8212.07,
+            "calendar_days": 29,
+            "trading_days": 14,
+            "change_pts": 584.1799999999994,
+            "change_pct": 0.07658474361848411
+          }
         },
         {
           "seq": 9,
@@ -716,7 +1073,15 @@
           "end_date": "2019-01-04",
           "start_px": 11270.18,
           "end_px": 9319.28,
-          "severe": false
+          "severe": false,
+          "rebound": {
+            "turn_date": "2019-02-20",
+            "turn_px": 10272.46,
+            "calendar_days": 47,
+            "trading_days": 26,
+            "change_pts": 953.1799999999985,
+            "change_pct": 0.10228043368157169
+          }
         },
         {
           "seq": 10,
@@ -730,7 +1095,15 @@
           "end_date": "2020-03-19",
           "start_px": 12197.64,
           "end_px": 8523.63,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2020-04-07",
+            "turn_px": 9996.39,
+            "calendar_days": 19,
+            "trading_days": 11,
+            "change_pts": 1472.7600000000002,
+            "change_pct": 0.17278553855575618
+          }
         },
         {
           "seq": 11,
@@ -744,7 +1117,15 @@
           "end_date": "2022-10-25",
           "start_px": 18619.61,
           "end_px": 12629.48,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2022-11-11",
+            "turn_px": 14007.56,
+            "calendar_days": 17,
+            "trading_days": 13,
+            "change_pts": 1378.08,
+            "change_pct": 0.10911613146384491
+          }
         },
         {
           "seq": 12,
@@ -758,7 +1139,15 @@
           "end_date": "2025-04-09",
           "start_px": 24416.67,
           "end_px": 17306.97,
-          "severe": true
+          "severe": true,
+          "rebound": {
+            "turn_date": "2025-04-29",
+            "turn_px": 20232.63,
+            "calendar_days": 20,
+            "trading_days": 14,
+            "change_pts": 2925.66,
+            "change_pct": 0.1690451881525188
+          }
         }
       ],
       "current": {
@@ -788,6 +1177,12 @@
       "median_calendar_days": 222.0,
       "avg_trading_days": 162.08333333333334,
       "median_trading_days": 148.5,
+      "rebound_avg_pct": 0.16140919410922006,
+      "rebound_median_pct": 0.13928402702264653,
+      "rebound_avg_calendar_days": 30.916666666666668,
+      "rebound_median_calendar_days": 27.0,
+      "rebound_avg_trading_days": 19.25,
+      "rebound_median_trading_days": 15.5,
       "footnotes": [
         "只列下跌段，事件序列重新由 1 編號（與完整表的編號不同）。資料來源：TradingView 日線 TWSE:TAIEX (IX0001)，取盤中最高價與最低價（非收盤價）。",
         "歷經交易日＝起訖兩根日K之間的K棒根數差，與 TradingView 粉色量測框顯示的根數相同。",
@@ -799,7 +1194,13 @@
         "事件1 低點取台股自己的最低點 2001/9/26（911 之後）。",
         "事件9 高點取 2018/1/23、事件12 高點取 2024/7/11，皆為該次低點之前台股自己的最高點（離 NDX 的事件時間較遠）。",
         "交易日以台灣開市日計算。",
+        "反彈區段（L~Q 欄，藍綠色）：依您在 TradingView 畫的藍綠色框整理。起點是該次下跌的低點（K 欄），終點是您框選的轉多日的日K收盤價；反彈交易日＝K棒根數差。",
+        "轉多日收盤價已逐一與 TradingView 日K收盤價核對（2026/11/20）。反彈平均與中位數計入全部下跌段；「現在本波下跌」尚無反彈資料。",
         "「現在本波下跌」（黃底列）：從上一段歷史下跌的低點（2025/4/9）之後的盤中最高點，算到該高點以來的盤中最低點；結束日是低點日。資料截至 2026/11/19；若之後再創新低，數字會變動。由本站日線自動計算（來源：證交所日線盤中高低點），隨每日資料自動更新。此列不計入上方的平均與中位數。"
+      ],
+      "rebound_footnotes": [
+        "反彈區段（L~Q 欄，藍綠色）：依您在 TradingView 畫的藍綠色框整理。起點是該次下跌的低點（K 欄），終點是您框選的轉多日的日K收盤價；反彈交易日＝K棒根數差。",
+        "轉多日收盤價已逐一與 TradingView 日K收盤價核對（2026/11/20）。反彈平均與中位數計入全部下跌段；「現在本波下跌」尚無反彈資料。"
       ]
     }
   ],

@@ -1,4 +1,4 @@
-"""歷史重大下跌段（/trend/drawdowns/）：重算 Excel 公式，對照快取與產出 JSON；本波由日線自動計算。不碰燈號規則。"""
+"""歷史跌幅（與反彈）（/trend/drawdowns/）：重算 Excel 公式（含 L~Q 反彈段），對照快取與產出 JSON；本波由日線自動計算、不推算反彈。不碰燈號規則。"""
 from __future__ import annotations
 
 import json
@@ -28,6 +28,7 @@ SCALE = ROOT / "trend" / "scale-in" / "index.html"
 SHEET_IDS = {"NDX": "NDX", "SPX": "SPX", "SOX": "SOX", "台灣加權": "TWII"}
 AVG_LABELS = ("下跌段平均", "下跌段平均跌幅(%)")
 MED_LABELS = ("下跌段中位數", "下跌段跌幅中位數(%)")
+REBOUND_KEYS = ("turn_date", "turn_px", "calendar_days", "trading_days", "change_pts", "change_pct")
 
 
 def excel_period(start, end) -> str:
@@ -70,6 +71,23 @@ def parse_leg(ws, r: int, seq):
     }
 
 
+def parse_rebound(ws, r: int):
+    """L~Q：起點＝K 欄低點（盤中最低價），終點＝M 欄轉多日收盤價；反彈交易日（O 欄）直接讀。"""
+    low_date, low = ws.cell(r, 9).value, float(ws.cell(r, 11).value)
+    turn, close, td = ws.cell(r, 12).value, ws.cell(r, 13).value, ws.cell(r, 15).value
+    if turn is None and close is None and td is None:
+        return None
+    close = float(close)
+    return {
+        "turn_date": turn.date().isoformat(),
+        "turn_px": close,
+        "calendar_days": calendar_days(low_date, turn),
+        "trading_days": int(td),
+        "change_pts": close - low,
+        "change_pct": close / low - 1,
+    }
+
+
 def recompute():
     wb = openpyxl.load_workbook(XLSX, data_only=False)
     out = {}
@@ -81,16 +99,26 @@ def recompute():
             if is_current_row(ws, r):
                 current = parse_leg(ws, r, "現在")
                 current.pop("severe", None)
+                current["rebound"] = parse_rebound(ws, r)
                 continue
             if isinstance(a, int) or (isinstance(a, float) and a == int(a)):
-                events.append(parse_leg(ws, r, int(a)))
+                ev = parse_leg(ws, r, int(a))
+                ev["rebound"] = parse_rebound(ws, r)
+                events.append(ev)
                 continue
             if isinstance(a, str) and a.strip() and a not in ("事件序列",):
                 notes.append(a)
         pcts = [e["change_pct"] for e in events]
         days = [e["calendar_days"] for e in events]
         tdays = [e["trading_days"] for e in events]
+        rebs = [e["rebound"] for e in events if e["rebound"]]
         out[name] = dict(
+            reb_avg=mean(x["change_pct"] for x in rebs),
+            reb_med=median(x["change_pct"] for x in rebs),
+            reb_avg_days=mean(x["calendar_days"] for x in rebs),
+            reb_med_days=median(x["calendar_days"] for x in rebs),
+            reb_avg_td=mean(x["trading_days"] for x in rebs),
+            reb_med_td=median(x["trading_days"] for x in rebs),
             events=events,
             current=current,
             avg=mean(pcts),
@@ -118,8 +146,13 @@ def cached():
         ws = wb[name]
         events, current = [], None
         avg = med = avg_days = med_days = avg_td = med_td = None
+        reb = {}
         for r in range(3, ws.max_row + 1):
             a, c = ws.cell(r, 1).value, ws.cell(r, 3).value
+            m = ws.cell(r, 13).value
+            if m in ("反彈平均", "反彈中位數"):
+                k = "avg" if m == "反彈平均" else "med"
+                reb[k] = (ws.cell(r, 17).value, ws.cell(r, 14).value, ws.cell(r, 15).value)
             if is_current_row(ws, r):
                 current = {
                     "period": ws.cell(r, 2).value,
@@ -127,10 +160,15 @@ def cached():
                     "trading_days": ws.cell(r, 5).value,
                     "change_pts": ws.cell(r, 6).value,
                     "change_pct": ws.cell(r, 7).value,
+                    "rebound_cells": [ws.cell(r, c).value for c in range(12, 18)],
                 }
                 continue
             if isinstance(a, int) or (isinstance(a, float) and a == int(a)):
                 events.append({
+                    "reb_calendar_days": ws.cell(r, 14).value,
+                    "reb_trading_days": ws.cell(r, 15).value,
+                    "reb_change_pts": ws.cell(r, 16).value,
+                    "reb_change_pct": ws.cell(r, 17).value,
                     "period": ws.cell(r, 2).value,
                     "calendar_days": ws.cell(r, 4).value,
                     "trading_days": ws.cell(r, 5).value,
@@ -145,6 +183,7 @@ def cached():
         out[name] = dict(
             events=events, current=current,
             avg=avg, med=med, avg_days=avg_days, med_days=med_days, avg_td=avg_td, med_td=med_td,
+            reb=reb,
         )
     return out
 
@@ -178,6 +217,127 @@ def test_recomputed_matches_excel_cache(computed, cached):
         assert comp["med_days"] == pytest.approx(ch["med_days"], rel=0, abs=1e-12)
         assert comp["avg_td"] == pytest.approx(ch["avg_td"], rel=0, abs=1e-12)
         assert comp["med_td"] == pytest.approx(ch["med_td"], rel=0, abs=1e-12)
+
+
+def test_rebound_recomputed_matches_excel_cache(computed, cached):
+    """L~Q 反彈段：公式重算（N＝L−I、P＝M−K、Q＝M/K−1）對 data_only 快取；反彈平均／中位數只算歷史列。"""
+    for name, comp in computed.items():
+        ch = cached[name]
+        for i, (a, b) in enumerate(zip(comp["events"], ch["events"])):
+            r = a["rebound"]
+            assert r is not None, (name, i, "每段歷史下跌都要有反彈資料")
+            assert r["calendar_days"] == b["reb_calendar_days"], (name, i)
+            assert r["trading_days"] == b["reb_trading_days"], (name, i)
+            assert r["change_pts"] == pytest.approx(b["reb_change_pts"], rel=0, abs=1e-8)
+            assert r["change_pct"] == pytest.approx(b["reb_change_pct"], rel=0, abs=1e-12)
+            assert r["calendar_days"] > 0 and r["trading_days"] > 0, (name, i, "轉多日要在低點之後")
+        # 本波列沒有轉多日／反彈數字
+        assert comp["current"]["rebound"] is None, name
+        assert all(v is None for v in ch["current"]["rebound_cells"]), name
+        for k, (cp, cd, ct) in ch["reb"].items():
+            assert comp[f"reb_{k}"] == pytest.approx(cp, rel=0, abs=1e-12), (name, k)
+            assert comp[f"reb_{k}_days"] == pytest.approx(cd, rel=0, abs=1e-12), (name, k)
+            assert comp[f"reb_{k}_td"] == pytest.approx(ct, rel=0, abs=1e-12), (name, k)
+        assert set(ch["reb"]) == {"avg", "med"}, name
+
+
+def test_rebound_summary_values(computed):
+    """使用者給的四指數反彈摘要（cache 與公式已對過）。"""
+    expect = {
+        # 平均%、平均天、平均交易日、中位數%、中位數天、中位數交易日、筆數
+        "NDX": (0.1894, 29.4, 20.4, 0.1699, 25.5, 18, 8),
+        "SPX": (0.1550, 43.1, 29.7, 0.1344, 17, 12, 9),
+        "SOX": (0.2451, 26.9, 18.9, 0.2073, 25, 17, 15),
+        "台灣加權": (0.1614, 30.9, 19.3, 0.1393, 27, 15.5, 12),
+    }
+    for name, (ap, ad, at, mp, md, mt, n) in expect.items():
+        c = computed[name]
+        assert len(c["events"]) == n
+        assert c["reb_avg"] == pytest.approx(ap, abs=5e-5)
+        assert c["reb_avg_days"] == pytest.approx(ad, abs=0.051)
+        assert c["reb_avg_td"] == pytest.approx(at, abs=0.051)
+        assert c["reb_med"] == pytest.approx(mp, abs=5e-5)
+        assert c["reb_med_days"] == pytest.approx(md, abs=1e-9)
+        assert c["reb_med_td"] == pytest.approx(mt, abs=1e-9)
+    ndx = {e["name"]: e["rebound"] for e in computed["NDX"]["events"]}
+    assert ndx[".COM泡沫破裂+911事件"]["change_pct"] == pytest.approx(0.4060, abs=5e-5)
+    assert ndx[".COM泡沫破裂+911事件"]["calendar_days"] == 44
+    maga = ndx["川普MAGA新政，關稅風暴席捲全球"]
+    assert maga["turn_date"] == "2025-04-24" and maga["calendar_days"] == 17
+    assert maga["change_pct"] == pytest.approx(0.1615, abs=5e-5)
+    spx = max(computed["SPX"]["events"], key=lambda e: e["rebound"]["change_pct"])
+    assert spx["name"] == "2008金融海嘯" and spx["rebound"]["calendar_days"] == 59
+    assert spx["rebound"]["change_pct"] == pytest.approx(0.3606, abs=5e-5)
+    sox = max(computed["SOX"]["events"], key=lambda e: e["rebound"]["change_pct"])
+    assert sox["name"] == ".COM泡沫破裂+911事件" and sox["rebound"]["calendar_days"] == 44
+    assert sox["rebound"]["change_pct"] == pytest.approx(0.7449, abs=5e-5)
+    tw = {e["name"]: e["rebound"] for e in computed["台灣加權"]["events"]}
+    top = max(tw.items(), key=lambda kv: kv[1]["change_pct"])
+    assert top[0] == ".COM泡沫破裂+911事件" and top[1]["calendar_days"] == 69
+    assert top[1]["change_pct"] == pytest.approx(0.3971, abs=5e-5)
+    assert tw["川普MAGA新政，關稅風暴席捲全球"]["turn_date"] == "2025-04-29"
+    assert tw["川普MAGA新政，關稅風暴席捲全球"]["calendar_days"] == 20
+    assert tw["川普MAGA新政，關稅風暴席捲全球"]["change_pct"] == pytest.approx(0.1690, abs=5e-5)
+
+
+def test_json_rebound_matches_recompute(computed, payload):
+    by_sheet = {x["sheet"]: x for x in payload["indices"]}
+    for name, comp in computed.items():
+        ix = by_sheet[name]
+        for a, b in zip(ix["events"], comp["events"]):
+            r, rb = a["rebound"], b["rebound"]
+            assert set(r) == set(REBOUND_KEYS)
+            assert r["turn_date"] == rb["turn_date"]
+            assert r["turn_px"] == pytest.approx(rb["turn_px"], rel=0, abs=1e-12)
+            assert r["calendar_days"] == rb["calendar_days"]
+            assert r["trading_days"] == rb["trading_days"]
+            assert r["change_pts"] == pytest.approx(rb["change_pts"], rel=0, abs=1e-12)
+            assert r["change_pct"] == pytest.approx(rb["change_pct"], rel=0, abs=1e-12)
+            # 起點＝該次下跌的低點（盤中最低價）
+            assert r["change_pct"] == pytest.approx(r["turn_px"] / a["end_px"] - 1, rel=0, abs=1e-12)
+        # 指數層反彈平均／中位數：只用歷史 events
+        rebs = [e["rebound"] for e in ix["events"]]
+        for k, fn in (("avg", mean), ("median", median)):
+            assert ix[f"rebound_{k}_pct"] == pytest.approx(fn(x["change_pct"] for x in rebs), rel=0, abs=1e-15)
+            assert ix[f"rebound_{k}_calendar_days"] == pytest.approx(fn(x["calendar_days"] for x in rebs), rel=0, abs=1e-12)
+            assert ix[f"rebound_{k}_trading_days"] == pytest.approx(fn(x["trading_days"] for x in rebs), rel=0, abs=1e-12)
+        assert ix["rebound_avg_pct"] == pytest.approx(comp["reb_avg"], rel=0, abs=1e-12)
+        assert ix["rebound_median_pct"] == pytest.approx(comp["reb_med"], rel=0, abs=1e-12)
+        # 本波沒有轉多確認：不得帶 rebound
+        assert not ix["current"].get("rebound"), name
+        # 反彈註腳：仍在 footnotes（Excel 全文保留），另以 rebound_footnotes 標出
+        assert len(ix["rebound_footnotes"]) == 2
+        assert all(f in ix["footnotes"] for f in ix["rebound_footnotes"])
+        assert any("「現在本波下跌」尚無反彈資料" in f for f in ix["rebound_footnotes"])
+        assert any("轉多日的日K收盤價" in f for f in ix["rebound_footnotes"])
+    assert "主觀判斷" in payload["rebound_method"] and "COBB我大哥" in payload["rebound_method"]
+
+
+def test_apply_current_keeps_rebound_and_never_adds_to_current(payload, tmp_path):
+    """本波自動覆寫（DC.apply_current／refresh_files 的核心）只動本波，歷史反彈原樣保留，本波不會長出 rebound。"""
+    import copy
+    data = copy.deepcopy(payload)
+    site = json.loads(SITE_JSON.read_text(encoding="utf-8"))
+    DC.apply_current(data, site, tmp_path)  # 空快取目錄：只用 data.json
+    for a, b in zip(data["indices"], payload["indices"]):
+        assert [e["rebound"] for e in a["events"]] == [e["rebound"] for e in b["events"]]
+        assert a["rebound_avg_pct"] == b["rebound_avg_pct"]
+        assert a["rebound_footnotes"] == b["rebound_footnotes"]
+        assert all(f in a["footnotes"] for f in a["rebound_footnotes"])
+        assert "rebound" not in a["current"]
+
+
+def test_build_rejects_rebound_on_current_row(tmp_path, monkeypatch):
+    """Excel 本波列若出現轉多日，build 要停下來，不默默帶入。"""
+    import build_drawdowns as BD
+    wb = openpyxl.load_workbook(XLSX)
+    ws = wb["NDX"]
+    r = [i for i in range(3, ws.max_row + 1) if is_current_row(ws, i)][0]
+    ws.cell(r, 12).value = datetime(2026, 11, 20)
+    ws.cell(r, 13).value = 27000.0
+    ws.cell(r, 15).value = 2
+    with pytest.raises(ValueError, match="現在本波下跌"):
+        BD.parse_sheet(ws)
 
 
 def test_json_matches_recompute(computed, payload):
@@ -276,6 +436,7 @@ def test_excel_snapshot_values(computed):
 def test_page_has_content_and_notes(computed):
     html = PAGE.read_text(encoding="utf-8")
     assert "<h1>歷史重大下跌段</h1>" in html
+    assert "<title>慈善撲克王｜歷史跌幅（與反彈）</title>" in html
     assert "過去的下跌段不能預測未來" in html
     assert "非投資建議" in html
     assert "drawdowns.js" in html
@@ -316,9 +477,40 @@ def test_page_has_content_and_notes(computed):
     assert "沿用完整表的編號" not in html
 
 
+def test_page_rebound_section_below_old_block():
+    html = PAGE.read_text(encoding="utf-8")
+    # 舊區塊仍在：h1、原 lede、舊圖 id、明細表與舊註腳
+    lede = "依使用者提供的 Excel 下跌段表做成網頁。表內高低點是 TradingView 日線的盤中最高價與最低價，不是收盤價。"
+    assert "<h1>歷史重大下跌段</h1>" in html and lede in html
+    assert '<p class="sub">過去每次大跌，跌了多少、跌了多久</p>' in html
+    for i in ('id="bars"', 'id="timeline"', 'id="tbody"', 'id="footnotes"', 'id="sum"', 'id="compare"', 'id="sort"'):
+        assert i in html, i
+    # 新區塊在明細表之後、頁底免責框之前
+    sec = html.index('<section id="rebound"')
+    assert html.index('<section id="table-sec">') < html.index('id="footnotes"') < sec < html.index('<div class="box-o">')
+    body = html[sec:html.index("</section>", sec)]
+    assert "<h2 id=\"rb-h\">跌段與反彈對照</h2>" in body
+    # 主觀判斷註記與方法來源、口徑
+    assert "轉多確認點是 Cobb 的主觀判斷" in body and "方法來源：COBB我大哥" in body
+    assert "盤中最低價" in body and "轉多日的日K收盤價" in body and "口徑不同" in body
+    assert "不能預測未來" in body and "非投資建議" in body
+    assert "不含「現在本波下跌」" in body
+    for i in ('id="rb-tabs"', 'id="rb-list"', 'id="rb-ref"', 'id="rb-mode"', 'id="rb-sort"', 'id="rb-footnotes"'):
+        assert i in body, i
+    # 本波：只畫跌段，不推算反彈
+    assert "尚無轉多確認（不推算反彈）" in html
+    assert "function paintRebound" in html and "paintRebound(ix, wave)" in html
+    js = html[html.index("function paintRebound"):html.index("function paint()")]
+    assert "wave.rebound" not in js and "cur.rebound" not in js
+    # 反彈註腳只顯示在新區塊；舊註腳清單排除它們
+    assert "ix.rebound_footnotes" in html
+    assert "rbNotes.indexOf(t)<0" in html
+    assert "#00838f" in html.lower()
+
+
 def test_home_and_scale_in_links():
     home = HOME.read_text(encoding="utf-8")
-    assert '<a href="./trend/drawdowns/">歷史跌幅</a>' in home
+    assert '<a href="./trend/drawdowns/">歷史跌幅（與反彈）</a>' in home
     nav = re.search(r'<nav class="book-nav" aria-label="看現況">.*?</nav>', home, re.S)
     assert nav and "drawdowns/" in nav.group(0)
     # 極簡：主圖區（分類導覽之前）不要出現下跌段正文
@@ -326,6 +518,9 @@ def test_home_and_scale_in_links():
     assert "歷史重大下跌段" not in head
     scale = SCALE.read_text(encoding="utf-8")
     assert 'href="../drawdowns/"' in scale
+    assert '<a href="../drawdowns/">歷史跌幅（與反彈）</a>' in scale
+    lsf = (ROOT / "trend" / "left-side-fix" / "index.html").read_text(encoding="utf-8")
+    assert lsf.count('<a href="../drawdowns/">歷史跌幅（與反彈）</a>') == 2
     assert "歷史重大下跌段" in scale or "歷史跌幅" in scale
 
 def test_bar_title_includes_period():
