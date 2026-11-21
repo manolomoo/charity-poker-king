@@ -24,38 +24,39 @@ HOM_PAGES = {
     "SOX": "https://historyofmarket.com/zh-tw/semi/semi-fwdpe/",
 }
 
-# COBB MEMO 2026-11 快照（凍結，不自動更新）。SOX 的月統計可本站以 HOM
-# 「每月最後一筆、截至 2026-11-05」重現到小數點後兩位；NDX 資料商未確認。
+# COBB MEMO 2026-11 快照（凍結，不自動更新；此期為 Cobb 11 月更新圖，最新值
+# NDX 17.23／SOX 11.69）。SOX 的月統計可本站以 HOM「每月最後一筆、截至
+# 2026-11-20」重現到小數點後兩位（當日 forwardOwn＝11.69）；NDX 資料商未確認。
 COBB_MEMO = {
     "source": "COBB MEMO",
     "asof": "2026-11",
     "indices": {
         "SOX": {
-            "latest": 12.72,
+            "latest": 11.69,
             "windows": {
-                "2020": {"mean": 21.37, "median": 21.12, "q1": 19.26, "q3": 24.59,
-                         "up05": 23.26, "dn05": 19.48, "up10": 25.14, "dn10": 17.60,
-                         "up15": 27.03, "dn15": 15.71},
-                "2016": {"mean": 19.08, "median": 18.35, "q1": 15.29, "q3": 22.36,
-                         "up05": 21.26, "dn05": 16.90, "up10": 23.44, "dn10": 14.72,
-                         "up15": 25.62, "dn15": 12.54},
+                "2020": {"mean": 21.36, "median": 21.12, "q1": 19.26, "q3": 24.59,
+                         "up05": 23.26, "dn05": 19.46, "up10": 25.16, "dn10": 17.55,
+                         "up15": 27.06, "dn15": 15.65},
+                "2016": {"mean": 19.07, "median": 18.35, "q1": 15.29, "q3": 22.36,
+                         "up05": 21.26, "dn05": 16.89, "up10": 23.44, "dn10": 14.70,
+                         "up15": 25.63, "dn15": 12.51},
                 "2011": {"mean": 17.51, "median": 15.71, "q1": 14.42, "q3": 20.55,
-                         "up05": 19.71, "dn05": 15.32, "up10": 21.90, "dn10": 13.12,
-                         "up15": 24.10, "dn15": 10.92},
+                         "up05": 19.71, "dn05": 15.31, "up10": 21.91, "dn10": 13.11,
+                         "up15": 24.11, "dn15": 10.91},
             },
         },
         "NDX": {
-            "latest": 18.01,
+            "latest": 17.23,
             "windows": {
-                "2020": {"mean": 25.35, "median": 25.53, "q1": 22.93, "q3": 27.11,
-                         "up05": 27.04, "dn05": 23.66, "up10": 28.73, "dn10": 21.98,
-                         "up15": 30.42, "dn15": 20.29},
-                "2016": {"mean": 23.62, "median": 22.92, "q1": 20.91, "q3": 25.88,
-                         "up05": 25.43, "dn05": 21.80, "up10": 27.24, "dn10": 19.99,
-                         "up15": 29.06, "dn15": 18.17},
+                "2020": {"mean": 25.34, "median": 25.53, "q1": 22.93, "q3": 27.11,
+                         "up05": 27.04, "dn05": 23.64, "up10": 28.74, "dn10": 21.94,
+                         "up15": 30.44, "dn15": 20.24},
+                "2016": {"mean": 23.61, "median": 22.92, "q1": 20.91, "q3": 25.88,
+                         "up05": 25.43, "dn05": 21.79, "up10": 27.25, "dn10": 19.97,
+                         "up15": 29.07, "dn15": 18.15},
                 "2011": {"mean": 21.47, "median": 21.10, "q1": 18.89, "q3": 24.73,
-                         "up05": 23.76, "dn05": 19.18, "up10": 26.05, "dn10": 16.89,
-                         "up15": 28.34, "dn15": 14.60},
+                         "up05": 23.76, "dn05": 19.18, "up10": 26.05, "dn10": 16.88,
+                         "up15": 28.34, "dn15": 14.59},
                 "2006": {"mean": 21.40, "median": 20.95, "q1": 18.52, "q3": 25.21},
                 "2001": {"mean": 23.94, "median": 22.04, "q1": 19.00, "q3": 26.21},
             },
@@ -78,7 +79,7 @@ EVENT_BOTTOMS = [
 
 HOME_WINDOW = "2016"  # 與第 4 項燈號的約 10 年窗口較接近；不用 2020 起（偏短、含零利率高估值期）
 WINDOWS_LIVE = ("2020", "2016", "2011")  # 本站只重算這三個；2006／2001 只引用 MEMO（HOM 有缺口）
-MEMO_REPRO_END = "2026-11-05"  # SOX 可重現 MEMO 的截止日期（當日 forwardOwn＝12.72）
+MEMO_REPRO_END = "2026-11-20"  # SOX 可重現 MEMO 的截止日期（當日 forwardOwn＝11.69）
 UA = "charity-poker-king/valuation (+https://manolomoo.github.io/charity-poker-king/)"
 
 
@@ -348,15 +349,18 @@ def _signal4(latest_path: Path | None) -> dict | None:
 
 
 def _crash_check(name: str, own: pd.Series, prices: pd.Series | None) -> dict | None:
-    """確認 2026-11-05 SOX 12.72 主要是價格變動，不是分母異常。"""
-    day = pd.Timestamp("2026-11-05")
-    prev = pd.Timestamp("2026-11-04")
-    if day not in own.index or prev not in own.index:
+    """確認 MEMO 當日 SOX 讀數主要是價格變動，不是分母異常。"""
+    day = pd.Timestamp(MEMO_REPRO_END)
+    if day not in own.index:
         return None
+    prev_idx = own.index[own.index < day]
+    if len(prev_idx) == 0:
+        return None
+    prev = prev_idx[-1]
     pe0, pe1 = float(own.loc[prev]), float(own.loc[day])
     out = {
-        "prev_date": "2026-11-04",
-        "date": "2026-11-05",
+        "prev_date": prev.strftime("%Y-%m-%d"),
+        "date": day.strftime("%Y-%m-%d"),
         "pe_prev": r2(pe0),
         "pe": r2(pe1),
         "pe_chg_pct": r2((pe1 / pe0 - 1) * 100),
@@ -374,7 +378,7 @@ def _crash_check(name: str, own: pd.Series, prices: pd.Series | None) -> dict | 
         # 價格跌幅與本益比跌幅同向且接近，即視為以價格為主
         if out["price_chg_pct"] is not None and out["pe_chg_pct"] is not None:
             out["conclusion"] = (
-                "本益比跌幅與指數收盤跌幅接近，隱含 EPS 沒有大幅下修，12.72 主要是價格變動，不像資料異常。"
+                "本益比跌幅與指數收盤跌幅接近，隱含 EPS 沒有大幅下修，此讀數主要是價格變動，不像資料異常。"
                 if abs(out["pe_chg_pct"] - out["price_chg_pct"]) < 5
                 else "價格與本益比變動幅度有差距，頁面上並列，不自動認定資料無誤。"
             )
@@ -443,7 +447,7 @@ def build_valuation(cache_dir: Path, latest_path: Path | None = None, today: dat
         if own.index[-1].to_period("M") > completed_end.to_period("M"):
             incomplete = (own.index[-1].strftime("%Y-%m"), cur)
 
-        # MEMO 重現：截至 2026-11-05 的月最後一筆
+        # MEMO 重現：截至 MEMO_REPRO_END 的月最後一筆
         repro_m = monthly_last(stitched[stitched.index <= pd.Timestamp(MEMO_REPRO_END)])
         cobb = COBB_MEMO["indices"][name]
         repro = {"through": MEMO_REPRO_END, "windows": {}, "exact_match": name == "SOX"}
@@ -492,7 +496,7 @@ def build_valuation(cache_dir: Path, latest_path: Path | None = None, today: dat
             indices[name]["memo_print"] = {
                 "date": MEMO_REPRO_END,
                 "value": r2(float(own.loc[pd.Timestamp(MEMO_REPRO_END)])),
-                "note": "當月尚未結束的單日讀數；MEMO 2026-11 月值與這一天相同（SOX 12.72；NDX 最接近 11/06 的 18.07）。",
+                "note": "當月尚未結束的單日讀數；MEMO 2026-11 月值 SOX 11.69 與 2026-11-20 相同；NDX MEMO 17.23 對不上（當日 HOM 為 16.42，前一日 11/19 為 17.86）。",
             }
 
         events[name] = _event_rows(name, stitched, prices)
@@ -505,12 +509,12 @@ def build_valuation(cache_dir: Path, latest_path: Path | None = None, today: dat
             name, cur, cur_date, tag_stats, tag_stats["current_vs"]["band"]
         )
 
-    # 12.72 與 14.40 並列說明
+    # MEMO 當日讀數與 HOM 現值並列說明
     sox_own_note = None
     if "SOX" in crash and indices["SOX"].get("memo_print"):
         sox_own_note = (
-            f"COBB MEMO 的 SOX 2026-11＝12.72，與 History of Market 2026-11-05 日線相同，"
-            f"是當月尚未結束的單日低點；同序列 2026-11-13 已回到 {indices['SOX']['latest']['value']}。"
+            f"COBB MEMO 的 SOX 2026-11＝11.69，與 History of Market 2026-11-20 日線相同，"
+            f"是當月尚未結束的單日讀數；同序列現值截至 {indices['SOX']['latest']['date']} 為 {indices['SOX']['latest']['value']}。"
             + ((" " + crash["SOX"]["conclusion"]) if crash["SOX"].get("conclusion") else "")
         )
 
@@ -528,7 +532,7 @@ def build_valuation(cache_dir: Path, latest_path: Path | None = None, today: dat
         },
         "cobb_memo": {
             **{k: COBB_MEMO[k] for k in ("source", "asof", "indices")},
-            "note": "這是 MEMO 快照，不隨行情更新。SOX 的 2020／2016／2011 視窗統計，本站以 HOM 月最後一筆截至 2026-11-05 可重現到小數點後兩位；並不表示已向 COBB 確認他使用該資料商。NDX 用同一做法對不上（mean 約差 0.7–1.1，且隨視窗拉長而變大，不是固定位移），資料商未確認，不可把 HOM 現值拿去比 MEMO 的 σ 帶。NDX 2006 起與 2001 起只引用 MEMO，本站不重算（HOM 在 2005-01 至 2006-07 有缺口）。",
+            "note": "這是 MEMO 快照，不隨行情更新（Cobb 11 月更新圖，最新值 NDX 17.23／SOX 11.69）。SOX 的 2020／2016／2011 視窗統計，本站以 HOM 月最後一筆截至 2026-11-20 可重現到小數點後兩位；並不表示已向 COBB 確認他使用該資料商。NDX 用同一做法對不上（mean 約差 0.7–1.5，且隨視窗拉長而變大，不是固定位移），資料商未確認，不可把 HOM 現值拿去比 MEMO 的 σ 帶。NDX 2006 起與 2001 起只引用 MEMO，本站不重算（HOM 在 2005-01 至 2006-07 有缺口）。",
         },
         "indices": indices,
         "events": events,

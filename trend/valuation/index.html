@@ -108,7 +108,7 @@ svg.chart{display:block;width:100%;height:auto;background:#121a29;border:1px sol
 
 <section id="events">
   <h2>事件底對照</h2>
-  <p class="sec-lead">事件名稱來自 COBB MEMO 圖上標註的「股價觸底月份」。P/E 由本站用 History of Market 同口徑計算：該月最低與月底。較早的月份落在週頻段（多為該週最後一個讀數），2026-11 的 12.72 則是日線低點，頻率不同，不能直接當成同一種「底部 P/E」。歷次事件月的最低 P/E 從十倍出頭到二十多倍都有，沒有固定地板；估值說明位置，不說明時點。</p>
+  <p class="sec-lead">事件名稱來自 COBB MEMO 圖上標註的「股價觸底月份」。P/E 由本站用 History of Market 同口徑計算：該月最低與月底。較早的月份落在週頻段（多為該週最後一個讀數），2026-11 的 11.69 則是日線讀數（截至 11/20），頻率不同，不能直接當成同一種「底部 P/E」。歷次事件月的最低 P/E 從十倍出頭到二十多倍都有，沒有固定地板；估值說明位置，不說明時點。</p>
   <div id="event-tables"></div>
   <div class="box-f">
     <p>例如 SOX 在 2022-06-17 的週頻讀數已約 12.86 倍，接近同年 10 月最低 12.84（10/14），之後指數又再跌一段才在 10 月見底。2024-08 那次價格修正時，SOX 該月最低仍約 23.90 倍，比較像價格修正而不是估值修正。P/E 已經偏低，不代表當日就是股價低點；也不要寫成「已低於 2022 底，所以見底」。</p>
@@ -198,7 +198,7 @@ svg.chart{display:block;width:100%;height:auto;background:#121a29;border:1px sol
   s4n.textContent = s4h;
 
   document.getElementById("sox-lead").textContent =
-    "本站以 History of Market 每月最後一筆（已完成月份）自算 σ 帶。截至 2026-11-05 的月統計，可重現 COBB MEMO 的 SOX 數字到小數點後兩位；這是核對結果，不是說已向對方確認資料來源。當月未完成的點在圖上用空心圓標出，不進入帶的計算。";
+    "本站以 History of Market 每月最後一筆（已完成月份）自算 σ 帶。截至 2026-11-20 的月統計，可重現 COBB MEMO 的 SOX 數字到小數點後兩位；這是核對結果，不是說已向對方確認資料來源。當月未完成的點在圖上用空心圓標出，不進入帶的計算。";
 
   function legendHtml(){
     return '<span><i style="border-color:#e8edf5"></i>μ</span>'+
@@ -346,7 +346,8 @@ svg.chart{display:block;width:100%;height:auto;background:#121a29;border:1px sol
   mh += "</tbody></table>";
   var dlt = V.indices.NDX.memo_repro && V.indices.NDX.memo_repro.windows && V.indices.NDX.memo_repro.windows["2020"];
   if(dlt && dlt.delta){
-    mh += "<p class='note'>若用 HOM 月最後一筆重算 2020 起（截至 MEMO 日 2026-11-05），平均差 "+num(dlt.delta.mean,2)+"，不是同一條序列。</p>";
+    var ndxThrough = (V.indices.NDX.memo_repro && V.indices.NDX.memo_repro.through) || "2026-11-20";
+    mh += "<p class='note'>若用 HOM 月最後一筆重算 2020 起（截至 MEMO 日 "+esc(ndxThrough)+"），平均差 "+num(dlt.delta.mean,2)+"，不是同一條序列。</p>";
   }
   document.getElementById("ndx-memo").innerHTML = mh;
 
@@ -376,7 +377,8 @@ svg.chart{display:block;width:100%;height:auto;background:#121a29;border:1px sol
     });
     mt += "</tbody></table>";
     if(id==="SOX" && V.indices.SOX.memo_repro && V.indices.SOX.memo_repro.exact_match){
-      mt += "<p class='note'>SOX：本站以 HOM 月最後一筆截至 2026-11-05，三個視窗的平均、中位、四分位與全部 σ 帶與上表小數點後兩位相同。</p>";
+      var through = V.indices.SOX.memo_repro.through || "2026-11-20";
+      mt += "<p class='note'>SOX：本站以 HOM 月最後一筆截至 "+esc(through)+"，三個視窗的平均、中位、四分位與全部 σ 帶與上表小數點後兩位相同。</p>";
     }
   });
   document.getElementById("memo-tables").innerHTML = mt;
@@ -384,7 +386,7 @@ svg.chart{display:block;width:100%;height:auto;background:#121a29;border:1px sol
   var ck = V.crash_check && V.crash_check.SOX;
   if(ck){
     document.getElementById("crash-note").textContent =
-      "核對 12.72 是否像資料異常：SOX 2026-11-04 收盤 "+num(ck.close_prev,2)+"、P/E "+num(ck.pe_prev,2)+"×，11-05 收盤 "+num(ck.close,2)+"、P/E "+num(ck.pe,2)+"×；指數 "+num(ck.price_chg_pct,2)+"%，本益比 "+num(ck.pe_chg_pct,2)+"%，隱含 EPS "+num(ck.implied_eps_chg_pct,2)+"%。"+ (ck.conclusion||"");
+      "核對 MEMO 當日讀數是否像資料異常：SOX "+esc(ck.prev_date)+" 收盤 "+num(ck.close_prev,2)+"、P/E "+num(ck.pe_prev,2)+"×，"+esc(ck.date)+" 收盤 "+num(ck.close,2)+"、P/E "+num(ck.pe,2)+"×；指數 "+num(ck.price_chg_pct,2)+"%，本益比 "+num(ck.pe_chg_pct,2)+"%，隱含 EPS "+num(ck.implied_eps_chg_pct,2)+"%。"+ (ck.conclusion||"");
   }
   document.getElementById("caveats").innerHTML = (V.caveats||[]).map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
 })();
