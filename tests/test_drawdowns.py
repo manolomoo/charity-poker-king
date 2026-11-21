@@ -527,24 +527,24 @@ def test_home_and_scale_in_links():
     assert "歷史重大下跌段" in scale or "歷史跌幅" in scale
 
 def test_bar_title_includes_period():
-    """橫條圖把期間寫在標題列事件名後的全形括號裡；副標只留跌幅與多久。兩種排序共用。"""
+    """橫條圖把期間寫在標題列事件名後的全形括號裡；副標只留跌幅與多久（本波另加名次）。兩種排序共用。"""
     html = PAGE.read_text(encoding="utf-8")
     assert "function titleLines" in html
-    assert 'titleLines(e.name, e.period, "500")' in html
-    assert 'titleLines("現在本波下跌", now.period, "700")' in html
+    assert 'titleLines(isNow ? "現在本波下跌" : e.name, e.period, isNow ? "700" : "500")' in html
     # 全形括號包期間，例如 中美貿易戰加劇（2018/10/1~2018/12/24）
     assert '"（" + period + "）"' in html
     # 日期略小略淡，跟事件名同一行
     assert '"font-size":"11"' in html
     assert "a3aec0" in html
-    # 副標回到只有跌幅與跌了多久，不再附期間
+    # 副標回到只有跌幅與跌了多久，不再附期間；本波在前面加上名次
     assert 'pctSigned(e.change_pct) + " · " + dur(e.calendar_days)' in html
-    assert 'pctSigned(now.change_pct) + " · " + dur(now.calendar_days)' in html
+    assert '"第 " + info.rank + "／" + info.total + " 名 · " + base' in html
     assert "function subLines" not in html
     # 標題太長時自然換行
     assert "function wrapText" in html
-    # 兩種排序都經過 ordered() 再畫同一套 items
+    # 兩種排序都經過 ordered()（含本波插入）再畫同一套 items
     assert "var ev = ordered(ix)" in html
+    assert "items.push" not in html
 
 
 # ---------------- 本波自動計算 ----------------

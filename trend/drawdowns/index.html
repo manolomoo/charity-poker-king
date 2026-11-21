@@ -47,12 +47,23 @@ section{margin:28px 0 36px}
 .sum .k{color:var(--muted);font-size:13px;margin:0}
 .sum .v{font-family:var(--serif);font-weight:900;font-size:clamp(22px,5vw,30px);line-height:1.2;color:var(--navy);margin:2px 0 0;font-variant-numeric:tabular-nums}
 .sum .v.neg{color:var(--red)}
-.nowbox{border-color:#5c4b1f;background:#1c1a12}
+.nowbox{border:1.5px solid #c9a227;background:#241c0c;box-shadow:inset 4px 0 0 #f5b83d}
 .nowbox .v{color:var(--amber)}
 .nowbox .d{color:var(--muted);font-size:12px;line-height:1.55;margin:6px 0 0}
 .nowbox .asof{color:var(--amber);font-size:12px;font-weight:700;line-height:1.5;margin:6px 0 0}
 .nowbox .v.ok{color:var(--green);font-size:clamp(18px,4vw,22px)}
 .nowbox .asof span{display:block}
+.pill-now{display:inline-block;margin-left:6px;padding:0 7px;border:1px solid #f5b83d;border-radius:999px;color:#f5b83d;font-size:11px;font-weight:700;line-height:1.7;vertical-align:middle;letter-spacing:.04em}
+.nb-rank{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:clamp(16px,3.6vw,22px);line-height:1.3;margin:8px 0 6px;font-variant-numeric:tabular-nums}
+.nb-rank .hint{display:block;font-family:var(--sans);font-weight:400;color:var(--muted);font-size:12px;margin-top:2px}
+.nb-cmp{margin:0;padding:0;list-style:none;font-size:13px;line-height:1.55}
+.nb-cmp li{margin:0 0 6px}
+.nb-cmp .who{display:block;color:var(--ink);overflow-wrap:anywhere}
+.nb-cmp .nm{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nb-cmp .pct{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}
+.nb-cmp .gap{display:block;color:var(--muted);font-size:12.5px}
+.nb-cmp .gap b{color:var(--amber);font-weight:700;white-space:nowrap}
+.nb-warn{color:var(--amber);font-size:12px;font-weight:700;line-height:1.5;margin:6px 0 0}
 @media (max-width:560px){ .sum .nowbox{grid-column:1/-1} }
 td .asof{display:block;color:var(--muted);font-size:11px;font-weight:400;line-height:1.45;margin-top:2px}
 .sort{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
@@ -73,9 +84,11 @@ th.rowh,td.rowh,td.name{text-align:left;white-space:normal;min-width:10em}
 td.neg{color:var(--red)}
 tr.severe td{background:rgba(80,40,48,.55)}
 tr.severe td.rowh{background:#2a1c22}
-tr.current td{background:rgba(255,220,60,.16)}
-tr.current td.rowh,tr.current td.name{background:rgba(255,220,60,.22);color:var(--navy)}
-tr.current td.neg{color:#f2d36b}
+tr.current td{background:rgba(245,184,61,.18);box-shadow:inset 4px 0 0 #f5b83d}
+tr.current td.rowh,tr.current td.name{background:rgba(245,184,61,.26);color:var(--navy);font-weight:700}
+tr.current td.neg{color:#ffe9a8}
+tr.current .rank-line{display:block;color:var(--navy);font-size:12px;font-weight:700;line-height:1.5;margin-top:3px;white-space:normal}
+tr.current .cmp-line{display:block;color:#d8c48a;font-size:11.5px;font-weight:400;line-height:1.5;margin-top:2px;white-space:normal}
 .notes{margin:12px 0 0;padding:0 0 0 1.1em;color:var(--muted);font-size:13px;line-height:1.7}
 .notes li{margin:0 0 4px}
 a{color:var(--edge)}
@@ -133,7 +146,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 <header>
   <h1>歷史重大下跌段</h1>
   <p class="sub">過去每次大跌，跌了多少、跌了多久</p>
-  <p class="lede">依使用者提供的 Excel 下跌段表做成網頁。表內高低點是 TradingView 日線的盤中最高價與最低價，不是收盤價。事件序列已重新由 1 編號（與完整表的編號不同）。歷史各列仍來自 Excel／TradingView。黃底的「現在本波下跌」改由本站日線的盤中高低點自動計算（台指用證交所、美股用 Yahoo），口徑與歷史列相同：從上一段歷史下跌的低點之後的最高點，算到該高點以來的最低點，結束日是低點那天，並標出資料截至日。若之後再創新低，數字會變動；本波不計入平均與中位數。</p>
+  <p class="lede">依使用者提供的 Excel 下跌段表做成網頁。表內高低點是 TradingView 日線的盤中最高價與最低價，不是收盤價。事件序列已重新由 1 編號（與完整表的編號不同）。歷史各列仍來自 Excel／TradingView。黃底的「現在本波下跌」改由本站日線的盤中高低點自動計算（台指用證交所、美股用 Yahoo），口徑與歷史列相同：從上一段歷史下跌的低點之後的最高點，算到該高點以來的最低點，結束日是低點那天，並標出資料截至日。若之後再創新低，數字會變動；依跌幅排序時本波會插入目前名次，依時間排序時放在最新一列。本波不計入平均與中位數。</p>
 </header>
 <nav class="top">
   <a href="../../">首頁</a>
@@ -173,7 +186,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 
 <section id="table-sec">
   <h2>明細表</h2>
-  <p class="note">紅底＝跌幅達 20% 以上；黃底＝現在本波下跌（本站日線自動計算，事件欄寫資料截至日與來源；不計入平均與中位數）。手機可左右滑動。</p>
+  <p class="note">紅底＝跌幅達 20% 以上；黃底＝現在本波下跌（本站日線自動計算，事件欄寫資料截至日與來源、目前名次與上下名差距；不計入平均與中位數）。依跌幅或依時間排序時，明細表與上面的橫條圖順序相同。手機可左右滑動。</p>
   <div class="scroll">
     <table>
       <thead>
@@ -301,6 +314,122 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     if(!c || c.recovered || c.change_pct==null) return null;
     return c;
   }
+  // --- rank helpers (tested) ---
+  function isCurrentEvent(e){
+    return !!(e && (e.seq === "現在" || e.name === "現在本波下跌") && !e.recovered);
+  }
+  function ppAbs(a, b){
+    return Math.round(Math.abs(a - b) * 10000) / 100;
+  }
+  function ppText(a, b){
+    return ppAbs(a, b).toFixed(2);
+  }
+  function cmpDepth(a, b){
+    if(a.change_pct !== b.change_pct) return a.change_pct - b.change_pct;
+    var aNow = isCurrentEvent(a), bNow = isCurrentEvent(b);
+    if(aNow !== bNow) return aNow ? 1 : -1;
+    if(a.start_date < b.start_date) return -1;
+    if(a.start_date > b.start_date) return 1;
+    return 0;
+  }
+  function cmpTime(a, b){
+    var aNow = isCurrentEvent(a), bNow = isCurrentEvent(b);
+    if(aNow !== bNow) return aNow ? 1 : -1;
+    if(a.start_date < b.start_date) return -1;
+    if(a.start_date > b.start_date) return 1;
+    var ae = a.end_date || "", be = b.end_date || "";
+    if(ae < be) return -1;
+    if(ae > be) return 1;
+    return 0;
+  }
+  function listWithCurrent(ix){
+    var ev = (ix && ix.events ? ix.events.slice() : []);
+    var w = waveOf(ix);
+    if(w) ev.push(w);
+    return ev;
+  }
+  function orderedEvents(ix, mode){
+    var ev = listWithCurrent(ix);
+    ev.sort(mode === "time" ? cmpTime : cmpDepth);
+    return ev;
+  }
+  function rankOf(ix){
+    var w = waveOf(ix);
+    if(!w) return null;
+    var all = listWithCurrent(ix);
+    all.sort(cmpDepth);
+    var idx = -1, i;
+    for(i=0;i<all.length;i++){
+      if(all[i] === w || isCurrentEvent(all[i])){ idx = i; break; }
+    }
+    if(idx < 0) return null;
+    var prev = idx > 0 ? all[idx-1] : null;
+    var next = idx < all.length-1 ? all[idx+1] : null;
+    return {rank: idx+1, total: all.length, prev: prev, next: next, wave: w};
+  }
+  function rankHint(rk){
+    if(!rk) return "";
+    if(rk.rank === 1) return "（含本波，目前最深的一次）";
+    if(rk.rank === rk.total) return "（含本波，目前最淺的一次）";
+    return "（含本波，依跌幅深到淺）";
+  }
+  function rankCompareSentence(rk){
+    if(!rk) return "";
+    var w = rk.wave;
+    var s = "目前排第 " + rk.rank + " 名／共 " + rk.total + " 次";
+    if(!rk.prev) s += "，是目前最深的一次";
+    else if(!rk.next) s += "，是目前最淺的一次";
+    var bits = [];
+    if(rk.prev){
+      bits.push("比上一名「" + rk.prev.name + "」（" + pctSigned(rk.prev.change_pct,2) + "）淺 " + ppText(w.change_pct, rk.prev.change_pct) + " 個百分點");
+    }
+    if(rk.next){
+      bits.push("比下一名「" + rk.next.name + "」（" + pctSigned(rk.next.change_pct,2) + "）深 " + ppText(w.change_pct, rk.next.change_pct) + " 個百分點");
+    }
+    if(bits.length) s += "：" + bits.join("，");
+    s += "。尚未創新高，跌幅可能繼續擴大。";
+    return s;
+  }
+  function rankBoxHtml(rk){
+    if(!rk) return "";
+    var w = rk.wave;
+    var h = '<p class="nb-rank">第 '+rk.rank+' 名／共 '+rk.total+' 次<span class="hint">'+esc(rankHint(rk))+'</span></p>';
+    h += '<ul class="nb-cmp">';
+    if(rk.prev){
+      var gPrev = ppText(w.change_pct, rk.prev.change_pct);
+      var gapPrev = (gPrev === "0.00")
+        ? '與上一名持平（差 <b>0.00</b> 個百分點）'
+        : '本波還淺 <b>'+gPrev+'</b> 個百分點';
+      h += '<li title="'+esc(rk.prev.name)+'"><span class="who">↑ 第 '+(rk.rank-1)+' 名　<span class="nm">'+esc(rk.prev.name)+'</span>　<span class="pct">'+pctSigned(rk.prev.change_pct,2)+'</span></span><span class="gap">'+gapPrev+'</span></li>';
+    } else {
+      h += '<li><span class="who">↑ 上一名：無（已超過所有歷史跌幅，為史上最深）</span></li>';
+    }
+    if(rk.next){
+      var gNext = ppText(w.change_pct, rk.next.change_pct);
+      var gapNext = (gNext === "0.00")
+        ? '與下一名持平（差 <b>0.00</b> 個百分點）'
+        : '本波已深 <b>'+gNext+'</b> 個百分點';
+      h += '<li title="'+esc(rk.next.name)+'"><span class="who">↓ 第 '+(rk.rank+1)+' 名　<span class="nm">'+esc(rk.next.name)+'</span>　<span class="pct">'+pctSigned(rk.next.change_pct,2)+'</span></span><span class="gap">'+gapNext+'</span></li>';
+    } else {
+      h += '<li><span class="who">↓ 下一名：無（本波是目前最淺的一次）</span></li>';
+    }
+    h += '</ul><p class="nb-warn">尚未創新高，跌幅可能繼續擴大，名次也可能往前。</p>';
+    return h;
+  }
+  function currentSubLines(wave, rk){
+    var lines = [];
+    if(rk){
+      lines.push("目前排第 "+rk.rank+" 名／共 "+rk.total+" 次（進行中，若再創新低還會擴大）");
+      if(rk.prev) lines.push("比上一名「"+rk.prev.name+"」（"+pctSigned(rk.prev.change_pct,2)+"）淺 "+ppText(wave.change_pct, rk.prev.change_pct)+" 個百分點");
+      else lines.push("上一名：無（目前最深）");
+      if(rk.next) lines.push("比下一名「"+rk.next.name+"」（"+pctSigned(rk.next.change_pct,2)+"）深 "+ppText(wave.change_pct, rk.next.change_pct)+" 個百分點");
+      else lines.push("下一名：無（目前最淺）");
+    }
+    var a = asofLine(wave);
+    if(a) lines.push(a);
+    return lines;
+  }
+  // --- end rank helpers ---
   function asofLine(c){
     if(!c) return "";
     var s = c.asof ? "資料截至 " + isoToYmd(c.asof) : "Excel 表上的快照";
@@ -360,8 +489,9 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     html += card("跌超過 20%", sev + " 次");
     var cur = ix.current;
     if(wave){
-      html += '<div class="card nowbox"><p class="k">現在本波下跌</p><p class="v">'+pctSigned(wave.change_pct)+'</p>'
+      html += '<div class="card nowbox"><p class="k">現在本波下跌<span class="pill-now">進行中</span></p><p class="v">'+pctSigned(wave.change_pct,2)+'</p>'
         + '<p class="d">'+esc(wave.period)+"，跌了 "+wave.calendar_days+" 天（"+wave.trading_days+" 個交易日）。結束日是低點日；不計入左邊的平均與中位數。</p>"
+        + rankBoxHtml(rankOf(ix))
         + '<p class="asof">'+asofHtml(wave)+'</p></div>';
     } else if(cur && cur.recovered){
       html += '<div class="card nowbox"><p class="k">現在本波下跌</p><p class="v ok">已創新高</p>'
@@ -372,10 +502,7 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
   }
 
   function ordered(ix){
-    var ev = ix.events.slice();
-    if(sortBy==="size") ev.sort(function(a,b){ return a.change_pct - b.change_pct; });
-    else ev.sort(function(a,b){ return a.start_date < b.start_date ? -1 : 1; });
-    return ev;
+    return orderedEvents(ix, sortBy);
   }
 
   function paintBars(ix, now){
@@ -439,22 +566,28 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     }
     function rowHFor(title){ return 52 + Math.max(0, title.length-1)*16; }
 
+    var info = rankOf(ix);
     var items = ev.map(function(e){
-      var title = titleLines(e.name, e.period, "500");
+      var isNow = isCurrentEvent(e);
+      var title = titleLines(isNow ? "現在本波下跌" : e.name, e.period, isNow ? "700" : "500");
+      var base = pctSigned(e.change_pct) + " · " + dur(e.calendar_days);
+      var sub = base, sub2 = isNow ? "進行中，跌幅可能繼續擴大" : "";
+      if(isNow && info){
+        var combined = "第 " + info.rank + "／" + info.total + " 名 · " + base;
+        if(measure(combined, 12, "700") <= maxTitle) sub = combined;
+        else {
+          sub = "第 " + info.rank + "／" + info.total + " 名 · " + pctSigned(e.change_pct);
+          sub2 = dur(e.calendar_days) + " · 進行中，跌幅可能繼續擴大";
+        }
+      }
       return {
         title:title,
-        sub: pctSigned(e.change_pct) + " · " + dur(e.calendar_days),
-        val:e.change_pct, color:e.severe?colBar:colSoft, isNow:false, h:rowHFor(title)
+        sub:sub,
+        sub2:sub2,
+        val:e.change_pct, color:isNow?colNow:(e.severe?colBar:colSoft), isNow:isNow,
+        h:rowHFor(title) + (isNow?16:0)
       };
     });
-    if(hasNow){
-      var nTitle = titleLines("現在本波下跌", now.period, "700");
-      items.push({
-        title:nTitle,
-        sub: pctSigned(now.change_pct) + " · " + dur(now.calendar_days),
-        val:now.change_pct, color:colNow, isNow:true, h:rowHFor(nTitle)
-      });
-    }
     var rowsH = 0;
     items.forEach(function(it){ rowsH += it.h; });
     var H = top + rowsH + mB;
@@ -466,6 +599,10 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     svg.appendChild(el("text", {x:Math.min(W-4, xa+4), y:H-8, "font-size":11, fill:colAvg}, "平均 "+pctSigned(ix.avg_pct)));
 
     function row(y, it){
+      if(it.isNow){
+        svg.appendChild(el("rect", {x:0, y:y-4, width:W, height:it.h, rx:6, fill:"rgba(245,184,61,0.14)"}));
+        svg.appendChild(el("rect", {x:0, y:y-4, width:4, height:it.h, fill:colNow}));
+      }
       var t = el("text", {x:barX0, y:y+14, "font-size":13, fill:"#e8edf5", "font-weight": it.isNow?"700":"500"});
       it.title.forEach(function(line, j){
         if(line.name){
@@ -477,11 +614,17 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
       });
       svg.appendChild(t);
       var subY = y + 30 + Math.max(0, it.title.length-1)*16;
-      svg.appendChild(el("text", {x:barX0, y:subY, "font-size":12, fill:"#a3aec0"}, it.sub));
+      svg.appendChild(el("text", {x:barX0, y:subY, "font-size":12, fill: it.isNow?colNow:"#a3aec0", "font-weight": it.isNow?"700":"400"}, it.sub));
+      if(it.sub2){
+        svg.appendChild(el("text", {x:barX0, y:subY+14, "font-size":11, fill:colNow, "font-weight":"700"}, it.sub2));
+      }
       var w = Math.max(2, x(it.val) - barX0);
-      var h = 10, yy = subY + 4;
+      var h = 10, yy = subY + 4 + (it.sub2?14:0);
       svg.appendChild(el("rect", {x:barX0, y:yy, width:w, height:h, rx:2, fill:it.color}));
-      var lx = barX0 + w + 6;
+      if(it.isNow && barX0 + w + 14 < W-8){
+        svg.appendChild(el("rect", {x:barX0+w+2, y:yy, width:10, height:h, rx:2, fill:"none", stroke:colNow, "stroke-width":1.2, "stroke-dasharray":"3 2"}));
+      }
+      var lx = barX0 + w + 6 + (it.isNow?12:0);
       var anchor = "start";
       if(lx + 54 > W-4){ lx = barX0 + w - 6; anchor = "end"; }
       svg.appendChild(el("text", {x:lx, y:yy+h-1, "font-size":13, "font-weight":"700", fill:it.color, "text-anchor":anchor}, pctSigned(it.val)));
@@ -553,10 +696,23 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
   }
 
   function rowHtml(e, cls, sub){
+    var subHtml = "";
+    if(typeof sub === "string" && sub){
+      subHtml = "<span class='asof'>"+esc(sub)+"</span>";
+    } else if(sub && sub.length){
+      subHtml = sub.map(function(t,i){
+        var c = "asof";
+        if(cls==="current"){
+          if(i===0) c = "rank-line";
+          else if(i < sub.length-1) c = "cmp-line";
+        }
+        return "<span class='"+c+"'>"+esc(t)+"</span>";
+      }).join("");
+    }
     return "<tr class='"+cls+"'>"
       + "<td class='rowh'>"+esc(String(e.seq))+"</td>"
       + "<td>"+esc(e.period)+"</td>"
-      + "<td class='name'>"+esc(e.name)+(sub?"<span class='asof'>"+esc(sub)+"</span>":"")+"</td>"
+      + "<td class='name'>"+esc(e.name)+subHtml+"</td>"
       + "<td>"+e.calendar_days+"</td>"
       + "<td>"+e.trading_days+"</td>"
       + "<td class='neg'>"+pts(e.change_pts)+"</td>"
@@ -568,13 +724,12 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
   }
   function paintTable(ix){
     var h = "";
-    ix.events.forEach(function(e){
-      h += rowHtml(e, e.severe?"severe":"");
+    var rk = rankOf(ix);
+    ordered(ix).forEach(function(e){
+      if(isCurrentEvent(e)) h += rowHtml(e, "current", currentSubLines(e, rk));
+      else h += rowHtml(e, e.severe?"severe":"");
     });
-    var wave = waveOf(ix);
-    if(wave){
-      h += rowHtml(wave, "current", asofLine(wave));
-    } else if(ix.current && ix.current.recovered){
+    if(!waveOf(ix) && ix.current && ix.current.recovered){
       h += "<tr class='current'><td class='rowh'>現在</td><td></td><td class='name' colspan='9'>已創新高，目前沒有進行中的下跌段<span class='asof'>"+esc(asofLine(ix.current))+"</span></td></tr>";
     }
     h += "<tr><td></td><td></td><td class='name'>下跌段平均</td><td>"+daysNum(ix.avg_calendar_days)+"</td><td>"+daysNum(ix.avg_trading_days)+"</td><td></td><td class='neg'>"+pctSigned(ix.avg_pct,2)+"</td><td></td><td></td><td></td><td></td></tr>";
@@ -589,7 +744,8 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     var deep = ev[0];
     var sev = ev.filter(function(e){return e.severe;}).length;
     if(wave){
-      $("compare").textContent = "本波 "+pctSigned(wave.change_pct)+"（"+wave.period+"）、跌了 "+wave.calendar_days+" 天（"+wave.trading_days+" 個交易日）；歷史平均 "+pctSigned(ix.avg_pct)+"、平均 "+daysNum(ix.avg_calendar_days)+" 天（"+daysNum(ix.avg_trading_days)+" 個交易日）。本波由本站日線盤中高低點自動計算，"+asofLine(wave)+"，不計入平均與中位數。";
+      var rk = rankOf(ix);
+      $("compare").textContent = "本波 "+pctSigned(wave.change_pct,2)+"（"+wave.period+"）、跌了 "+wave.calendar_days+" 天（"+wave.trading_days+" 個交易日）"+(rk ? "，"+rankCompareSentence(rk) : "。")+"歷史平均 "+pctSigned(ix.avg_pct)+"、平均 "+daysNum(ix.avg_calendar_days)+" 天（"+daysNum(ix.avg_trading_days)+" 個交易日）。本波由本站日線盤中高低點自動計算，"+asofLine(wave)+"，不計入平均與中位數。";
     } else if(ix.current && ix.current.recovered){
       $("compare").textContent = "已創新高，目前沒有進行中的下跌段（"+asofLine(ix.current)+"）。歷史平均 "+pctSigned(ix.avg_pct)+"、平均 "+daysNum(ix.avg_calendar_days)+" 天。";
     } else {
