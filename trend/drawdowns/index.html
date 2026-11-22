@@ -17,6 +17,8 @@
   --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
   --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
   --bar:#c45b68; --bar-soft:#8a4a55; --now:#f2b552; --avg:#8fa6d8;
+  --deep-a:#5974C1; --deep-b:#87A3ED; --shallow-a:#3E4A66; --shallow-b:#56668C;
+  --tick:#F15E5D; --neutral:#56668C;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -99,6 +101,69 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
 .sw.soft{background:var(--bar-soft)}
 .sw.now{background:var(--now)}
 .sw.avg{width:16px;height:0;border-top:2px dashed var(--avg)}
+.sw.deep{background:linear-gradient(90deg,var(--deep-a),var(--deep-b));border-radius:99px}
+.sw.shallow{background:linear-gradient(90deg,var(--shallow-a),var(--shallow-b));border-radius:99px}
+.sw.neutral{background:var(--neutral);border-radius:99px}
+.sw.tick{width:2px;height:14px;border-radius:1px;background:var(--tick);box-shadow:0 0 4px rgba(241,94,93,.45)}
+.dd-scale-hint{margin:0 0 10px;color:var(--muted);font-size:12px}
+.dd-now{background:#241c0c;border:1.5px solid #5c4b1f;border-radius:12px;box-shadow:inset 4px 0 0 #f5b83d;padding:12px 12px 10px;margin:0 0 12px}
+.dd-now-hd{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 10px;margin:0 0 4px}
+.dd-now-hd .ttl{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:18px;margin:0}
+.dd-now-hd .asof{color:var(--muted);font-size:12px;font-weight:400}
+.dd-now-dates{margin:0 0 8px;color:var(--muted);font-size:12px}
+.dd-now-grid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.dd-now-grid > div{padding:6px 8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
+.dd-now-grid .k{color:var(--muted);font-size:12px;margin:0 0 2px}
+.dd-now-grid .v{font-family:var(--serif);font-weight:700;font-size:20px;line-height:1.2;color:var(--navy);margin:0;font-variant-numeric:tabular-nums}
+.dd-now-grid .v.pct{font-weight:900;font-size:clamp(26px,7vw,34px);color:var(--amber)}
+.dd-now-grid .s{color:var(--muted);font-size:12px;margin:3px 0 0;font-variant-numeric:tabular-nums}
+.dd-now .ok{font-family:var(--serif);font-weight:900;color:var(--green);font-size:clamp(22px,5vw,30px);margin:6px 0 4px}
+.dd-now .dd-rank{margin:8px 0 0;padding-top:8px;border-top:1px dashed var(--line)}
+.dd-now .nb-rank{font-size:13px;margin:0 0 4px;color:var(--ink);font-family:var(--sans);font-weight:700}
+.dd-now .nb-rank .hint{display:inline;font-weight:400;color:var(--muted);font-size:12px;margin-left:4px}
+.dd-now .nb-cmp{font-size:12.5px}
+.dd-now .nb-cmp li{margin:0 0 3px}
+.dd-now .nb-warn{margin:4px 0 0;font-size:11.5px}
+.dd-now > .asof{color:var(--muted);font-weight:400}
+@media (min-width:720px){
+  .dd-now-grid{grid-template-columns:1.1fr 1.2fr .9fr 1fr}
+}
+.sum .d,.dd-now .d{color:var(--muted);font-size:12px;line-height:1.55;margin:6px 0 0}
+.dd-now > .asof{color:var(--muted);font-size:12px;font-weight:400;line-height:1.5;margin:6px 0 0}
+.dd-now > .asof span{display:block}
+.dd-axis{position:relative;height:16px;margin:2px 0 4px;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.dd-axis span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.dd-axis span:nth-child(1){left:0;transform:none}
+.dd-axis span:nth-child(2){left:20%}
+.dd-axis span:nth-child(3){left:40%}
+.dd-axis span:nth-child(4){left:60%}
+.dd-axis span:nth-child(5){left:80%}
+.dd-axis span:nth-child(6){left:auto;right:0;transform:none}
+.dd-list{list-style:none;margin:0;padding:0}
+.dd-row{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;grid-template-areas:"num name pct" ". meta meta" "track track track";column-gap:6px;row-gap:1px;padding:10px 8px 12px;margin:0}
+.dd-row + .dd-row{margin-top:2px}
+.dd-num{grid-area:num;color:var(--amber);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;padding-top:2px}
+.dd-name{grid-area:name;color:var(--ink);font-size:15px;font-weight:600;line-height:1.4;text-wrap:pretty;overflow-wrap:anywhere}
+.dd-pct{grid-area:pct;font-size:16px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;line-height:1.3;align-self:start;padding-top:1px}
+.dd-row.deep .dd-pct{color:#E8EEFC}
+.dd-row.shallow .dd-pct,.dd-row.neutral .dd-pct{color:#AAB6CF}
+.dd-row.now .dd-pct{color:var(--amber)}
+.dd-meta{grid-area:meta;color:var(--muted);font-size:12px;line-height:1.45;margin-top:1px}
+.dd-days{display:none;grid-area:days;color:var(--muted);font-size:12px;white-space:nowrap;align-self:start;padding-top:3px;font-variant-numeric:tabular-nums}
+.dd-track{grid-area:track;position:relative;height:8px;border-radius:4px;background:var(--bg);margin-top:8px}
+.dd-track::before{content:"";position:absolute;inset:-3px 0;background-image:linear-gradient(var(--line),var(--line)),linear-gradient(var(--line),var(--line)),linear-gradient(var(--line),var(--line)),linear-gradient(var(--line),var(--line));background-size:1px 100%;background-repeat:no-repeat;background-position:20% 0,40% 0,60% 0,80% 0;pointer-events:none;z-index:0}
+.dd-fill{position:absolute;left:0;top:0;height:8px;border-radius:4px;min-width:2px;z-index:1}
+.dd-row.deep .dd-fill{background:linear-gradient(90deg,var(--deep-a),var(--deep-b))}
+.dd-row.shallow .dd-fill{background:linear-gradient(90deg,var(--shallow-a),var(--shallow-b))}
+.dd-row.neutral .dd-fill{background:var(--neutral)}
+.dd-row.now .dd-fill{background:var(--now)}
+.dd-tick{position:absolute;top:-5px;width:2px;height:18px;background:var(--tick);border-radius:1px;transform:translateX(-50%);box-shadow:0 0 6px rgba(241,94,93,.55);z-index:2;pointer-events:none}
+.dd-row.now{background:rgba(242,181,82,.08);box-shadow:inset 3px 0 0 var(--now);border-radius:8px;padding-left:11px}
+@media (min-width:640px){
+  .dd-row{grid-template-columns:2.2em minmax(0,1fr) auto auto;grid-template-areas:"num name days pct" ". meta days pct" "track track track track";column-gap:10px}
+  .dd-days{display:block}
+  .dd-days-m{display:none}
+}
 /* ---- 跌段與反彈對照（新區塊） ---- */
 #rebound{--reb:#00838f;--reb-ink:#5fd0da;border-top:1px solid var(--line);padding-top:24px}
 #rebound .subj{background:#10262b;border:1px solid #1f5a61;border-radius:10px;padding:10px 12px;margin:0 0 12px;color:var(--ink);font-size:14px;line-height:1.65}
@@ -164,18 +229,21 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
   <p class="take" id="compare"></p>
   <p class="take" id="take-bars"></p>
   <p class="note" id="yahoo-note" hidden></p>
-  <div class="card">
-    <ul class="leg">
-      <li><span class="sw"></span>跌幅達 20% 以上</li>
-      <li><span class="sw soft"></span>跌幅不到 20%</li>
-      <li><span class="sw avg"></span>平均跌幅</li>
-      <li><span class="sw now"></span>現在本波下跌（黃底列，本站日線自動計算，不計入平均）</li>
+  <div class="card dd-card">
+    <div id="dd-now"></div>
+    <ul class="leg" id="dd-leg">
+      <li><span class="sw tick"></span>本波跌到這裡</li>
+      <li><span class="sw deep"></span>跌得比本波深</li>
+      <li><span class="sw shallow"></span>比本波淺</li>
+      <li><span class="sw now"></span>本波（進行中）</li>
     </ul>
     <div class="sort" id="sort">
       <button type="button" data-sort="size" class="on">依跌幅（深的在上）</button>
       <button type="button" data-sort="time">依時間（舊的在上）</button>
     </div>
-    <div class="chart" id="bars" role="img" aria-label="各次下跌的跌幅橫條圖"></div>
+    <p class="dd-scale-hint">條長固定以 0%～−100% 為尺，越長跌越深。</p>
+    <div id="bars" class="dd-bars" role="region" aria-label="各次下跌的跌幅比較"></div>
+    <p class="note" id="dd-fn"></p>
   </div>
   <p class="take" id="take-time"></p>
   <div class="card">
@@ -487,17 +555,6 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     html += card("平均跌幅", pctSigned(ix.avg_pct), "neg", "", "平均 "+daysNum(ix.avg_calendar_days)+" 天／"+daysNum(ix.avg_trading_days)+" 個交易日（不含本波）");
     html += card("中位數跌幅", pctSigned(ix.median_pct), "neg", "", "中位數 "+daysNum(ix.median_calendar_days)+" 天／"+daysNum(ix.median_trading_days)+" 個交易日");
     html += card("跌超過 20%", sev + " 次");
-    var cur = ix.current;
-    if(wave){
-      html += '<div class="card nowbox"><p class="k">現在本波下跌<span class="pill-now">進行中</span></p><p class="v">'+pctSigned(wave.change_pct,2)+'</p>'
-        + '<p class="d">'+esc(wave.period)+"，跌了 "+wave.calendar_days+" 天（"+wave.trading_days+" 個交易日）。結束日是低點日；不計入左邊的平均與中位數。</p>"
-        + rankBoxHtml(rankOf(ix))
-        + '<p class="asof">'+asofHtml(wave)+'</p></div>';
-    } else if(cur && cur.recovered){
-      html += '<div class="card nowbox"><p class="k">現在本波下跌</p><p class="v ok">已創新高</p>'
-        + '<p class="d">目前沒有進行中的下跌段（最高點 '+isoToYmd(cur.high_date)+'）。</p>'
-        + '<p class="asof">'+asofHtml(cur)+'</p></div>';
-    }
     $("sum").innerHTML = html;
   }
 
@@ -505,136 +562,136 @@ footer{border-top:3px double var(--edge);padding-top:18px;color:var(--muted);fon
     return orderedEvents(ix, sortBy);
   }
 
+  function shownAbsPct(x){
+    return Math.round(Math.abs(x) * 10000) / 100;
+  }
+  function periodText(e){
+    if(e.period) return String(e.period).replace("~", " ～ ");
+    if(e.start_date && e.end_date) return isoToYmd(e.start_date) + " ～ " + isoToYmd(e.end_date);
+    return "";
+  }
+  function breakName(s){
+    return esc(s).replace(/[、，]/g, function(ch){ return ch + "<wbr>"; });
+  }
+  function seqLabel(e, isNow){
+    if(isNow) return "本";
+    var n = e.seq;
+    if(typeof n === "number" && isFinite(n)) return (n < 10 ? "0" : "") + n;
+    var s = String(n == null ? "" : n);
+    if(/^\d+$/.test(s) && s.length < 2) return "0" + s;
+    return s || "—";
+  }
+  function barKind(e, now){
+    if(isCurrentEvent(e)) return "now";
+    if(!now || now.change_pct == null) return "neutral";
+    return shownAbsPct(e.change_pct) > shownAbsPct(now.change_pct) ? "deep" : "shallow";
+  }
+  function axisHtml(){
+    var marks = ["0%","−20%","−40%","−60%","−80%","−100%"];
+    var h = '<div class="dd-axis" aria-hidden="true">';
+    var i;
+    for(i=0;i<marks.length;i++) h += "<span>"+marks[i]+"</span>";
+    return h + "</div>";
+  }
+  function paintNowCard(ix, now){
+    var box = $("dd-now");
+    if(!box) return;
+    var cur = ix && ix.current;
+    if(now){
+      var h = '<div class="dd-now">';
+      h += '<div class="dd-now-hd"><p class="ttl">本波<span class="pill-now">進行中</span></p><span class="asof">截至 '+esc(isoToYmd(now.asof || now.end_date))+'</span></div>';
+      h += '<p class="dd-now-dates">'+esc(periodText(now))+'</p>';
+      h += '<div class="dd-now-grid">';
+      h += '<div><p class="k">跌幅</p><p class="v pct">'+pctSigned(now.change_pct,2)+'</p><p class="s">下跌 '+pts(Math.abs(now.change_pts))+' 點</p></div>';
+      h += '<div><p class="k">歷時</p><p class="v">'+daysNum(now.calendar_days)+' 天</p><p class="s">'+daysNum(now.trading_days)+' 個交易日</p></div>';
+      h += '<div><p class="k">高點</p><p class="v">'+pts(now.start_px)+'</p></div>';
+      h += '<div><p class="k">低點</p><p class="v">'+pts(now.end_px)+'</p></div>';
+      h += "</div>";
+      var rk = rankOf(ix);
+      if(rk) h += '<div class="dd-rank">'+rankBoxHtml(rankOf(ix))+"</div>";
+      if(now.source_label) h += '<p class="asof"><span>'+esc(now.source_label)+"</span></p>";
+      h += "</div>";
+      box.innerHTML = h;
+      return;
+    }
+    if(cur && cur.recovered){
+      box.innerHTML = '<div class="dd-now"><div class="dd-now-hd"><p class="ttl">本波</p></div><p class="ok">已創新高</p><p class="d">目前沒有進行中的下跌段'+(cur.high_date?("（最高點 "+esc(isoToYmd(cur.high_date))+"）"):"")+'。</p><p class="asof">'+asofHtml(cur)+"</p></div>";
+      return;
+    }
+    box.innerHTML = "";
+  }
+  function paintLegend(now){
+    var box = $("dd-leg");
+    if(!box) return;
+    if(now){
+      box.innerHTML = '<li><span class="sw tick"></span>本波跌到這裡</li>'
+        + '<li><span class="sw deep"></span>跌得比本波深</li>'
+        + '<li><span class="sw shallow"></span>比本波淺</li>'
+        + '<li><span class="sw now"></span>本波（進行中）</li>';
+    } else {
+      box.innerHTML = '<li><span class="sw neutral"></span>歷次下跌</li>'
+        + '<li class="note" style="display:block;width:100%">本波已創新高，目前沒有進行中的下跌可以比較。</li>';
+    }
+  }
+  function paintFootnote(ix, now){
+    var box = $("dd-fn");
+    if(!box) return;
+    var asof = (now && now.asof) || (ix.current && ix.current.asof);
+    var t = "跌幅用盤中最高價到盤中最低價計算，歷時是日曆天。歷史各段來自使用者提供的 Excel（TradingView 日線）。本波由本站日線自動計算（台指用證交所、美股用 Yahoo），從上一段歷史低點之後的最高點起算";
+    if(asof) t += "，資料截至 " + isoToYmd(asof);
+    t += "；結束日是低點日，之後如果再創新低，數字會跟著變。本波不計入平均與中位數。過去的跌幅不能預測未來，不是投資建議。";
+    box.textContent = t;
+  }
+
   function paintBars(ix, now){
     var box = $("bars");
     box.innerHTML = "";
+    paintNowCard(ix, now);
+    paintLegend(now);
+    paintFootnote(ix, now);
     var ev = ordered(ix);
-    var W = Math.max(300, Math.round(box.clientWidth || 680));
-    var top = 8, mB = 28;
     var hasNow = now && now.change_pct != null;
-    var deepest = ev[0] ? ev.reduce(function(m,e){return Math.min(m,e.change_pct);},0) : -0.2;
-    if(hasNow) deepest = Math.min(deepest, now.change_pct);
-    deepest = Math.min(deepest, ix.avg_pct, -0.2);
-    var axisMin = Math.floor(deepest*10 - 0.01)/10; // e.g. -0.9
-    var barX0 = 8, barX1 = W - 8;
-    var x = function(p){ return barX0 + (barX1-barX0) * (p / axisMin); }; // p negative
-    var colBar = cssVar("--bar"), colSoft = cssVar("--bar-soft"), colNow = cssVar("--now"), colAvg = cssVar("--avg");
-    var maxTitle = Math.max(120, W - barX0 - 8);
-
-    function measure(s, size, weight){
-      try{
-        if(!measure.ctx) measure.ctx = document.createElement("canvas").getContext("2d");
-        measure.ctx.font = (weight||"400")+" "+size+'px "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif';
-        return measure.ctx.measureText(s).width;
-      }catch(err){
-        var w=0, unit = (weight==="700"?size*1.05:size);
-        for(var i=0;i<s.length;i++) w += s.charCodeAt(i)>127 ? unit : unit*0.62;
-        return w;
-      }
-    }
-    function wrapText(s, size, weight, maxW){
-      var lines=[], i=0;
-      while(i<s.length){
-        var j=i+1;
-        while(j<=s.length && measure(s.slice(i,j), size, weight)<=maxW) j++;
-        j--;
-        if(j<=i) j=i+1;
-        if(j<s.length){
-          var k=j;
-          while(k>i+1 && "，、。；, ".indexOf(s.charAt(k-1))<0) k--;
-          if(k>i+1) j=k;
-        }
-        lines.push(s.slice(i,j));
-        i=j;
-      }
-      return lines.length?lines:[s];
-    }
-    // 標題：事件名（期間）；期間用全形括號、略小略淡。太長就自然換行。
-    function titleLines(name, period, weight){
-      var dateStr = "（" + period + "）";
-      var dateW = measure(dateStr, 11, "400");
-      var chunks = wrapText(name, 13, weight, maxTitle);
-      var last = chunks[chunks.length-1];
-      var lines = chunks.slice(0,-1).map(function(n){ return {name:n}; });
-      if(measure(last, 13, weight)+dateW <= maxTitle){
-        lines.push({name:last, date:dateStr});
-      } else {
-        lines.push({name:last});
-        lines.push({date:dateStr});
-      }
-      return lines;
-    }
-    function rowHFor(title){ return 52 + Math.max(0, title.length-1)*16; }
-
-    var info = rankOf(ix);
-    var items = ev.map(function(e){
+    var tickAt = hasNow ? shownAbsPct(now.change_pct) : null;
+    var rk = hasNow ? rankOf(ix) : null;
+    var html = axisHtml();
+    html += '<ol class="dd-list">';
+    ev.forEach(function(e){
       var isNow = isCurrentEvent(e);
-      var title = titleLines(isNow ? "現在本波下跌" : e.name, e.period, isNow ? "700" : "500");
-      var base = pctSigned(e.change_pct) + " · " + dur(e.calendar_days);
-      var sub = base, sub2 = isNow ? "進行中，跌幅可能繼續擴大" : "";
-      if(isNow && info){
-        var combined = "第 " + info.rank + "／" + info.total + " 名 · " + base;
-        if(measure(combined, 12, "700") <= maxTitle) sub = combined;
-        else {
-          sub = "第 " + info.rank + "／" + info.total + " 名 · " + pctSigned(e.change_pct);
-          sub2 = dur(e.calendar_days) + " · 進行中，跌幅可能繼續擴大";
-        }
+      var kind = barKind(e, now);
+      var depth = shownAbsPct(e.change_pct);
+      var w = Math.min(100, depth);
+      var name = isNow ? "本波" : e.name;
+      var aria;
+      if(isNow) aria = "本波跌 " + depth.toFixed(2) + "%，進行中";
+      else if(kind === "deep") aria = "跌 " + depth.toFixed(2) + "%，比本波深";
+      else if(kind === "shallow") aria = "跌 " + depth.toFixed(2) + "%，比本波淺";
+      else aria = "跌 " + depth.toFixed(2) + "%";
+      var meta;
+      if(isNow){
+        var until = now.asof ? isoToYmd(now.asof) : "";
+        meta = esc(isoToYmd(e.start_date) + " ～ 進行中") + (until ? "・截至 " + esc(until) : "") + '<span class="dd-days-m">・' + daysNum(e.calendar_days) + " 天</span>";
+      } else {
+        meta = esc(periodText(e)) + '<span class="dd-days-m">・' + daysNum(e.calendar_days) + " 天</span>";
       }
-      return {
-        title:title,
-        sub:sub,
-        sub2:sub2,
-        val:e.change_pct, color:isNow?colNow:(e.severe?colBar:colSoft), isNow:isNow,
-        h:rowHFor(title) + (isNow?16:0)
-      };
+      var pill = "";
+      if(isNow){
+        pill = '<span class="pill-now">進行中</span>';
+        if(sortBy === "size" && rk) pill += '<span class="pill-now">第 ' + rk.rank + "／共 " + rk.total + " 名</span>";
+      }
+      html += '<li class="dd-row ' + kind + '">';
+      html += '<span class="dd-num">' + esc(seqLabel(e, isNow)) + "</span>";
+      html += '<span class="dd-name">' + (isNow ? "本波" : breakName(name)) + pill + "</span>";
+      html += '<span class="dd-days">' + daysNum(e.calendar_days) + " 天</span>";
+      html += '<span class="dd-pct">' + pctSigned(e.change_pct, 2) + "</span>";
+      html += '<span class="dd-meta">' + meta + "</span>";
+      html += '<div class="dd-track" role="img" aria-label="'+esc(aria)+'">';
+      html += '<span class="dd-fill" style="width:'+w+'%"></span>';
+      if(tickAt != null) html += '<span class="dd-tick" style="left:'+tickAt+'%"></span>';
+      html += "</div></li>";
     });
-    var rowsH = 0;
-    items.forEach(function(it){ rowsH += it.h; });
-    var H = top + rowsH + mB;
-    var svg = el("svg", {viewBox:"0 0 "+W+" "+H, width:W, height:H, "aria-hidden":"true"});
-
-    // avg line
-    var xa = x(ix.avg_pct);
-    svg.appendChild(el("line", {x1:xa,x2:xa,y1:top-2,y2:top+rowsH-6, stroke:colAvg, "stroke-width":1.5, "stroke-dasharray":"5 4"}));
-    svg.appendChild(el("text", {x:Math.min(W-4, xa+4), y:H-8, "font-size":11, fill:colAvg}, "平均 "+pctSigned(ix.avg_pct)));
-
-    function row(y, it){
-      if(it.isNow){
-        svg.appendChild(el("rect", {x:0, y:y-4, width:W, height:it.h, rx:6, fill:"rgba(245,184,61,0.14)"}));
-        svg.appendChild(el("rect", {x:0, y:y-4, width:4, height:it.h, fill:colNow}));
-      }
-      var t = el("text", {x:barX0, y:y+14, "font-size":13, fill:"#e8edf5", "font-weight": it.isNow?"700":"500"});
-      it.title.forEach(function(line, j){
-        if(line.name){
-          t.appendChild(el("tspan", {x:barX0, dy: j===0?0:16}, line.name));
-          if(line.date) t.appendChild(el("tspan", {"font-size":"11", fill:"#a3aec0", "font-weight":"400"}, line.date));
-        } else if(line.date){
-          t.appendChild(el("tspan", {x:barX0, dy: j===0?0:16, "font-size":"11", fill:"#a3aec0", "font-weight":"400"}, line.date));
-        }
-      });
-      svg.appendChild(t);
-      var subY = y + 30 + Math.max(0, it.title.length-1)*16;
-      svg.appendChild(el("text", {x:barX0, y:subY, "font-size":12, fill: it.isNow?colNow:"#a3aec0", "font-weight": it.isNow?"700":"400"}, it.sub));
-      if(it.sub2){
-        svg.appendChild(el("text", {x:barX0, y:subY+14, "font-size":11, fill:colNow, "font-weight":"700"}, it.sub2));
-      }
-      var w = Math.max(2, x(it.val) - barX0);
-      var h = 10, yy = subY + 4 + (it.sub2?14:0);
-      svg.appendChild(el("rect", {x:barX0, y:yy, width:w, height:h, rx:2, fill:it.color}));
-      if(it.isNow && barX0 + w + 14 < W-8){
-        svg.appendChild(el("rect", {x:barX0+w+2, y:yy, width:10, height:h, rx:2, fill:"none", stroke:colNow, "stroke-width":1.2, "stroke-dasharray":"3 2"}));
-      }
-      var lx = barX0 + w + 6 + (it.isNow?12:0);
-      var anchor = "start";
-      if(lx + 54 > W-4){ lx = barX0 + w - 6; anchor = "end"; }
-      svg.appendChild(el("text", {x:lx, y:yy+h-1, "font-size":13, "font-weight":"700", fill:it.color, "text-anchor":anchor}, pctSigned(it.val)));
-    }
-    var y = top;
-    items.forEach(function(it){
-      row(y, it);
-      y += it.h;
-    });
-    box.appendChild(svg);
+    html += "</ol>";
+    if(ev.length >= 12) html += axisHtml();
+    box.innerHTML = html;
   }
 
   function paintTimeline(ix, now){
