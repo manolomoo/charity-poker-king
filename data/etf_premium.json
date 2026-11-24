@@ -2,7 +2,7 @@
   "version": 1,
   "source": "臺灣證券交易所 申贖資訊及即時淨值揭露專區（彙整各投信預估淨值）",
   "source_url": "https://mis.twse.com.tw/stock/data/all_etf.txt",
-  "note": "交易時段約每 10 分鐘由 GitHub Actions 更新的快取，不是瀏覽器直連即時報價。",
+  "note": "交易時段約每小時由 GitHub Actions 更新的快取（排程可能延遲），不是瀏覽器直連即時報價。",
   "code_aliases": {
     "00630L": "00631L"
   },

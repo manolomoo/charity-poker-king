@@ -168,7 +168,7 @@ def test_home_js_codes_labels_and_sources():
     assert "盤中快取" in js
     assert "mis.twse.com.tw" not in js  # 不直連（無 CORS），也不走第三方 proxy
     assert "corsproxy" not in h and "allorigins" not in h
-    assert "臺灣證券交易所彙整各投信預估淨值；本站交易時段約每 10 分鐘更新快取" in h
+    assert "臺灣證券交易所彙整各投信預估淨值；本站交易時段約每小時更新（GitHub 排程可能延遲）" in h
     # 同時抓 raw 與同源，用較新的 fetched_at；網路成功時不優先用 localStorage
     assert "Promise.all([settle(get(RAW)), settle(get(LOCAL))])" in js
     assert "fetchedMs" in js
@@ -176,7 +176,7 @@ def test_home_js_codes_labels_and_sources():
     assert 'addEventListener("pageshow"' in js and "e.persisted" in js
     assert 'addEventListener("visibilitychange"' in js
     assert "visibilityState === \"visible\"" in js
-    assert "POLL_MS = 150000" in js
+    assert "POLL_MS = 600000" in js
     assert 'id="etfp-refresh"' in h and ">更新</button>" in h
     assert "load({ force: true })" in js
     assert "更新中…" in js

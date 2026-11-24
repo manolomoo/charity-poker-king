@@ -187,7 +187,7 @@ def _base(now: dt.datetime) -> dict:
         "version": 1,
         "source": SOURCE,
         "source_url": URL,
-        "note": "交易時段約每 10 分鐘由 GitHub Actions 更新的快取，不是瀏覽器直連即時報價。",
+        "note": "交易時段約每小時由 GitHub Actions 更新的快取（排程可能延遲），不是瀏覽器直連即時報價。",
         "code_aliases": dict(CODE_ALIASES),
         "attempted_at": now.isoformat(),
     }

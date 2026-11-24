@@ -237,7 +237,7 @@ footer .more a:hover{color:var(--accent)}
       <thead><tr><th scope="col">代號</th><th scope="col">市價</th><th scope="col">預估淨值</th><th scope="col">溢折價</th></tr></thead>
       <tbody id="etfp-rows"></tbody>
     </table>
-    <p class="etfp-src">臺灣證券交易所彙整各投信預估淨值；本站交易時段約每 10 分鐘更新快取。</p>
+    <p class="etfp-src">臺灣證券交易所彙整各投信預估淨值；本站交易時段約每小時更新（GitHub 排程可能延遲）。</p>
   </section>
 
   <section aria-label="指數走勢">
@@ -315,7 +315,7 @@ footer .more a:hover{color:var(--accent)}
   var RAW = "https://raw.githubusercontent.com/manolomoo/charity-poker-king/main/data/etf_premium.json";
   var LOCAL = "data/etf_premium.json";
   var KEY = "etfPremiumLast";
-  var POLL_MS = 150000; // 盤中約每 2.5 分鐘再抓一次快取
+  var POLL_MS = 600000; // 盤中約每 10 分鐘再抓一次本站快取（上游約每小時才更新）
   var DEBOUNCE_MS = 10000;
   // 00630L 不是上市代號，對應元大台灣50正2 00631L
   var CODES = [["0050","元大台灣50"],["00631L","元大台灣50正2"],["00662","富邦NASDAQ"],["00670L","富邦NASDAQ正2"],["00830","國泰費半"],["00646","元大S&P500"],["00647L","元大S&P500正2"]];
