@@ -167,6 +167,8 @@ footer .more a:hover{color:var(--accent)}
 .etfp-refresh:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .etfp-refresh:disabled{opacity:.55}
 .etfp .etfp-when{margin:2px 0 6px; color:var(--mute); font-size:12px; line-height:1.5}
+.etfp .etfp-fb{margin:-2px 0 6px; color:var(--accent); font-size:12px; line-height:1.5}
+.etfp .etfp-fb:empty{display:none}
 .etfp .etfp-when .old{color:var(--near)}
 .etfp table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:14px; font-variant-numeric:tabular-nums}
 .etfp th{color:var(--mute); font-size:11px; font-weight:500; text-align:right; padding:5px 8px; border-bottom:1px solid var(--line)}
@@ -233,6 +235,7 @@ footer .more a:hover{color:var(--accent)}
       <button type="button" class="etfp-refresh" id="etfp-refresh" aria-label="重新抓取本站快取，不會向證交所即時連線">更新</button>
     </div>
     <p class="etfp-when" id="etfp-when">載入中…</p>
+    <p class="etfp-fb" id="etfp-fb" aria-live="polite"></p>
     <table>
       <thead><tr><th scope="col">代號</th><th scope="col">市價</th><th scope="col">預估淨值</th><th scope="col">溢折價</th></tr></thead>
       <tbody id="etfp-rows"></tbody>
@@ -397,7 +400,7 @@ footer .more a:hover{color:var(--accent)}
     var warn = "";
     if(offline) warn = "快取載不進來，顯示這台裝置上次看到的資料";
     else if(d && d.stale) warn = "上游暫時抓不到，沿用上次資料" + (fmt(d.attempted_at) ? "（最後嘗試 " + fmt(d.attempted_at) + "）" : "");
-    else if(inSession(now) && d && d.fetched_at && now - new Date(d.fetched_at) > 30*60e3)
+    else if(inSession(now) && d && d.fetched_at && now - new Date(d.fetched_at) > 75*60e3)
       warn = "快取已 " + Math.round((now - new Date(d.fetched_at))/60e3) + " 分鐘未更新";
     if(!dataTxt) warn = warn || "暫無資料";
     whenEl.innerHTML = esc(parts.join("．")) + (warn ? '<br><span class="old">' + esc(warn) + '</span>' : "");
@@ -410,23 +413,37 @@ footer .more a:hover{color:var(--accent)}
 
   function bust(url){ return url + (url.indexOf("?") >= 0 ? "&" : "?") + "t=" + Date.now(); }
 
+  var TIMEOUT_MS = 8000;
+  var FEEDBACK_MS = 2000;
+
+  // 不論 AbortController 在 iOS／App 內瀏覽器能不能真的中斷請求，
+  // 這個 Promise 一定在 TIMEOUT_MS 內結束，避免「更新中…」永遠卡著。
   function get(url){
-    var ctl = typeof AbortController === "function" ? new AbortController() : null;
-    var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 8000) : null;
-    return fetch(bust(url), {
-      cache:"no-store",
-      headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
-      signal: ctl ? ctl.signal : undefined
-    }).then(function(r){
-      if(timer) clearTimeout(timer);
-      if(!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    }).then(function(d){
-      if(!d || !Array.isArray(d.items)) throw new Error("bad data");
-      return d;
-    }, function(err){
-      if(timer) clearTimeout(timer);
-      throw err;
+    return new Promise(function(resolve, reject){
+      var settled = false;
+      var ctl = typeof AbortController === "function" ? new AbortController() : null;
+      var timer = setTimeout(function(){
+        if(ctl) try{ ctl.abort(); }catch(e){}
+        done(null, new Error("timeout"));
+      }, TIMEOUT_MS);
+      function done(val, err){
+        if(settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if(err) reject(err); else resolve(val);
+      }
+      var opts = { cache: "no-store" };
+      if(ctl) opts.signal = ctl.signal;
+      // 不送 CORS 非白名單標頭，避免對 raw.githubusercontent.com 觸發預檢而後一直掛住。
+      fetch(bust(url), opts).then(function(r){
+        if(!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      }).then(function(d){
+        if(!d || !Array.isArray(d.items)) throw new Error("bad data");
+        done(d);
+      }, function(err){
+        done(null, err || new Error("fetch failed"));
+      });
     });
   }
 
@@ -435,55 +452,130 @@ footer .more a:hover{color:var(--accent)}
 
   function settle(p){ return p.then(function(d){ return d; }, function(){ return null; }); }
 
-  function setBusy(on){
+  function setBtn(text, busy){
     if(!btn) return;
-    btn.disabled = !!on;
-    btn.setAttribute("aria-busy", on ? "true" : "false");
-    btn.textContent = on ? "更新中…" : "更新";
+    btn.disabled = !!busy;
+    btn.setAttribute("aria-busy", busy ? "true" : "false");
+    btn.textContent = text;
+  }
+
+  function fmtHm(iso){
+    var s = fmt(iso);
+    if(!s) return null;
+    var sp = s.lastIndexOf(" ");
+    return sp >= 0 ? s.slice(sp + 1) : s;
+  }
+  function nextHourIso(iso){
+    if(!iso) return null;
+    var d = new Date(iso);
+    if(isNaN(d.getTime())) return null;
+    return new Date(d.getTime() + 60 * 60e3).toISOString();
+  }
+
+  var feedbackTimer = null;
+  function clearFeedback(){
+    if(feedbackTimer){ clearTimeout(feedbackTimer); feedbackTimer = null; }
+    var n = document.getElementById("etfp-fb");
+    if(n) n.textContent = "";
+  }
+  function flash(shortTxt, detail){
+    clearFeedback();
+    setBtn(shortTxt, false);
+    var n = document.getElementById("etfp-fb");
+    if(n && detail) n.textContent = detail;
+    feedbackTimer = setTimeout(function(){
+      feedbackTimer = null;
+      setBtn("更新", false);
+      if(n) n.textContent = "";
+    }, FEEDBACK_MS);
   }
 
   var inFlight = null;
   var lastLoad = 0;
+  var shownFetchedMs = 0;
+  var pendingForce = false;
+  var lastApplied = null;
+
+  function applyData(d, offline){
+    lastApplied = d || null;
+    if(d && fetchedMs(d)) shownFetchedMs = fetchedMs(d);
+    if(d) render(d, offline);
+    else empty();
+  }
+
+  function feedbackAfterForce(d, wasNewer){
+    if(wasNewer){
+      flash("已更新", "已更新");
+      return;
+    }
+    var hm = fmtHm(d && d.fetched_at);
+    var nxt = fmtHm(nextHourIso(d && d.fetched_at));
+    if(hm && nxt) flash("已是最新", "已是最新（" + hm + "），下次約 " + nxt);
+    else flash("已是最新", "目前已是最新資料");
+  }
+
+  function finish(prevMs){
+    inFlight = null;
+    if(pendingForce){
+      pendingForce = false;
+      feedbackAfterForce(lastApplied, shownFetchedMs > prevMs);
+    } else {
+      setBtn("更新", false);
+    }
+  }
 
   // 同時抓 raw 與同源 JSON，用 fetched_at 較新的；只有網路都失敗才退回 localStorage。
   // 不觸發 GitHub Actions，只是再讀本站已經寫好的快取。
   function load(opts){
     opts = opts || {};
+    var force = !!opts.force;
     var now = Date.now();
-    if(!opts.force){
-      if(inFlight) return inFlight;
-      if(lastLoad && now - lastLoad < DEBOUNCE_MS) return Promise.resolve();
-    } else if(inFlight){
+    if(force) pendingForce = true;
+    if(inFlight){
+      if(force) setBtn("更新中…", true);
       return inFlight;
     }
+    if(!force && lastLoad && now - lastLoad < DEBOUNCE_MS) return Promise.resolve();
     lastLoad = now;
-    if(opts.force) setBusy(true);
+    if(force) setBtn("更新中…", true);
+    var prevMs = shownFetchedMs;
+
     inFlight = Promise.all([settle(get(RAW)), settle(get(LOCAL))]).then(function(pair){
       var net = newer(pair[0], pair[1]);
       var old = recall();
-      // 有網路副本時，只有 localStorage 的 fetched_at 更新才用它；否則一律用網路較新的那份
       if(net){
         if(old && fetchedMs(old) > fetchedMs(net)){
-          render(old, true);
+          applyData(old, true);
           return;
         }
         if(latestDataAt(net.items)) remember(net);
-        render(net, false);
+        applyData(net, false);
         return;
       }
-      if(old) render(old, true);
-      else empty();
+      if(old) applyData(old, true);
+      else applyData(null, false);
     }, function(){
       var old = recall();
-      if(old) render(old, true); else empty();
-    }).then(function(){
-      inFlight = null;
-      setBusy(false);
-    }, function(){
-      inFlight = null;
-      setBusy(false);
+      if(old) applyData(old, true);
+      else applyData(null, false);
     });
-    return inFlight;
+
+    // 雙保險：就算 then 鏈意外沒跑完，也不讓 in-flight 與按鈕一直卡住
+    var watchdog = setTimeout(function(){
+      if(inFlight){
+        inFlight = null;
+        pendingForce = false;
+        setBtn("更新", false);
+      }
+    }, TIMEOUT_MS + 2000);
+
+    return inFlight.then(function(){
+      clearTimeout(watchdog);
+      finish(prevMs);
+    }, function(){
+      clearTimeout(watchdog);
+      finish(prevMs);
+    });
   }
 
   load();

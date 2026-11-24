@@ -162,7 +162,7 @@ def test_home_js_codes_labels_and_sources():
     assert "暫無資料" in js
     assert "https://raw.githubusercontent.com/manolomoo/charity-poker-king/main/data/etf_premium.json" in js
     assert '"data/etf_premium.json"' in js
-    assert 'cache:"no-store"' in js
+    assert 'cache:"no-store"' in js.replace(" ", "")
     assert "localStorage" in js
     assert "非交易時段，以下為最近一次預估淨值" in js
     assert "盤中快取" in js
@@ -181,6 +181,37 @@ def test_home_js_codes_labels_and_sources():
     assert "load({ force: true })" in js
     assert "更新中…" in js
     assert "workflow_dispatch" not in js and "actions/workflows" not in js
+
+
+def test_home_refresh_timeout_and_feedback():
+    """更新鈕：逾時一定結束、finally 重置、已是最新／已更新回饋；過期警告改 75 分鐘。"""
+    h = _home()
+    i = h.find("ETF 溢折價：讀 GitHub Actions")
+    js = h[i:h.find("</script>", i)]
+    assert "TIMEOUT_MS = 8000" in js
+    assert "FEEDBACK_MS = 2000" in js
+    assert "AbortController" in js
+    # 獨立計時，不單靠 abort() 是否會 reject（iOS／App 內瀏覽器可能不會）
+    assert 'done(null, new Error("timeout"))' in js
+    assert "if(settled) return" in js
+    # 不送會觸發 CORS 預檢的自訂標頭
+    assert "Pragma" not in js
+    assert "Cache-Control" not in js
+    assert "headers:" not in js
+    # 按鈕與 in-flight 一定會清掉
+    assert "function finish(prevMs)" in js
+    assert "inFlight = null" in js
+    assert 'setBtn("更新", false)' in js
+    assert "TIMEOUT_MS + 2000" in js  # watchdog
+    # 回饋文案
+    assert 'flash("已更新"' in js
+    assert "已是最新（" in js
+    assert "下次約" in js
+    assert "目前已是最新資料" in js
+    assert 'id="etfp-fb"' in h
+    # 約每小時更新，43 分鐘不應再警告「未更新」
+    assert "75*60e3" in js
+    assert "30*60e3" not in js
 
 
 def test_home_css_uses_tokens():
