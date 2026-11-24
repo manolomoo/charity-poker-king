@@ -6,8 +6,8 @@
   "code_aliases": {
     "00630L": "00631L"
   },
-  "attempted_at": "2026-11-24T09:24:05+08:00",
-  "fetched_at": "2026-11-24T09:24:05+08:00",
+  "attempted_at": "2026-11-24T09:32:37+08:00",
+  "fetched_at": "2026-11-24T09:32:37+08:00",
   "stale": false,
   "error": null,
   "items": [
@@ -15,26 +15,26 @@
       "code": "00830",
       "short": "國泰費半",
       "name": "國泰費城半導體",
-      "price": 72.55,
+      "price": 72.25,
       "nav": 69.66,
-      "premium_pct": 4.15,
+      "premium_pct": 3.72,
       "prev_nav": 69.79,
       "data_date": "20261124",
-      "data_time": "09:23:45",
-      "data_at": "2026-11-24T09:23:45+08:00",
+      "data_time": "09:29:30",
+      "data_at": "2026-11-24T09:29:30+08:00",
       "ref_url": "https://www.cathaysite.com.tw/ETF/estimate"
     },
     {
       "code": "00662",
       "short": "富邦NASDAQ",
       "name": "富邦NASDAQ",
-      "price": 22.7,
-      "nav": 22.47,
-      "premium_pct": 1.02,
+      "price": 22.66,
+      "nav": 22.48,
+      "premium_pct": 0.8,
       "prev_nav": 22.55,
       "data_date": "20261124",
-      "data_time": "09:23:48",
-      "data_at": "2026-11-24T09:23:48+08:00",
+      "data_time": "09:31:57",
+      "data_at": "2026-11-24T09:31:57+08:00",
       "ref_url": "https://websys.fsit.com.tw/FubonETF/Trade/Estimate.aspx"
     },
     {
@@ -46,22 +46,35 @@
       "premium_pct": 1.24,
       "prev_nav": 22.23,
       "data_date": "20261124",
-      "data_time": "09:23:45",
-      "data_at": "2026-11-24T09:23:45+08:00",
+      "data_time": "09:31:30",
+      "data_at": "2026-11-24T09:31:30+08:00",
       "ref_url": "https://www.yuantaetfs.com/tradeInfo/INav"
     },
     {
       "code": "00670L",
       "short": "富邦NASDAQ正2",
       "name": "富邦NASDAQ正2",
-      "price": 160.3,
-      "nav": 159.66,
-      "premium_pct": 0.4,
+      "price": 159.75,
+      "nav": 159.55,
+      "premium_pct": 0.13,
       "prev_nav": 157.94,
       "data_date": "20261124",
-      "data_time": "09:23:48",
-      "data_at": "2026-11-24T09:23:48+08:00",
+      "data_time": "09:31:57",
+      "data_at": "2026-11-24T09:31:57+08:00",
       "ref_url": "https://websys.fsit.com.tw/FubonETF/Trade/Estimate.aspx"
+    },
+    {
+      "code": "00646",
+      "short": "元大S&P500",
+      "name": "元大S&P500",
+      "price": 75.35,
+      "nav": 74.84,
+      "premium_pct": 0.68,
+      "prev_nav": 74.84,
+      "data_date": "20261124",
+      "data_time": "09:31:30",
+      "data_at": "2026-11-24T09:31:30+08:00",
+      "ref_url": "https://www.yuantaetfs.com/tradeInfo/INav"
     }
   ]
 }

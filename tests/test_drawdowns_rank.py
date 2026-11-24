@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "trend" / "drawdowns" / "index.html"
 DATA = ROOT / "trend" / "drawdowns" / "drawdowns.json"
 
-# 名次與差距以原始 change_pct 計算後四捨五入到小數兩位；與 drawdowns.json 2026-11-20 資料對照。
+# 名次與差距以原始 change_pct 計算後四捨五入到小數兩位；與 drawdowns.json 目前資料對照（asof 2026-11-23；SOX 本波低點仍是 2026-11-20）。
 EXPECTED = {
     "SOX": {
         "rank": 4,
@@ -20,7 +20,7 @@ EXPECTED = {
         "next": "川普MAGA新政，關稅風暴席捲全球",
         "gap_prev": "5.55",
         "gap_next": "0.20",
-        "asof": "2026-11-20",
+        "asof": "2026-11-23",
     },
     "NDX": {
         "rank": 7,
@@ -29,7 +29,7 @@ EXPECTED = {
         "next": "中國上證股災、美國升息預期",
         "gap_prev": "2.88",
         "gap_next": "1.25",
-        "asof": "2026-11-20",
+        "asof": "2026-11-23",
     },
     "SPX": {
         "rank": 10,
@@ -38,16 +38,16 @@ EXPECTED = {
         "next": None,
         "gap_prev": "0.28",
         "gap_next": None,
-        "asof": "2026-11-20",
+        "asof": "2026-11-23",
     },
     "TWII": {
         "rank": 7,
         "total": 13,
         "prev": "川普MAGA新政，關稅風暴席捲全球",
         "next": "歐債危機、美債遭降評",
-        "gap_prev": "0.64",
-        "gap_next": "0.16",
-        "asof": "2026-11-20",
+        "gap_prev": "0.05",
+        "gap_next": "0.75",
+        "asof": "2026-11-23",
     },
 }
 
@@ -130,7 +130,7 @@ def test_sox_current_is_about_43_percent_fourth(payload):
     """使用者說 SOX 本波約 −43%、第四名：以 drawdowns.json 實際值核對，不捏造。"""
     sox = next(ix for ix in payload["indices"] if ix["id"] == "SOX")
     cur = sox["current"]
-    assert cur["asof"] == "2026-11-20"
+    assert cur["asof"] == "2026-11-23"
     assert cur["recovered"] is False
     # −43.08%（顯示兩位小數），不是以前的 −38.61%
     assert cur["change_pct"] == pytest.approx(-0.4307714142811232, rel=0, abs=1e-12)

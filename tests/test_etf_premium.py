@@ -21,7 +21,7 @@ import etf_premium as EP  # noqa: E402
 FIX = ROOT / "tests" / "fixtures" / "etf_premium" / "all_etf_small.json"
 HOME = ROOT / "home" / "index.html"
 WF = ROOT / ".github" / "workflows" / "etf-premium.yml"
-CODES = ["00830", "00662", "00631L", "00670L"]
+CODES = ["00830", "00662", "00631L", "00670L", "00646"]
 NOW = dt.datetime(2026, 11, 24, 9, 0, tzinfo=EP.TPE)
 
 
@@ -48,6 +48,9 @@ def test_parse_fixture_four_codes():
     assert by["00631L"]["price"] == 22.5 and by["00631L"]["nav"] == 25.76 and by["00631L"]["premium_pct"] == -12.66
     assert by["00631L"]["prev_nav"] == 22.23
     assert by["00631L"]["data_date"] == "20261124" and by["00631L"]["data_time"] == "08:53:00"
+    assert by["00646"]["name"] == "元大S&P500"
+    assert by["00646"]["price"] == 73.45 and by["00646"]["nav"] == 74.95 and by["00646"]["premium_pct"] == -2.0
+    assert by["00646"]["data_at"] == "2026-11-24T08:53:00+08:00"
     # 不相干的 0050 不進首頁
     assert "0050" not in by
 
