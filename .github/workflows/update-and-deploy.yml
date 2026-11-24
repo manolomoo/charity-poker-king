@@ -122,6 +122,32 @@ jobs:
         with:
           path: _site
 
+      # 上傳後立刻部署偶爾會報「No artifacts named github-pages」（GitHub 端還沒登記好 artifact），
+      # 所以失敗時等 30 秒再試，最多三次
       - name: 部署
-        id: deployment
+        id: deploy1
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+
+      - name: 等 30 秒再部署（第 2 次）
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 30
+
+      - name: 部署（第 2 次）
+        id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: 等 60 秒再部署（第 3 次）
+        if: steps.deploy1.outcome == 'failure' && steps.deploy2.outcome == 'failure'
+        run: sleep 60
+
+      - name: 部署（第 3 次）
+        id: deploy3
+        if: steps.deploy1.outcome == 'failure' && steps.deploy2.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+
+      - name: 部署網址
+        id: deployment
+        run: echo "page_url=${{ steps.deploy1.outputs.page_url || steps.deploy2.outputs.page_url || steps.deploy3.outputs.page_url }}" >> "$GITHUB_OUTPUT"

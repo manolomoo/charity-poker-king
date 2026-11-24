@@ -2,6 +2,9 @@
 
 這裡只記走勢頁與首頁圖表的資料與站務變動。11 項燈號的規則與門檻不在這裡，請看 `rules.md`。
 
+## 2026-11-25
+- 部署流程：deploy-pages 偶爾找不到剛上傳的 github-pages artifact 而失敗（11/24 三次），改成失敗時等 30／60 秒自動重試，最多三次。原因：避免收盤後資料已更新但網站沒部署。
+
 ## 2026-11-24 首頁「更新」鈕不再卡在「更新中…」（iPhone／App 內瀏覽器）
 
 - 使用者在 iPhone 內建瀏覽器按「更新」，鈕會一直停在「更新中…」，其實畫面上的 11:33／11:34 已是當時最新快取。根因是同時抓 raw.githubusercontent.com 與同源 JSON 時，有一邊（常見是跨網域 raw，加上自訂 `Cache-Control`／`Pragma` 可能觸發 CORS 預檢）請求掛住；只靠 `AbortController.abort()` 在部分 iOS／App 內 WebView 不會讓 `fetch` reject，`Promise.all` 就一直不結束，`inFlight` 與按鈕狀態也就沒機會重設。後續再按一次還會接到那條已掛住的 Promise。
