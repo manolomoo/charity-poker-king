@@ -21,7 +21,7 @@ import etf_premium as EP  # noqa: E402
 FIX = ROOT / "tests" / "fixtures" / "etf_premium" / "all_etf_small.json"
 HOME = ROOT / "home" / "index.html"
 WF = ROOT / ".github" / "workflows" / "etf-premium.yml"
-CODES = ["00830", "00662", "00631L", "00670L", "00646"]
+CODES = ["0050", "00631L", "00662", "00670L", "00830", "00646", "00647L"]
 NOW = dt.datetime(2026, 11, 24, 9, 0, tzinfo=EP.TPE)
 
 
@@ -34,7 +34,7 @@ def test_targets_use_00631l_not_00630l():
     assert EP.CODE_ALIASES == {"00630L": "00631L"}
 
 
-def test_parse_fixture_four_codes():
+def test_parse_fixture_listed_codes():
     d = EP.build_ok(EP.parse(_fixture()), NOW)
     by = {i["code"]: i for i in d["items"]}
     assert [i["code"] for i in d["items"]] == CODES
@@ -51,8 +51,12 @@ def test_parse_fixture_four_codes():
     assert by["00646"]["name"] == "元大S&P500"
     assert by["00646"]["price"] == 73.45 and by["00646"]["nav"] == 74.95 and by["00646"]["premium_pct"] == -2.0
     assert by["00646"]["data_at"] == "2026-11-24T08:53:00+08:00"
-    # 不相干的 0050 不進首頁
-    assert "0050" not in by
+    assert by["0050"]["name"] == "元大台灣50"
+    assert by["0050"]["price"] == 87.0 and by["0050"]["nav"] == 86.57 and by["0050"]["premium_pct"] == 0.5
+    assert by["00647L"]["name"] == "元大S&P500正2"
+    assert by["00647L"]["price"] == 119.0 and by["00647L"]["nav"] == 124.37 and by["00647L"]["premium_pct"] == -4.32
+    # 證交所名單沒有費城半導體正 2 倍，首頁不列這一列
+    assert all("費城" not in (s or "") or "正2" not in (s or "") for _, s in EP.TARGETS)
 
 
 def test_missing_code_and_fields_are_null_not_zero():
@@ -95,7 +99,8 @@ def test_fetch_failure_keeps_old_values_and_marks_stale(tmp_path):
     assert d["attempted_at"]
     assert d["items"] == good["items"]
     saved = json.loads(out.read_text(encoding="utf-8"))
-    assert saved["stale"] is True and saved["items"][2]["premium_pct"] == -12.66
+    by = {i["code"]: i for i in saved["items"]}
+    assert saved["stale"] is True and by["00631L"]["premium_pct"] == -12.66
 
 
 def test_fetch_failure_without_old_file_writes_null_shell(tmp_path):
