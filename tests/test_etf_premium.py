@@ -161,6 +161,18 @@ def test_home_js_codes_labels_and_sources():
     assert "mis.twse.com.tw" not in js  # 不直連（無 CORS），也不走第三方 proxy
     assert "corsproxy" not in h and "allorigins" not in h
     assert "臺灣證券交易所彙整各投信預估淨值；本站交易時段約每 10 分鐘更新快取" in h
+    # 同時抓 raw 與同源，用較新的 fetched_at；網路成功時不優先用 localStorage
+    assert "Promise.all([settle(get(RAW)), settle(get(LOCAL))])" in js
+    assert "fetchedMs" in js
+    assert "if(old && fetchedMs(old) > fetchedMs(net))" in js
+    assert 'addEventListener("pageshow"' in js and "e.persisted" in js
+    assert 'addEventListener("visibilitychange"' in js
+    assert "visibilityState === \"visible\"" in js
+    assert "POLL_MS = 150000" in js
+    assert 'id="etfp-refresh"' in h and ">更新</button>" in h
+    assert "load({ force: true })" in js
+    assert "更新中…" in js
+    assert "workflow_dispatch" not in js and "actions/workflows" not in js
 
 
 def test_home_css_uses_tokens():
@@ -168,6 +180,8 @@ def test_home_css_uses_tokens():
     style = h[h.find("<style>"):h.find("</style>")]
     assert ".etfp .pm.prem{color:var(--warn)}" in style
     assert ".etfp .pm.disc{color:var(--up)}" in style
+    assert "min-height:44px" in style  # 更新鈕拇指可點
+    assert ".etfp-head{display:flex" in style
 
 
 # ---------- workflow ----------
@@ -175,7 +189,8 @@ def test_home_css_uses_tokens():
 def test_workflow_schedule_and_scope():
     wf = WF.read_text(encoding="utf-8")
     crons = re.findall(r'cron:\s*"([^"]+)"', wf)
-    assert crons == ["0,10,20,30,40,50 1-4 * * 1-5", "0,10,20,30 5 * * 1-5", "0 6 * * 1-5"]
+    # 已於 ac2faff 改為每小時 7/17/27… 分，避開整點尖峰
+    assert crons == ["7,17,27,37,47,57 1-4 * * 1-5", "7,17,27 5 * * 1-5", "7 6 * * 1-5"]
     assert "workflow_dispatch" in wf
     assert "python scripts/etf_premium.py" in wf
     assert "git add data/etf_premium.json" in wf

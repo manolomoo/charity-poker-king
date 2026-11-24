@@ -155,7 +155,17 @@ footer .more a:hover{color:var(--accent)}
 .pe-miss{margin:8px 2px;color:var(--mute);font-size:13px}
 
 /* ETF 溢折價：小表，文字標溢價／折價，顏色只是輔助 */
+.etfp-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0}
 .etfp h2{margin:0; color:var(--head); font-size:15px; font-weight:700; letter-spacing:.04em}
+.etfp-refresh{
+  flex:0 0 auto; appearance:none; -webkit-appearance:none;
+  margin:0; border:1px solid var(--line); background:var(--card); color:var(--head);
+  font:inherit; font-size:14px; font-weight:600; letter-spacing:.04em;
+  border-radius:999px; min-height:44px; min-width:64px; padding:0 16px; line-height:1;
+}
+.etfp-refresh:active{border-color:var(--accent); color:var(--accent)}
+.etfp-refresh:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.etfp-refresh:disabled{opacity:.55}
 .etfp .etfp-when{margin:2px 0 6px; color:var(--mute); font-size:12px; line-height:1.5}
 .etfp .etfp-when .old{color:var(--near)}
 .etfp table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:14px; font-variant-numeric:tabular-nums}
@@ -218,7 +228,10 @@ footer .more a:hover{color:var(--accent)}
   </section>
 
   <section id="etf-premium" class="etfp" aria-label="ETF 溢折價">
-    <h2>ETF 溢折價</h2>
+    <div class="etfp-head">
+      <h2>ETF 溢折價</h2>
+      <button type="button" class="etfp-refresh" id="etfp-refresh" aria-label="重新抓取本站快取，不會向證交所即時連線">更新</button>
+    </div>
     <p class="etfp-when" id="etfp-when">載入中…</p>
     <table>
       <thead><tr><th scope="col">代號</th><th scope="col">市價</th><th scope="col">預估淨值</th><th scope="col">溢折價</th></tr></thead>
@@ -302,11 +315,14 @@ footer .more a:hover{color:var(--accent)}
   var RAW = "https://raw.githubusercontent.com/manolomoo/charity-poker-king/main/data/etf_premium.json";
   var LOCAL = "data/etf_premium.json";
   var KEY = "etfPremiumLast";
+  var POLL_MS = 150000; // 盤中約每 2.5 分鐘再抓一次快取
+  var DEBOUNCE_MS = 10000;
   // 00630L 不是上市代號，對應元大台灣50正2 00631L
   var CODES = [["00830","國泰費半"],["00662","富邦NASDAQ"],["00631L","元大台灣50正2"],["00670L","富邦NASDAQ正2"]];
   var NA = '<span class="na">暫無資料</span>';
   var whenEl = document.getElementById("etfp-when");
   var rowsEl = document.getElementById("etfp-rows");
+  var btn = document.getElementById("etfp-refresh");
   if(!whenEl || !rowsEl) return;
 
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -340,6 +356,18 @@ footer .more a:hover{color:var(--accent)}
       if(it && it.data_at && (!best || new Date(it.data_at) > new Date(best))) best = it.data_at;
     });
     return best;
+  }
+
+  function fetchedMs(d){
+    if(!d || !d.fetched_at) return 0;
+    var t = new Date(d.fetched_at).getTime();
+    return isNaN(t) ? 0 : t;
+  }
+  // 兩邊都抓到時，用 fetched_at 較新的那份；相等則保留 a
+  function newer(a, b){
+    if(!a) return b || null;
+    if(!b) return a;
+    return fetchedMs(b) > fetchedMs(a) ? b : a;
   }
 
   function render(d, offline){
@@ -380,31 +408,102 @@ footer .more a:hover{color:var(--accent)}
     whenEl.innerHTML = '<span class="old">暫無資料，快取載不進來</span>';
   }
 
+  function bust(url){ return url + (url.indexOf("?") >= 0 ? "&" : "?") + "t=" + Date.now(); }
+
   function get(url){
     var ctl = typeof AbortController === "function" ? new AbortController() : null;
     var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 8000) : null;
-    return fetch(url, { cache:"no-store", signal: ctl ? ctl.signal : undefined }).then(function(r){
+    return fetch(bust(url), {
+      cache:"no-store",
+      headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
+      signal: ctl ? ctl.signal : undefined
+    }).then(function(r){
       if(timer) clearTimeout(timer);
       if(!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     }).then(function(d){
       if(!d || !Array.isArray(d.items)) throw new Error("bad data");
       return d;
+    }, function(err){
+      if(timer) clearTimeout(timer);
+      throw err;
     });
   }
 
   function remember(d){ try{ localStorage.setItem(KEY, JSON.stringify(d)); }catch(e){} }
   function recall(){ try{ var d = JSON.parse(localStorage.getItem(KEY) || "null"); return d && Array.isArray(d.items) ? d : null; }catch(e){ return null; } }
 
-  // 先 raw（main 上最新的快取），失敗退回同源（上次 Pages 部署的副本）
-  get(RAW + "?t=" + Date.now()).catch(function(){ return get(LOCAL); }).then(function(d){
-    if(latestDataAt(d.items)) remember(d);
-    else { var old = recall(); if(old && latestDataAt(old.items)) { render(old, true); return; } }
-    render(d, false);
-  }).catch(function(){
-    var old = recall();
-    if(old) render(old, true); else empty();
+  function settle(p){ return p.then(function(d){ return d; }, function(){ return null; }); }
+
+  function setBusy(on){
+    if(!btn) return;
+    btn.disabled = !!on;
+    btn.setAttribute("aria-busy", on ? "true" : "false");
+    btn.textContent = on ? "更新中…" : "更新";
+  }
+
+  var inFlight = null;
+  var lastLoad = 0;
+
+  // 同時抓 raw 與同源 JSON，用 fetched_at 較新的；只有網路都失敗才退回 localStorage。
+  // 不觸發 GitHub Actions，只是再讀本站已經寫好的快取。
+  function load(opts){
+    opts = opts || {};
+    var now = Date.now();
+    if(!opts.force){
+      if(inFlight) return inFlight;
+      if(lastLoad && now - lastLoad < DEBOUNCE_MS) return Promise.resolve();
+    } else if(inFlight){
+      return inFlight;
+    }
+    lastLoad = now;
+    if(opts.force) setBusy(true);
+    inFlight = Promise.all([settle(get(RAW)), settle(get(LOCAL))]).then(function(pair){
+      var net = newer(pair[0], pair[1]);
+      var old = recall();
+      // 有網路副本時，只有 localStorage 的 fetched_at 更新才用它；否則一律用網路較新的那份
+      if(net){
+        if(old && fetchedMs(old) > fetchedMs(net)){
+          render(old, true);
+          return;
+        }
+        if(latestDataAt(net.items)) remember(net);
+        render(net, false);
+        return;
+      }
+      if(old) render(old, true);
+      else empty();
+    }, function(){
+      var old = recall();
+      if(old) render(old, true); else empty();
+    }).then(function(){
+      inFlight = null;
+      setBusy(false);
+    }, function(){
+      inFlight = null;
+      setBusy(false);
+    });
+    return inFlight;
+  }
+
+  load();
+
+  // iPhone／內建瀏覽器常從 bfcache 或背景分頁恢復，腳本不會重跑，必須在這裡再抓一次
+  window.addEventListener("pageshow", function(e){
+    if(e.persisted) load();
   });
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible") load();
+  });
+  setInterval(function(){
+    if(document.visibilityState === "hidden") return;
+    if(!inSession(new Date())) return;
+    load();
+  }, POLL_MS);
+
+  if(btn){
+    btn.addEventListener("click", function(){ load({ force: true }); });
+  }
 })();
 </script>
 <script>
