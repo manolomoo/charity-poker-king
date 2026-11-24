@@ -2,6 +2,15 @@
 
 這裡只記走勢頁與首頁圖表的資料與站務變動。11 項燈號的規則與門檻不在這裡，請看 `rules.md`。
 
+## 2026-11-24 首頁加入 ETF 溢折價小表（00830／00662／00631L／00670L；燈號規則未改，仍是 v3.0）
+
+- 首頁在燈號之後、指數走勢圖之前加一張 4 列小表：代號、簡稱、市價、預估淨值、溢折價。溢折價一律用文字寫「溢價 +x.xx%」「折價 −x.xx%」，0 寫「平盤 0.00%」；紅（溢價）、綠（折價）只是輔助。缺值顯示「暫無資料」，不會寫成 0。
+- 來源：臺灣證券交易所「申贖資訊及即時淨值揭露專區」的 `https://mis.twse.com.tw/stock/data/all_etf.txt`（彙整各投信預估淨值；欄位 e 成交價、f 預估淨值、g 預估折溢價幅度、i/j 資料日期時間）。四檔同一來源，不混用投信各自的 API。
+- CORS 限制：all_etf.txt 沒有 `Access-Control-Allow-Origin`，GitHub Pages 上的瀏覽器不能直連，也不用第三方 CORS proxy。改由新 workflow `.github/workflows/etf-premium.yml` 跑 `scripts/etf_premium.py` 抓取、寫 `data/etf_premium.json` 並 commit；首頁每次打開先讀 raw.githubusercontent.com 上 main 的這份 JSON（`cache: "no-store"` 加隨機 query，raw 仍可能有約 5 分鐘 CDN 快取），失敗退回同源 `data/etf_premium.json`（上次 Pages 部署的副本），再失敗則用瀏覽器上次成功的資料並標明，完全沒有就顯示「暫無資料」。畫面會寫清楚這是快取、不是即時直連，並附投信資料時間與本站抓取時間（台北時間）。
+- 排程：平日台北 09:00–13:30 每 10 分鐘、14:00 盤後一次（UTC cron `0,10,20,30,40,50 1-4 * * 1-5`、`0,10,20,30 5 * * 1-5`、`0 6 * * 1-5`），另可手動觸發。這個 job 只抓這支檔案、有變更才 commit `data/etf_premium.json`，不跑 `run.sh`／`update_trend.py`，不部署 Pages；既有 `update-and-deploy.yml` 未改。上游常回 502，腳本會 retry；仍失敗就保留舊值、標 `stale: true` 並記下錯誤與嘗試時間，workflow 不因此失敗。
+- 代號對照：使用者寫的 00630L 不是上市代號（證交所 ETF 名單與 all_etf.txt 都沒有），依使用者意思對應元大台灣50正2 **00631L**。
+- 原因：使用者要把這四檔的溢折價放在首頁、每次打開自動抓最新的。
+
 ## 2026-11-22 還原歷史跌幅列表改版，改回原本排版
 
 - 撤銷稍早把 `/trend/drawdowns/` 列表改成 Cobb 風格逐次對照的改版（原 commit `238e456`），橫條圖、本波摘要卡與圖例回到改版前的樣子：黃底本波列、依跌幅插入名次、20% 分色與平均虛線。時間軸示意、明細表、跌段與反彈對照與燈號規則都沒動。

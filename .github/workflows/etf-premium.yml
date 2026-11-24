@@ -1,0 +1,60 @@
+name: 更新首頁 ETF 溢折價快取
+
+# 只抓證交所 all_etf.txt 寫 data/etf_premium.json；不跑燈號 pipeline、不部署 Pages。
+# 首頁直接讀 raw.githubusercontent.com 上的這份 JSON，所以 commit 進 main 就生效。
+# 用預設 GITHUB_TOKEN 推送，GitHub 不會因此觸發 update-and-deploy.yml 的 push 事件，所以不會每 10 分鐘部署一次。
+# 台灣時間 UTC+8（無夏令時間）；cron 用 UTC。
+on:
+  schedule:
+    - cron: "0,10,20,30,40,50 1-4 * * 1-5" # 09:00–12:50 台北，每 10 分鐘
+    - cron: "0,10,20,30 5 * * 1-5" # 13:00–13:30 台北
+    - cron: "0 6 * * 1-5" # 14:00 台北（盤後一次）
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-premium
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    name: 抓 ETF 預估淨值與溢折價
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 設定 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: 安裝 requests
+        run: pip install requests
+
+      # 上游常 502：腳本會 retry；仍失敗就保留舊值並標 stale，以 0 結束。
+      - name: 抓取 all_etf.txt
+        env:
+          TZ: Asia/Taipei
+        run: python scripts/etf_premium.py
+
+      - name: 有變更才 commit 並推送
+        env:
+          TZ: Asia/Taipei
+        run: |
+          git add data/etf_premium.json
+          if git diff --cached --quiet; then
+            echo "沒有變更"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(etf): 更新 ETF 溢折價快取 $(date '+%Y-%m-%d %H:%M (台北時間 UTC+8)')"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep $((i * 5))
+          done
+          exit 1

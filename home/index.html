@@ -154,6 +154,27 @@ footer .more a:hover{color:var(--accent)}
 .pe-card svg{display:block;width:100%;height:auto}
 .pe-miss{margin:8px 2px;color:var(--mute);font-size:13px}
 
+/* ETF 溢折價：小表，文字標溢價／折價，顏色只是輔助 */
+.etfp h2{margin:0; color:var(--head); font-size:15px; font-weight:700; letter-spacing:.04em}
+.etfp .etfp-when{margin:2px 0 6px; color:var(--mute); font-size:12px; line-height:1.5}
+.etfp .etfp-when .old{color:var(--near)}
+.etfp table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:14px; font-variant-numeric:tabular-nums}
+.etfp th{color:var(--mute); font-size:11px; font-weight:500; text-align:right; padding:5px 8px; border-bottom:1px solid var(--line)}
+.etfp td{text-align:right; padding:6px 8px; border-top:1px solid var(--line); color:var(--text); white-space:nowrap}
+.etfp tr:first-child td{border-top:0}
+.etfp th:first-child,.etfp td:first-child{text-align:left}
+.etfp .cd{color:var(--head); font-weight:700; letter-spacing:.02em}
+.etfp .nm{display:block; color:var(--mute); font-size:11px; line-height:1.3}
+.etfp .pm{font-weight:700; color:var(--head)}
+.etfp .pm.prem{color:var(--warn)}
+.etfp .pm.disc{color:var(--up)}
+.etfp .na{color:var(--mute); font-weight:400; font-size:12px}
+.etfp .etfp-src{margin:4px 0 0; color:var(--mute); font-size:11px; line-height:1.5}
+@media (max-width:420px){
+  .etfp table{font-size:13px}
+  .etfp th,.etfp td{padding:5px 5px}
+}
+
 @media (max-width:620px){
 
   .book-nav{
@@ -194,6 +215,16 @@ footer .more a:hover{color:var(--accent)}
 
   <section id="lights" aria-label="燈號">
     <p class="msg">燈號載入中…</p>
+  </section>
+
+  <section id="etf-premium" class="etfp" aria-label="ETF 溢折價">
+    <h2>ETF 溢折價</h2>
+    <p class="etfp-when" id="etfp-when">載入中…</p>
+    <table>
+      <thead><tr><th scope="col">代號</th><th scope="col">市價</th><th scope="col">預估淨值</th><th scope="col">溢折價</th></tr></thead>
+      <tbody id="etfp-rows"></tbody>
+    </table>
+    <p class="etfp-src">臺灣證券交易所彙整各投信預估淨值；本站交易時段約每 10 分鐘更新快取。</p>
   </section>
 
   <section aria-label="指數走勢">
@@ -264,6 +295,118 @@ footer .more a:hover{color:var(--accent)}
 
 <script src="./trend/data.js"></script>
 <script src="./trend/ta-book/nav.js"></script>
+<script>
+/* ---------- ETF 溢折價：讀 GitHub Actions 產生的快取（證交所 all_etf.txt 無 CORS，瀏覽器不能直連） ---------- */
+(function(){
+  "use strict";
+  var RAW = "https://raw.githubusercontent.com/manolomoo/charity-poker-king/main/data/etf_premium.json";
+  var LOCAL = "data/etf_premium.json";
+  var KEY = "etfPremiumLast";
+  // 00630L 不是上市代號，對應元大台灣50正2 00631L
+  var CODES = [["00830","國泰費半"],["00662","富邦NASDAQ"],["00631L","元大台灣50正2"],["00670L","富邦NASDAQ正2"]];
+  var NA = '<span class="na">暫無資料</span>';
+  var whenEl = document.getElementById("etfp-when");
+  var rowsEl = document.getElementById("etfp-rows");
+  if(!whenEl || !rowsEl) return;
+
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function isNum(x){ return typeof x === "number" && isFinite(x); }
+  function n2(x){ return isNum(x) ? x.toFixed(2) : NA; }
+
+  // 溢折價：文字是主訊息，顏色只是輔助；缺值是「暫無資料」，不是 0
+  function prem(g){
+    if(!isNum(g)) return NA;
+    var r = Math.round(g * 100) / 100;
+    if(r > 0) return '<span class="pm prem">溢價 +' + r.toFixed(2) + '%</span>';
+    if(r < 0) return '<span class="pm disc">折價 −' + Math.abs(r).toFixed(2) + '%</span>';
+    return '<span class="pm">平盤 0.00%</span>';
+  }
+
+  // 台北時間（UTC+8，無夏令）
+  function tpe(d){ var t = new Date(d.getTime() + 8*3600e3); return { wd:t.getUTCDay(), m:t.getUTCHours()*60 + t.getUTCMinutes(), t:t }; }
+  function pad(x){ return (x < 10 ? "0" : "") + x; }
+  function fmt(iso){
+    if(!iso) return null;
+    var d = new Date(iso);
+    if(isNaN(d.getTime())) return null;
+    var t = tpe(d).t;
+    return (t.getUTCMonth()+1) + "/" + t.getUTCDate() + " " + pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes());
+  }
+  function inSession(now){ var x = tpe(now); return x.wd >= 1 && x.wd <= 5 && x.m >= 540 && x.m <= 810; }
+
+  function latestDataAt(items){
+    var best = null;
+    (items || []).forEach(function(it){
+      if(it && it.data_at && (!best || new Date(it.data_at) > new Date(best))) best = it.data_at;
+    });
+    return best;
+  }
+
+  function render(d, offline){
+    var by = {};
+    ((d && d.items) || []).forEach(function(it){ if(it && it.code) by[it.code] = it; });
+    var html = "";
+    CODES.forEach(function(c){
+      var it = by[c[0]] || {};
+      html += '<tr><td><span class="cd">' + esc(c[0]) + '</span><span class="nm">' + esc(it.short || c[1]) + '</span></td>' +
+        '<td>' + n2(it.price) + '</td><td>' + n2(it.nav) + '</td><td>' + prem(it.premium_pct) + '</td></tr>';
+    });
+    rowsEl.innerHTML = html;
+
+    var now = new Date();
+    var dataAt = latestDataAt(d && d.items);
+    var dataTxt = fmt(dataAt);
+    var fetchTxt = fmt(d && d.fetched_at);
+    var parts = [];
+    if(inSession(now)){
+      parts.push("盤中快取" + (dataTxt ? "，資料時間 " + dataTxt : ""));
+    } else {
+      var after = dataAt && tpe(new Date(dataAt)).m >= 810 ? "（盤後）" : "";
+      parts.push("非交易時段，以下為最近一次預估淨值" + (dataTxt ? "，資料時間 " + dataTxt + after : ""));
+    }
+    if(fetchTxt) parts.push("本站抓取 " + fetchTxt);
+    parts.push("台北時間；快取，非即時直連");
+    var warn = "";
+    if(offline) warn = "快取載不進來，顯示這台裝置上次看到的資料";
+    else if(d && d.stale) warn = "上游暫時抓不到，沿用上次資料" + (fmt(d.attempted_at) ? "（最後嘗試 " + fmt(d.attempted_at) + "）" : "");
+    else if(inSession(now) && d && d.fetched_at && now - new Date(d.fetched_at) > 30*60e3)
+      warn = "快取已 " + Math.round((now - new Date(d.fetched_at))/60e3) + " 分鐘未更新";
+    if(!dataTxt) warn = warn || "暫無資料";
+    whenEl.innerHTML = esc(parts.join("．")) + (warn ? '<br><span class="old">' + esc(warn) + '</span>' : "");
+  }
+
+  function empty(){
+    render({ items: [] }, false);
+    whenEl.innerHTML = '<span class="old">暫無資料，快取載不進來</span>';
+  }
+
+  function get(url){
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 8000) : null;
+    return fetch(url, { cache:"no-store", signal: ctl ? ctl.signal : undefined }).then(function(r){
+      if(timer) clearTimeout(timer);
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function(d){
+      if(!d || !Array.isArray(d.items)) throw new Error("bad data");
+      return d;
+    });
+  }
+
+  function remember(d){ try{ localStorage.setItem(KEY, JSON.stringify(d)); }catch(e){} }
+  function recall(){ try{ var d = JSON.parse(localStorage.getItem(KEY) || "null"); return d && Array.isArray(d.items) ? d : null; }catch(e){ return null; } }
+
+  // 先 raw（main 上最新的快取），失敗退回同源（上次 Pages 部署的副本）
+  get(RAW + "?t=" + Date.now()).catch(function(){ return get(LOCAL); }).then(function(d){
+    if(latestDataAt(d.items)) remember(d);
+    else { var old = recall(); if(old && latestDataAt(old.items)) { render(old, true); return; } }
+    render(d, false);
+  }).catch(function(){
+    var old = recall();
+    if(old) render(old, true); else empty();
+  });
+})();
+</script>
 <script>
 renderTaBookNav(document.getElementById("ta-nav"), "./trend/ta-book/", {exclude:["expectancy","valuation"]});
 /* ---------- 燈號：只列 🔴 / 🟡，其餘一行帶過 ---------- */
