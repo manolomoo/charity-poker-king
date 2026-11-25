@@ -1,7 +1,8 @@
 name: 更新首頁 ETF 溢折價快取
 
-# 只抓證交所 all_etf.txt 寫 data/etf_premium.json；不跑燈號 pipeline、不部署 Pages。
-# 首頁直接讀 raw.githubusercontent.com 上的這份 JSON，所以 commit 進 main 就生效。
+# 只抓證交所 all_etf.txt 寫 data/etf_premium.json；不跑燈號 pipeline。
+# 首頁同時讀 raw.githubusercontent.com 與站內同一份 JSON，取較新的。有些手機 App 內建瀏覽器讀不到 raw，
+# 所以有新資料時也部署一次 Pages，讓站內那份跟著更新（2026-11-25 加）。
 # 用預設 GITHUB_TOKEN 推送，GitHub 不會因此觸發 update-and-deploy.yml 的 push 事件，所以不會每 10 分鐘部署一次。
 # 台灣時間 UTC+8（無夏令時間）；cron 用 UTC。
 on:
@@ -13,6 +14,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: etf-premium
@@ -23,6 +26,8 @@ jobs:
     name: 抓 ETF 預估淨值與溢折價
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      changed: ${{ steps.push.outputs.changed }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,6 +47,7 @@ jobs:
         run: python scripts/etf_premium.py
 
       - name: 有變更才 commit 並推送
+        id: push
         env:
           TZ: Asia/Taipei
         run: |
@@ -54,7 +60,49 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(etf): 更新 ETF 溢折價快取 $(date '+%Y-%m-%d %H:%M (台北時間 UTC+8)')"
           for i in 1 2 3; do
-            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            git pull --rebase origin main && git push origin HEAD:main && echo "changed=true" >> "$GITHUB_OUTPUT" && exit 0
             sleep $((i * 5))
           done
           exit 1
+
+  deploy:
+    name: 部署 GitHub Pages（讓站內 JSON 也更新）
+    needs: fetch
+    if: needs.fetch.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+    steps:
+      - name: Checkout（main 最新 commit）
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: 組出 _site
+        run: ./scripts/build_site.sh _site
+
+      - name: 設定 GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上傳 Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      # deploy-pages 偶爾找不到剛上傳的 artifact，失敗就等一下再試
+      - name: 部署
+        id: deploy1
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: 等 30 秒
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 30
+
+      - name: 部署（第 2 次）
+        if: steps.deploy1.outcome == 'failure'
+        uses: actions/deploy-pages@v4
