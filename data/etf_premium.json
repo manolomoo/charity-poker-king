@@ -6,8 +6,8 @@
   "code_aliases": {
     "00630L": "00631L"
   },
-  "attempted_at": "2026-11-25T13:43:04+08:00",
-  "fetched_at": "2026-11-25T13:43:04+08:00",
+  "attempted_at": "2026-11-25T14:00:40+08:00",
+  "fetched_at": "2026-11-25T14:00:40+08:00",
   "stale": false,
   "error": null,
   "items": [
@@ -42,12 +42,12 @@
       "short": "富邦NASDAQ",
       "name": "富邦NASDAQ",
       "price": 21.86,
-      "nav": 22.14,
-      "premium_pct": -1.26,
+      "nav": 22.15,
+      "premium_pct": -1.31,
       "prev_nav": 22.09,
       "data_date": "20261125",
-      "data_time": "13:42:22",
-      "data_at": "2026-11-25T13:42:22+08:00",
+      "data_time": "13:59:54",
+      "data_at": "2026-11-25T13:59:54+08:00",
       "ref_url": "https://websys.fsit.com.tw/FubonETF/Trade/Estimate.aspx"
     },
     {
@@ -55,12 +55,12 @@
       "short": "富邦NASDAQ正2",
       "name": "富邦NASDAQ正2",
       "price": 147.5,
-      "nav": 147.16,
-      "premium_pct": 0.23,
+      "nav": 147.13,
+      "premium_pct": 0.25,
       "prev_nav": 151.61,
       "data_date": "20261125",
-      "data_time": "13:42:22",
-      "data_at": "2026-11-25T13:42:22+08:00",
+      "data_time": "13:59:54",
+      "data_at": "2026-11-25T13:59:54+08:00",
       "ref_url": "https://websys.fsit.com.tw/FubonETF/Trade/Estimate.aspx"
     },
     {
@@ -72,8 +72,8 @@
       "premium_pct": -1.91,
       "prev_nav": 64.47,
       "data_date": "20261125",
-      "data_time": "13:42:09",
-      "data_at": "2026-11-25T13:42:09+08:00",
+      "data_time": "13:59:39",
+      "data_at": "2026-11-25T13:59:39+08:00",
       "ref_url": "https://www.cathaysite.com.tw/ETF/estimate"
     },
     {
@@ -85,8 +85,8 @@
       "premium_pct": -0.43,
       "prev_nav": 74.54,
       "data_date": "20261125",
-      "data_time": "13:42:15",
-      "data_at": "2026-11-25T13:42:15+08:00",
+      "data_time": "14:00:00",
+      "data_at": "2026-11-25T14:00:00+08:00",
       "ref_url": "https://www.yuantaetfs.com/tradeInfo/INav"
     },
     {
@@ -94,12 +94,12 @@
       "short": "元大S&P500正2",
       "name": "元大S&P500正2",
       "price": 121.1,
-      "nav": 120.9,
-      "premium_pct": 0.17,
+      "nav": 120.97,
+      "premium_pct": 0.11,
       "prev_nav": 122.77,
       "data_date": "20261125",
-      "data_time": "13:42:15",
-      "data_at": "2026-11-25T13:42:15+08:00",
+      "data_time": "14:00:00",
+      "data_at": "2026-11-25T14:00:00+08:00",
       "ref_url": "https://www.yuantaetfs.com/tradeInfo/INav"
     }
   ]
