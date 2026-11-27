@@ -219,7 +219,7 @@ window.DRAWDOWNS_DATA = {
         "source": "Yahoo",
         "source_label": "Yahoo ^NDX 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2024-11-26",
+        "history_from": "2024-11-27",
         "history_covers_after_date": true,
         "cache_file": "NDX_daily_2y.csv"
       },
@@ -500,7 +500,7 @@ window.DRAWDOWNS_DATA = {
         "source": "Yahoo",
         "source_label": "Yahoo ^GSPC 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2024-11-26",
+        "history_from": "2024-11-27",
         "history_covers_after_date": true,
         "cache_file": "SPX_daily_2y.csv"
       },
@@ -925,7 +925,7 @@ window.DRAWDOWNS_DATA = {
         "source": "Yahoo",
         "source_label": "Yahoo ^SOX 日線盤中高低點",
         "after_date": "2025-04-07",
-        "history_from": "2024-11-26",
+        "history_from": "2024-11-27",
         "history_covers_after_date": true,
         "cache_file": "SOX_daily_2y.csv"
       },
