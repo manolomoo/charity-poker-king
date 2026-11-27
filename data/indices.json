@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-27T15:29:50+08:00",
+  "fetched_at": "2026-11-27T16:19:03+08:00",
   "stale": false,
   "errors": [],
   "note": "美股三指數來自 CNBC；加權來自證交所 MIS（失敗改用 CNBC，非即時）；台指期來自期交所 MIS 近月。時間為台北時間。",
@@ -55,11 +55,11 @@
     {
       "key": "TX",
       "name": "台指期",
-      "last": 39103.0,
-      "change": -247.0,
-      "change_pct": -0.63,
+      "last": 39090.0,
+      "change": -260.0,
+      "change_pct": -0.66,
       "prev_close": 39350.0,
-      "data_at": "2026-11-27T15:29:53+08:00",
+      "data_at": "2026-11-27T16:19:02+08:00",
       "date_only": false,
       "realtime": false,
       "source": "TAIFEX MIS",
