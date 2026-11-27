@@ -6,8 +6,8 @@
   "code_aliases": {
     "00630L": "00631L"
   },
-  "attempted_at": "2026-11-27T13:40:30+08:00",
-  "fetched_at": "2026-11-27T13:40:30+08:00",
+  "attempted_at": "2026-11-27T13:43:57+08:00",
+  "fetched_at": "2026-11-27T13:43:57+08:00",
   "stale": false,
   "error": null,
   "items": [
@@ -46,8 +46,8 @@
       "premium_pct": 3.0,
       "prev_nav": 22.07,
       "data_date": "20261127",
-      "data_time": "13:39:58",
-      "data_at": "2026-11-27T13:39:58+08:00",
+      "data_time": "13:43:39",
+      "data_at": "2026-11-27T13:43:39+08:00",
       "ref_url": "https://websys.fsit.com.tw/FubonETF/Trade/Estimate.aspx"
     },
     {
@@ -55,12 +55,12 @@
       "short": "富邦NASDAQ正2",
       "name": "富邦NASDAQ正2",
       "price": 158.1,
-      "nav": 157.69,
-      "premium_pct": 0.26,
+      "nav": 157.72,
+      "premium_pct": 0.24,
       "prev_nav": 149.5,
       "data_date": "20261127",
-      "data_time": "13:39:58",
-      "data_at": "2026-11-27T13:39:58+08:00",
+      "data_time": "13:43:39",
+      "data_at": "2026-11-27T13:43:39+08:00",
       "ref_url": "https://websys.fsit.com.tw/FubonETF/Trade/Estimate.aspx"
     },
     {
@@ -72,8 +72,8 @@
       "premium_pct": 5.34,
       "prev_nav": 64.4,
       "data_date": "20261127",
-      "data_time": "13:40:06",
-      "data_at": "2026-11-27T13:40:06+08:00",
+      "data_time": "13:43:21",
+      "data_at": "2026-11-27T13:43:21+08:00",
       "ref_url": "https://www.cathaysite.com.tw/ETF/estimate"
     },
     {
@@ -85,8 +85,8 @@
       "premium_pct": 1.61,
       "prev_nav": 74.88,
       "data_date": "20261127",
-      "data_time": "13:40:00",
-      "data_at": "2026-11-27T13:40:00+08:00",
+      "data_time": "13:43:30",
+      "data_at": "2026-11-27T13:43:30+08:00",
       "ref_url": "https://www.yuantaetfs.com/tradeInfo/INav"
     },
     {
@@ -94,12 +94,12 @@
       "short": "元大S&P500正2",
       "name": "元大S&P500正2",
       "price": 126.5,
-      "nav": 126.65,
-      "premium_pct": -0.12,
+      "nav": 126.68,
+      "premium_pct": -0.14,
       "prev_nav": 122.71,
       "data_date": "20261127",
-      "data_time": "13:40:00",
-      "data_at": "2026-11-27T13:40:00+08:00",
+      "data_time": "13:43:30",
+      "data_at": "2026-11-27T13:43:30+08:00",
       "ref_url": "https://www.yuantaetfs.com/tradeInfo/INav"
     }
   ]
