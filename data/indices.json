@@ -1,0 +1,70 @@
+{
+  "fetched_at": "2026-11-27T15:29:50+08:00",
+  "stale": false,
+  "errors": [],
+  "note": "美股三指數來自 CNBC；加權來自證交所 MIS（失敗改用 CNBC，非即時）；台指期來自期交所 MIS 近月。時間為台北時間。",
+  "items": [
+    {
+      "key": "SPX",
+      "name": "S&P 500",
+      "last": 7182.78,
+      "change": -18.31,
+      "change_pct": -0.25,
+      "prev_close": 7182.78,
+      "data_at": "2026-11-25",
+      "date_only": true,
+      "realtime": true,
+      "source": "CNBC"
+    },
+    {
+      "key": "NDX",
+      "name": "Nasdaq 100",
+      "last": 26046.897,
+      "change": -167.271,
+      "change_pct": -0.64,
+      "prev_close": 26046.897,
+      "data_at": "2026-11-25",
+      "date_only": true,
+      "realtime": true,
+      "source": "CNBC"
+    },
+    {
+      "key": "SOX",
+      "name": "費半",
+      "last": 8774.862,
+      "change": -57.639,
+      "change_pct": -0.65,
+      "prev_close": 8774.862,
+      "data_at": "2026-11-25",
+      "date_only": true,
+      "realtime": true,
+      "source": "CNBC"
+    },
+    {
+      "key": "TWII",
+      "name": "加權指數",
+      "last": 39308.08,
+      "change": 156.27,
+      "change_pct": 0.4,
+      "prev_close": 39151.81,
+      "data_at": "2026-11-27T13:33:00+08:00",
+      "date_only": false,
+      "realtime": true,
+      "source": "TWSE MIS"
+    },
+    {
+      "key": "TX",
+      "name": "台指期",
+      "last": 39103.0,
+      "change": -247.0,
+      "change_pct": -0.63,
+      "prev_close": 39350.0,
+      "data_at": "2026-11-27T15:29:53+08:00",
+      "date_only": false,
+      "realtime": false,
+      "source": "TAIFEX MIS",
+      "session": "夜盤",
+      "contract": "臺指期126"
+    }
+  ]
+}

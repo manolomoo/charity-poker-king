@@ -154,6 +154,23 @@ footer .more a:hover{color:var(--accent)}
 .pe-card svg{display:block;width:100%;height:auto}
 .pe-miss{margin:8px 2px;color:var(--mute);font-size:13px}
 
+/* 指數報價：小表，台灣配色（漲紅跌綠） */
+.idxq h2{margin:0 0 6px; color:var(--head); font-size:15px; font-weight:700; letter-spacing:.04em}
+.idxq table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:14px; font-variant-numeric:tabular-nums}
+.idxq td{text-align:right; padding:6px 8px; border-top:1px solid var(--line); color:var(--text); white-space:nowrap}
+.idxq tr:first-child td{border-top:0}
+.idxq td:first-child{text-align:left; white-space:normal}
+.idxq .cd{color:var(--head); font-weight:700; letter-spacing:.02em}
+.idxq .nm{display:block; color:var(--mute); font-size:11px; line-height:1.3}
+.idxq .up{color:var(--warn)}
+.idxq .dn{color:var(--up)}
+.idxq .na{color:var(--mute); font-weight:400; font-size:12px}
+.idxq .idxq-src{margin:4px 0 0; color:var(--mute); font-size:11px; line-height:1.5}
+@media (max-width:420px){
+  .idxq table{font-size:13px}
+  .idxq td{padding:5px 5px}
+}
+
 /* ETF 溢折價：小表，文字標溢價／折價，顏色只是輔助 */
 .etfp-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0}
 .etfp h2{margin:0; color:var(--head); font-size:15px; font-weight:700; letter-spacing:.04em}
@@ -227,6 +244,12 @@ footer .more a:hover{color:var(--accent)}
 
   <section id="lights" aria-label="燈號">
     <p class="msg">燈號載入中…</p>
+  </section>
+
+  <section id="idxq" class="idxq" aria-label="指數報價">
+    <h2>指數報價</h2>
+    <table><tbody id="idxq-rows"></tbody></table>
+    <p class="idxq-src" id="idxq-src">…</p>
   </section>
 
   <section id="etf-premium" class="etfp" aria-label="ETF 溢折價">
@@ -311,6 +334,234 @@ footer .more a:hover{color:var(--accent)}
 
 <script src="./trend/data.js"></script>
 <script src="./trend/ta-book/nav.js"></script>
+<script>
+/* ---------- 指數報價：CNBC（瀏覽器直連，有 CORS）＋本站快照（台指期等） ---------- */
+(function(){
+  "use strict";
+  var CNBC = "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=.SPX%7C.NDX%7C.SOX%7C.TWII&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1";
+  var RAW = "https://raw.githubusercontent.com/manolomoo/charity-poker-king/main/data/indices.json";
+  var LOCAL = "data/indices.json";
+  var KEY = "idxQuotesLast";
+  var TIMEOUT_MS = 8000;
+  var LIVE_MS = 60000;
+  var SNAP_MS = 600000;
+  var ROWS = [["SPX","S&P 500"],["NDX","Nasdaq 100"],["SOX","費半"],["TWII","加權指數"],["TX","台指期"]];
+  var SYMS = { ".SPX":["SPX","S&P 500"], ".NDX":["NDX","Nasdaq 100"], ".SOX":["SOX","費半"], ".TWII":["TWII","加權指數"] };
+  var NA = '<span class="na">暫無資料</span>';
+  var rowsEl = document.getElementById("idxq-rows");
+  var srcEl = document.getElementById("idxq-src");
+  if(!rowsEl || !srcEl) return;
+
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function isNum(x){ return typeof x === "number" && isFinite(x); }
+  function pad(x){ return (x < 10 ? "0" : "") + x; }
+  function num(v){
+    if(v == null) return null;
+    var s = String(v).replace(/[,%+]/g, "").trim();
+    if(s.toUpperCase() === "UNCH") return 0;
+    if(s === "" || s === "-") return null;
+    var x = Number(s);
+    return isFinite(x) ? x : null;
+  }
+  function grpFix(s){ // 只對整數部分加千分位
+    var p = s.split(".");
+    p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return p.join(".");
+  }
+  function fmtNum(x){ return grpFix(x.toFixed(2)); }
+  function signed(x, suffix){
+    var r = Math.round(x * 100) / 100;
+    var s = grpFix(Math.abs(r).toFixed(2)) + (suffix || "");
+    return r > 0 ? "+" + s : r < 0 ? "−" + s : s;
+  }
+
+  // ---- 時間 ----
+  function tpeParts(d){ var t = new Date(d.getTime() + 8*3600e3); return { wd:t.getUTCDay(), m:t.getUTCHours()*60 + t.getUTCMinutes(), t:t }; }
+  function fmtTpe(d){ var t = tpeParts(d).t; return (t.getUTCMonth()+1) + "/" + t.getUTCDate() + " " + pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes()); }
+  function etParts(d){
+    try{
+      var f = new Intl.DateTimeFormat("en-US", { timeZone:"America/New_York", hour12:false, weekday:"short", hour:"2-digit", minute:"2-digit" });
+      var o = {};
+      f.formatToParts(d).forEach(function(p){ o[p.type] = p.value; });
+      var wd = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 }[o.weekday];
+      var h = parseInt(o.hour, 10) % 24, mi = parseInt(o.minute, 10);
+      if(wd == null || isNaN(h) || isNaN(mi)) throw new Error("tz");
+      return { wd:wd, m:h*60 + mi };
+    }catch(e){
+      var t = new Date(d.getTime() - 5*3600e3); // 不支援時區時當作 EST
+      return { wd:t.getUTCDay(), m:t.getUTCHours()*60 + t.getUTCMinutes() };
+    }
+  }
+  function usOpen(now){ var x = etParts(now); return x.wd >= 1 && x.wd <= 5 && x.m >= 570 && x.m < 960; }
+  function twOpen(now){ var x = tpeParts(now); return x.wd >= 1 && x.wd <= 5 && x.m >= 540 && x.m < 810; }
+
+  function dateOnlyMd(s){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ""); return m ? (parseInt(m[2],10) + "/" + parseInt(m[3],10)) : null; }
+  function tsOf(it){
+    if(!it || !it.data_at) return 0;
+    var t = it.date_only ? new Date(it.data_at + "T21:00:00Z").getTime() : new Date(it.data_at).getTime();
+    return isNaN(t) ? 0 : t;
+  }
+
+  // ---- 解析 CNBC ----
+  function isoOff(s){
+    var m = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/.exec(s || "");
+    if(!m || !m[2]) return null;
+    var off = m[2] === "Z" ? "+00:00" : (m[2].indexOf(":") < 0 ? m[2].slice(0,3) + ":" + m[2].slice(3) : m[2]);
+    return m[1] + off;
+  }
+  function parseCnbc(d){
+    var out = {};
+    var rows = d && d.FormattedQuoteResult && d.FormattedQuoteResult.FormattedQuote;
+    if(rows && !Array.isArray(rows)) rows = [rows];
+    (rows || []).forEach(function(q){
+      var s = q && SYMS[q.symbol];
+      if(!s || String(q.code == null ? "0" : q.code) !== "0") return;
+      var last = num(q.last);
+      if(last == null) return;
+      var lt = String(q.last_time || "");
+      var dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(lt);
+      var rt = String(q.realTime).toLowerCase();
+      out[s[0]] = { key:s[0], name:s[1], last:last, change:num(q.change), change_pct:num(q.change_pct), prev_close:num(q.previous_day_closing),
+        data_at: dateOnly ? lt : isoOff(lt), date_only: dateOnly, realtime: rt === "true" ? true : rt === "false" ? false : null, source:"CNBC" };
+    });
+    return out;
+  }
+
+  // ---- 網路 ----
+  function bust(url){ return url + (url.indexOf("?") >= 0 ? "&" : "?") + "t=" + Date.now(); }
+  // 不論 AbortController 能不能真的中斷，這個 Promise 一定在 TIMEOUT_MS 內結束（iOS／App 內建瀏覽器）。
+  function get(url, validate){
+    return new Promise(function(resolve, reject){
+      var settled = false;
+      var ctl = typeof AbortController === "function" ? new AbortController() : null;
+      var timer = setTimeout(function(){
+        if(ctl) try{ ctl.abort(); }catch(e){}
+        done(null, new Error("timeout"));
+      }, TIMEOUT_MS);
+      function done(val, err){
+        if(settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if(err) reject(err); else resolve(val);
+      }
+      var opts = { cache: "no-store" };
+      if(ctl) opts.signal = ctl.signal;
+      // 不送自訂標頭，維持 simple CORS request，避免預檢。
+      fetch(bust(url), opts).then(function(r){
+        if(!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      }).then(function(d){
+        if(!validate(d)) throw new Error("bad data");
+        done(d);
+      }, function(err){
+        done(null, err || new Error("fetch failed"));
+      });
+    });
+  }
+  function settle(p){ return p.then(function(d){ return d; }, function(){ return null; }); }
+  function okSnap(d){ return !!d && Array.isArray(d.items); }
+  function okCnbc(d){ return !!d && !!d.FormattedQuoteResult; }
+
+  function fetchedMs(d){ var t = d && d.fetched_at ? new Date(d.fetched_at).getTime() : 0; return isNaN(t) ? 0 : t; }
+  function newerSnap(a, b){ if(!a) return b || null; if(!b) return a; return fetchedMs(b) > fetchedMs(a) ? b : a; }
+
+  function remember(d){ try{ localStorage.setItem(KEY, JSON.stringify(d)); }catch(e){} }
+  function recall(){ try{ var d = JSON.parse(localStorage.getItem(KEY) || "null"); return d && Array.isArray(d.items) ? d : null; }catch(e){ return null; } }
+
+  // ---- 合併：每個項目取 data_at 較新者（相等取即時） ----
+  function merge(live, snap){
+    var by = {};
+    ((snap && snap.items) || []).forEach(function(it){ if(it && it.key) by[it.key] = it; });
+    return ROWS.map(function(r){
+      var a = live && live[r[0]], b = by[r[0]];
+      if(a && b) return tsOf(b) > tsOf(a) ? b : a;
+      return a || b || null;
+    }).filter(Boolean);
+  }
+
+  // ---- 畫面 ----
+  function label(it, now){
+    if(it.date_only){ var md = dateOnlyMd(it.data_at); return md ? md + " 收盤" : "收盤"; }
+    var t = it.data_at ? new Date(it.data_at) : null;
+    if(!t || isNaN(t.getTime())) return "";
+    var when = fmtTpe(t);
+    if(it.key === "TX") return when + " · " + (it.session || "") + "快照";
+    var open = it.key === "TWII" ? twOpen(now) : usOpen(now);
+    if(!open) return when + " · 收盤";
+    var age = Math.max(0, Math.round((now - t) / 60e3));
+    return when + " · " + (age <= 3 ? "即時" : "延遲約" + age + "分");
+  }
+  function render(items, liveFailed){
+    var now = new Date();
+    var by = {};
+    items.forEach(function(it){ by[it.key] = it; });
+    var html = "";
+    ROWS.forEach(function(r){
+      var it = by[r[0]];
+      var ok = it && isNum(it.last);
+      var cls = "";
+      if(ok && isNum(it.change)) cls = it.change > 0 ? "up" : it.change < 0 ? "dn" : "";
+      var sub = ok ? label(it, now) : "";
+      var name = r[0] === "TX" && ok && it.contract ? it.contract : r[1];
+      html += '<tr><td><span class="cd">' + esc(r[0] === "TWII" ? "加權" : r[0] === "TX" ? "台指期" : r[0]) + '</span><span class="nm">' + esc(sub || name) + '</span></td>';
+      if(!ok){ html += '<td colspan="3">' + NA + '</td></tr>'; return; }
+      html += '<td>' + fmtNum(it.last) + '</td>' +
+        '<td class="' + cls + '">' + (isNum(it.change) ? signed(it.change) : NA) + '</td>' +
+        '<td class="' + cls + '">' + (isNum(it.change_pct) ? signed(it.change_pct, "%") : NA) + '</td></tr>';
+    });
+    rowsEl.innerHTML = html;
+    srcEl.textContent = "美股三指數與加權指數：瀏覽器每 60 秒直接向 CNBC 取價（CNBC 標示美股為即時、加權為非即時）；台指期：本站排程快照（盤中約每 10 分鐘，夜盤不即時）。台北時間。" +
+      (liveFailed ? "CNBC 連不上，顯示本站快照" : "");
+  }
+
+  // ---- 載入 ----
+  var live = null, snap = null, lastSnap = 0, lastTick = 0, inFlight = null;
+
+  function show(liveFailed){
+    var items = merge(live, snap);
+    if(items.length){
+      remember({ fetched_at: new Date().toISOString(), items: items });
+      render(items, liveFailed);
+    } else {
+      var old = recall();
+      if(old) render(old.items, true);
+      else { render([], true); }
+    }
+  }
+
+  function load(forceSnap){
+    if(inFlight) return inFlight;
+    var now = Date.now();
+    lastTick = now;
+    var wantSnap = !!forceSnap || !snap || now - lastSnap >= SNAP_MS;
+    if(wantSnap) lastSnap = now;
+    var pLive = settle(get(CNBC, okCnbc));
+    var pSnap = wantSnap ? Promise.all([settle(get(RAW, okSnap)), settle(get(LOCAL, okSnap))]).then(function(p){ return newerSnap(p[0], p[1]); }) : Promise.resolve(null);
+    var watchdog = setTimeout(function(){ inFlight = null; }, TIMEOUT_MS + 2000);
+    var p = Promise.all([pLive, pSnap]).then(function(r){
+      var failed = !r[0];
+      if(r[0]) live = parseCnbc(r[0]);
+      if(r[1]) snap = (!snap || fetchedMs(r[1]) >= fetchedMs(snap)) ? r[1] : snap;
+      show(failed);
+    }, function(){ show(true); });
+    inFlight = p.then(function(){ clearTimeout(watchdog); inFlight = null; }, function(){ clearTimeout(watchdog); inFlight = null; });
+    return inFlight;
+  }
+
+  var old0 = recall();
+  if(old0) render(old0.items, false);
+  load(true);
+
+  window.addEventListener("pageshow", function(e){ if(e.persisted) load(true); });
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible") load(false);
+  });
+  setInterval(function(){
+    if(document.visibilityState === "hidden") return;
+    load(false);
+  }, LIVE_MS);
+})();
+</script>
 <script>
 /* ---------- ETF 溢折價：讀 GitHub Actions 產生的快取（證交所 all_etf.txt 無 CORS，瀏覽器不能直連） ---------- */
 (function(){

@@ -2,6 +2,12 @@
 
 這裡只記走勢頁與首頁圖表的資料與站務變動。11 項燈號的規則與門檻不在這裡，請看 `rules.md`。
 
+## 2026-11-27 首頁加上指數報價（SPX、NDX、SOX、加權、台指期）（燈號規則未改，仍是 v3.0）
+- 首頁在「ETF 溢折價」上方加一張小表：最新價、漲跌、漲跌幅（漲紅跌綠），每列附資料時間（台北時間）與標籤（即時／延遲約 N 分／收盤／快照）。
+- 來源：SPX、NDX、SOX、加權指數由瀏覽器直接向 CNBC quote API 取價（該 API 回 `Access-Control-Allow-Origin: *`），頁面開著時每 60 秒更新一次，沿用 ETF 區塊的 8 秒必定結束逾時寫法（iOS／App 內 WebView）。CNBC 對美股三指數標 realTime=true，對加權標 realTime=false；開盤中若資料時間落後超過 3 分鐘就顯示「延遲約 N 分」。Yahoo chart API、證交所 MIS、期交所 MIS 都沒有 CORS 標頭，瀏覽器不能直連。
+- 台指期（期交所 MIS 近月，含夜盤）與加權（證交所 MIS）另由 `scripts/index_quotes.py` 寫成 `data/indices.json` 快照，當成 CNBC 連不上時的備援。快照在 etf-premium.yml（盤中約每 10 分鐘）與 update-and-deploy.yml（06:30／15:00／22:00／22:45）各多跑一步，兩個 workflow 的排程都沒改。台指期不是即時，夜盤只有那幾個時間點的快照。
+- 原因：使用者要求首頁加 SPX、NDX、SOX、台指，並問能不能即時。
+
 ## 2026-11-27
 - ETF 溢折價改由外部排程 cron-job.org 觸發：週一到週五、台北時間 08:50–13:40，每 10 分鐘一次，共 3 個排程（`50 8 * * 1-5`、`*/10 9-12 * * 1-5`、`0,10,20,30,40 13 * * 1-5`，時區 Asia/Taipei），用 workflow_dispatch 呼叫 etf-premium.yml。驗證方式是權限最小的 fine-grained token `cron-job-org-etf-dispatch`（只開 charity-poker-king 的 Actions 讀寫，2027-11-27 到期）。GitHub 原本的 cron 跟 14:07 盤後那一次都保留，當作備援。workflow 檔案和燈號規則都沒有改。第一次觸發是 11:52 的測試執行，回 204，run 也成功。原因：GitHub 的 cron 常延遲，有時直接跳過（連續三天漏掉 09:xx 那幾次），使用者希望盤中能穩定每 10 分鐘更新。
 

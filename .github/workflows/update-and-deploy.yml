@@ -72,6 +72,10 @@ jobs:
       - name: 更新 SOX／NDX／SPX 與台指走勢資料（不影響燈號規則）
         run: TZ=Asia/Taipei python scripts/update_trend.py
 
+      - name: 更新首頁指數報價快取（不影響燈號規則）
+        continue-on-error: true
+        run: TZ=Asia/Taipei python scripts/index_quotes.py
+
       - name: 檢查是否有資料變更
         id: diff
         run: |

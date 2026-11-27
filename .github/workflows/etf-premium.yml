@@ -46,12 +46,18 @@ jobs:
           TZ: Asia/Taipei
         run: python scripts/etf_premium.py
 
+      - name: 抓取指數報價快照（台指期等）
+        continue-on-error: true
+        env:
+          TZ: Asia/Taipei
+        run: python scripts/index_quotes.py
+
       - name: 有變更才 commit 並推送
         id: push
         env:
           TZ: Asia/Taipei
         run: |
-          git add data/etf_premium.json
+          git add data/etf_premium.json data/indices.json
           if git diff --cached --quiet; then
             echo "沒有變更"
             exit 0
