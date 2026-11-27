@@ -2,6 +2,9 @@
 
 這裡只記走勢頁與首頁圖表的資料與站務變動。11 項燈號的規則與門檻不在這裡，請看 `rules.md`。
 
+## 2026-11-27
+- ETF 溢折價改由外部排程 cron-job.org 觸發：週一到週五、台北時間 08:50–13:40，每 10 分鐘一次，共 3 個排程（`50 8 * * 1-5`、`*/10 9-12 * * 1-5`、`0,10,20,30,40 13 * * 1-5`，時區 Asia/Taipei），用 workflow_dispatch 呼叫 etf-premium.yml。驗證方式是權限最小的 fine-grained token `cron-job-org-etf-dispatch`（只開 charity-poker-king 的 Actions 讀寫，2027-11-27 到期）。GitHub 原本的 cron 跟 14:07 盤後那一次都保留，當作備援。workflow 檔案和燈號規則都沒有改。第一次觸發是 11:52 的測試執行，回 204，run 也成功。原因：GitHub 的 cron 常延遲，有時直接跳過（連續三天漏掉 09:xx 那幾次），使用者希望盤中能穩定每 10 分鐘更新。
+
 ## 2026-11-25
 - 首頁 ETF 溢折價：有新資料時 ETF 排程也部署一次 Pages。原因：使用者手機（App 內建瀏覽器）讀不到 raw.githubusercontent.com，只看得到站內那份 JSON，按更新也停在前一天 15:15。
 - 部署流程：deploy-pages 偶爾找不到剛上傳的 github-pages artifact 而失敗（11/24 三次），改成失敗時等 30／60 秒自動重試，最多三次。原因：避免收盤後資料已更新但網站沒部署。
