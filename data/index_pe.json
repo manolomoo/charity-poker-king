@@ -1,0 +1,64 @@
+{
+  "fetched_at": "2026-11-28T12:42:06+08:00",
+  "stale": false,
+  "errors": [],
+  "note": "美股三指數：History of Market（CC BY 4.0）；加權：證交所個股本益比以市值加權自算（非官方大盤本益比）。近四季＝trailing，預估＝未來 12 個月 forward，兩者口徑不同不可直接相比。台指期不適用；沒有可靠來源的格子顯示「—」。",
+  "items": [
+    {
+      "key": "SPX",
+      "name": "S&P 500",
+      "trailing": {
+        "value": 24.05,
+        "asof": "2026-11-27",
+        "source": "historyofmarket.com",
+        "method": "成分股市值加權，近四季 EPS"
+      },
+      "forward": {
+        "value": 16.73,
+        "asof": "2026-11-26",
+        "source": "historyofmarket.com",
+        "method": "12 個月預估，FY1/FY2 共識混合"
+      }
+    },
+    {
+      "key": "NDX",
+      "name": "Nasdaq 100",
+      "trailing": {
+        "value": 22.72,
+        "asof": "2026-11-27",
+        "source": "historyofmarket.com",
+        "method": "成分股市值加權，近四季 EPS"
+      },
+      "forward": {
+        "value": 17.29,
+        "asof": "2026-11-26",
+        "source": "historyofmarket.com",
+        "method": "12 個月預估，FY1/FY2 共識混合"
+      }
+    },
+    {
+      "key": "SOX",
+      "name": "費半",
+      "trailing": null,
+      "forward": {
+        "value": 12.07,
+        "asof": "2026-11-26",
+        "source": "historyofmarket.com",
+        "method": "12 個月預估，FY1/FY2 共識混合"
+      }
+    },
+    {
+      "key": "TWII",
+      "name": "加權指數",
+      "trailing": {
+        "value": 18.64,
+        "asof": "2026-11-27",
+        "source": "TWSE OpenAPI",
+        "method": "證交所個股本益比（近四季）市值加權，本站自算、排除虧損股",
+        "coverage_pct": 98.9,
+        "stocks": 875
+      },
+      "forward": null
+    }
+  ]
+}

@@ -170,6 +170,12 @@ footer .more a:hover{color:var(--accent)}
   .idxq table{font-size:13px}
   .idxq td{padding:5px 5px}
 }
+.idxq .idxpe-h{margin:12px 0 6px; color:var(--head); font-size:15px; font-weight:700; letter-spacing:.04em}
+.idxq .idxpe th{text-align:right; padding:6px 8px; color:var(--mute); font-size:11px; font-weight:400; white-space:nowrap}
+.idxq .idxpe th:first-child{text-align:left}
+.idxq .idxpe .nm{display:block; color:var(--mute); font-size:11px; line-height:1.3}
+.idxq .idxpe .v{color:var(--head); font-weight:700}
+@media (max-width:420px){ .idxq .idxpe th{padding:5px 5px} }
 
 /* ETF 溢折價：小表，文字標溢價／折價，顏色只是輔助 */
 .etfp-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0}
@@ -250,6 +256,12 @@ footer .more a:hover{color:var(--accent)}
     <h2>指數報價</h2>
     <table><tbody id="idxq-rows"></tbody></table>
     <p class="idxq-src" id="idxq-src">…</p>
+    <h3 class="idxpe-h">本益比</h3>
+    <table class="idxpe">
+      <thead><tr><th scope="col">指數</th><th scope="col">近四季</th><th scope="col">預估 12 個月</th></tr></thead>
+      <tbody id="idxpe-rows"></tbody>
+    </table>
+    <p class="idxq-src" id="idxpe-src">…</p>
   </section>
 
   <section id="etf-premium" class="etfp" aria-label="ETF 溢折價">
@@ -560,6 +572,63 @@ footer .more a:hover{color:var(--accent)}
     if(document.visibilityState === "hidden") return;
     load(false);
   }, LIVE_MS);
+})();
+</script>
+<script>
+/* ---------- 指數本益比：讀 GitHub Actions 產生的 data/index_pe.json（每格自帶來源、資料日、口徑；沒有就顯示「—」） ---------- */
+(function(){
+  "use strict";
+  var RAW = "https://raw.githubusercontent.com/manolomoo/charity-poker-king/main/data/index_pe.json";
+  var LOCAL = "data/index_pe.json";
+  var TIMEOUT_MS = 8000;
+  var ROWS = [["SPX","SPX"],["NDX","NDX"],["SOX","SOX"],["TWII","加權"]];
+  var rowsEl = document.getElementById("idxpe-rows");
+  var srcEl = document.getElementById("idxpe-src");
+  if(!rowsEl || !srcEl) return;
+
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function md(s){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ""); return m ? (parseInt(m[2],10) + "/" + parseInt(m[3],10)) : ""; }
+  function okCell(c){ return !!c && typeof c.value === "number" && isFinite(c.value) && c.value > 0; }
+  function cellHtml(c){
+    if(!okCell(c)) return '<td><span class="na">—</span></td>';
+    var tip = [c.source, c.method].filter(Boolean).join("；");
+    return '<td title="' + esc(tip) + '"><span class="v">' + c.value.toFixed(1) + '</span><span class="nm">' + esc(md(c.asof)) + '</span></td>';
+  }
+  function fetchedMs(d){ var t = d && d.fetched_at ? new Date(d.fetched_at).getTime() : 0; return isNaN(t) ? 0 : t; }
+  function ok(d){ return !!d && Array.isArray(d.items); }
+  function get(url){
+    return new Promise(function(resolve){
+      var done = false, ctl = typeof AbortController === "function" ? new AbortController() : null;
+      var timer = setTimeout(function(){ if(ctl) try{ ctl.abort(); }catch(e){} fin(null); }, TIMEOUT_MS);
+      function fin(v){ if(done) return; done = true; clearTimeout(timer); resolve(v); }
+      var opts = { cache: "no-store" };
+      if(ctl) opts.signal = ctl.signal;
+      fetch(url + "?t=" + Date.now(), opts).then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function(d){ fin(ok(d) ? d : null); }, function(){ fin(null); });
+    });
+  }
+  function render(d){
+    var by = {};
+    ((d && d.items) || []).forEach(function(it){ if(it && it.key) by[it.key] = it; });
+    var html = "";
+    ROWS.forEach(function(r){
+      var it = by[r[0]] || {};
+      html += '<tr><td><span class="cd">' + esc(r[1]) + '</span></td>' + cellHtml(it.trailing) + cellHtml(it.forward) + '</tr>';
+    });
+    rowsEl.innerHTML = html;
+    var tw = by.TWII && by.TWII.trailing, cov = tw && typeof tw.coverage_pct === "number" ? "（涵蓋約 " + tw.coverage_pct + "% 市值）" : "";
+    srcEl.textContent = ((d && d.note) || "") + cov + (d && d.stale ? " 部分來源更新失敗，該格沿用舊值，請看資料日。" : "") + " 小字為資料日。";
+  }
+  function load(){
+    Promise.all([get(RAW), get(LOCAL)]).then(function(p){
+      var a = p[0], b = p[1];
+      var d = a && b ? (fetchedMs(b) > fetchedMs(a) ? b : a) : (a || b);
+      if(d) render(d);
+      else { rowsEl.innerHTML = '<tr><td colspan="3"><span class="na">暫無資料</span></td></tr>'; srcEl.textContent = "本益比快照讀取失敗。"; }
+    });
+  }
+  load();
+  window.addEventListener("pageshow", function(e){ if(e.persisted) load(); });
 })();
 </script>
 <script>

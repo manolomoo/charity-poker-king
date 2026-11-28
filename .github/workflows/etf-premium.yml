@@ -52,12 +52,18 @@ jobs:
           TZ: Asia/Taipei
         run: python scripts/index_quotes.py
 
+      - name: 更新首頁指數本益比快照（3 小時內抓過就略過）
+        continue-on-error: true
+        env:
+          TZ: Asia/Taipei
+        run: python scripts/index_pe.py
+
       - name: 有變更才 commit 並推送
         id: push
         env:
           TZ: Asia/Taipei
         run: |
-          git add data/etf_premium.json data/indices.json
+          git add data/etf_premium.json data/indices.json data/index_pe.json
           if git diff --cached --quiet; then
             echo "沒有變更"
             exit 0

@@ -2,6 +2,16 @@
 
 這裡只記走勢頁與首頁圖表的資料與站務變動。11 項燈號的規則與門檻不在這裡，請看 `rules.md`。
 
+## 2026-11-28 首頁指數報價下方加「本益比」小表（SPX、NDX、SOX、加權）（燈號規則未改，仍是 v3.0）
+- 首頁「指數報價」區塊下方多一張小表：每個指數分「近四季（trailing）」與「預估 12 個月（forward）」兩欄，每格附資料日；滑鼠停留／長按可看來源與口徑。沒有可靠來源的格子顯示「—」，不補數字、不把兩種口徑混在同一欄。台指期不適用，不列。
+- 資料由新腳本 `scripts/index_pe.py` 寫成 `data/index_pe.json`（每格自帶 source／method／asof），首頁同時讀 raw.githubusercontent.com 與站內同一份，取較新者。來源失敗時該格沿用舊值並標 stale。
+  - SPX、NDX：History of Market（CC BY 4.0，走勢頁估值位置已在用同一家）。近四季＝成分股市值加權、每日；預估＝12 個月 forward（FY1/FY2 共識混合、ETF 持股加權），取每日的 `forwardOwn`。同檔的週資料 `forward`／`current.forward` 目前停在 2026-08-05，已過期，不用（它會讓 SPX 顯示 20.1，而同期 FactSet 是 17.1）。對照：FactSet Earnings Insight 2026-11-20 的 S&P 500 forward 12M P/E 為 17.1（11/19 收盤 7,175.83），HoM 同日（11/19）為 16.83，相差約 2%；NDX 預估與 COBB MEMO 2026-11 的 17.23 相近。
+  - SOX：預估取 HoM sectors 的 `forwardOwnLatest`（與 COBB MEMO 2026-11 的 11.69 同一個數字）。近四季沒有可靠的免費來源 → 「—」。
+  - 加權：證交所沒有官方「大盤本益比」API，所以用證交所 OpenAPI BWIBBU_d（個股近四季本益比與收盤價）× t187ap03_L（已發行普通股數）自算：Σ市值 ÷ Σ(市值/個股本益比)，只含本益比為正的個股，並顯示涵蓋的市值比例（低於 90% 或不足 500 檔就不顯示）。這是本站自算，非證交所官方數字。加權沒有預估本益比 → 「—」。
+- 排程：etf-premium.yml 與 update-and-deploy.yml 各多一步（etf-premium 那步 3 小時內抓過就略過，所以不會每 10 分鐘重抓；update-and-deploy 每次都抓）。兩個 workflow 的 cron 都沒改。新增 `tests/test_index_pe.py`。
+- 已知限制：HoM 的 forwardOwn 偶有單日跳動（例如 SOX 11/19→11/20 由 13.25 變 11.69），是上游資料特性。
+- 原因：使用者要求首頁各指數加上本益比。
+
 ## 2026-11-27 首頁加上指數報價（SPX、NDX、SOX、加權、台指期）（燈號規則未改，仍是 v3.0）
 - 首頁在「ETF 溢折價」上方加一張小表：最新價、漲跌、漲跌幅（漲紅跌綠），每列附資料時間（台北時間）與標籤（即時／延遲約 N 分／收盤／快照）。
 - 來源：SPX、NDX、SOX、加權指數由瀏覽器直接向 CNBC quote API 取價（該 API 回 `Access-Control-Allow-Origin: *`），頁面開著時每 60 秒更新一次，沿用 ETF 區塊的 8 秒必定結束逾時寫法（iOS／App 內 WebView）。CNBC 對美股三指數標 realTime=true，對加權標 realTime=false；開盤中若資料時間落後超過 3 分鐘就顯示「延遲約 N 分」。Yahoo chart API、證交所 MIS、期交所 MIS 都沒有 CORS 標頭，瀏覽器不能直連。

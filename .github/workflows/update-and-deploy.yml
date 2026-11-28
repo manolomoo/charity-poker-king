@@ -76,6 +76,10 @@ jobs:
         continue-on-error: true
         run: TZ=Asia/Taipei python scripts/index_quotes.py
 
+      - name: 更新首頁指數本益比快照（不影響燈號規則）
+        continue-on-error: true
+        run: TZ=Asia/Taipei python scripts/index_pe.py --min-age-hours 0
+
       - name: 檢查是否有資料變更
         id: diff
         run: |
